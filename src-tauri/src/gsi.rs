@@ -69,11 +69,16 @@ impl GsiState {
     pub fn ingest(&self, payload: Value) {
         let snap = normalize(&payload);
         *self.snapshot.write() = snap.clone();
-        *self.raw.write() = Some(payload);
+        *self.raw.write() = Some(payload.clone());
         *self.last_seen.write() = Some(chrono::Utc::now().timestamp());
         if let Ok(json) = serde_json::to_string(&snap) {
             let _ = self.tx.send(json);
         }
+        // Forward the untouched GSI payload to a native cs-hud server (Eidetic
+        // port) so its own HUD renders 1:1. Best-effort: never blocks ingest.
+        tokio::spawn(async move {
+            forward_to_eidetic(payload).await;
+        });
     }
 
     /// Push an arbitrary control event to every overlay (veto, replay, sponsor...).
@@ -96,6 +101,48 @@ impl GsiState {
             .read()
             .map(|t| chrono::Utc::now().timestamp() - t)
     }
+}
+
+/// Forward the raw GSI payload to a locally running cs-hud server (Eidetic
+/// port). It validates Valve's User-Agent and its own hardcoded auth token
+/// (see its src/server/gsi.js), so we spoof both here.
+async fn forward_to_eidetic(payload: Value) {
+    use std::time::Duration;
+    const EIDETIC_TOKEN: &str = "7ATvXUzTfBYyMLrA";
+
+    let mut p = payload;
+    // cs-hud's parser expects these keys to always exist (it does
+    // Object.entries on them without a guard).
+    if let Some(obj) = p.as_object_mut() {
+        obj.entry("grenades".to_string())
+            .or_insert(Value::Object(Default::default()));
+        obj.entry("bomb".to_string())
+            .or_insert(Value::Object(Default::default()));
+    }
+    match p.get_mut("auth").and_then(|a| a.as_object_mut()) {
+        Some(auth) => {
+            auth.insert("token".into(), Value::String(EIDETIC_TOKEN.into()));
+        }
+        None => {
+            if let Some(obj) = p.as_object_mut() {
+                obj.insert("auth".into(), serde_json::json!({ "token": EIDETIC_TOKEN }));
+            }
+        }
+    }
+
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_secs(2))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+    let _ = client
+        .post("http://127.0.0.1:31982/gsi")
+        .header("User-Agent", "Valve/Steam HTTP Client 1.0")
+        .json(&p)
+        .send()
+        .await;
 }
 
 fn s(v: &Value, path: &[&str]) -> String {

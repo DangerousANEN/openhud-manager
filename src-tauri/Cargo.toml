@@ -20,6 +20,7 @@ serde_json = "1"
 
 # HTTP server for GSI + overlay hosting
 axum = { version = "0.7", features = ["ws"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.5", features = ["fs", "cors"] }
 
