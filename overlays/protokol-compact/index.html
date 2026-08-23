@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>OpenHUD Compact HUD</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ════ TOP BAR: Score + Round + Timer ════ -->
+<div id="topbar" class="hidden">
+  <div class="team-bar ct">
+    <span class="team-logo" id="ct-logo"></span>
+    <span class="team-name" id="ct-name">Counter-Terrorists</span>
+    <span class="team-score" id="ct-score">0</span>
+  </div>
+
+  <div class="center-block">
+    <div class="round-info">
+      <span class="map-name" id="map-name">de_dust2</span>
+      <span class="round-num" id="round-num">R1</span>
+    </div>
+    <div class="timer" id="timer">1:55</div>
+    <div class="bomb-indicator" id="bomb-indicator">
+      <span class="bomb-icon"></span>
+      <span class="bomb-state" id="bomb-state"></span>
+    </div>
+  </div>
+
+  <div class="team-bar t">
+    <span class="team-score" id="t-score">0</span>
+    <span class="team-name" id="t-name">Terrorists</span>
+    <span class="team-logo" id="t-logo"></span>
+  </div>
+</div>
+
+<!-- ════ PLAYER TABLES ════ -->
+<div id="players" class="hidden">
+  <div class="team-table ct-table">
+    <div class="table-header ct">CT</div>
+    <div class="player-list" id="ct-players"></div>
+  </div>
+  <div class="team-table t-table">
+    <div class="table-header t">T</div>
+    <div class="player-list" id="t-players"></div>
+  </div>
+</div>
+
+<!-- ════ BOTTOM: Observer target info ════ -->
+<div id="bottom-info" class="hidden">
+  <div class="obs-player" id="obs-player">
+    <span class="obs-name" id="obs-name"></span>
+    <span class="obs-stats" id="obs-stats"></span>
+  </div>
+</div>
+
+<!-- ════ SERIES SCORE (if applicable) ════ -->
+<div id="series-score" class="hidden">
+  <span id="series-text">BO3 — 0:0</span>
+</div>
+
+<!-- ════ Sponsor slot ════ -->
+<div id="sponsor-slot">
+  <img src="sponsor.png" alt="" onerror="this.style.display='none'">
+</div>
+
+<script src="events.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

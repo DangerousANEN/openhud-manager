@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html, body, #app {
+    height: 100%;
+    margin: 0;
+    background-color: #0E0F11;
+    color: #FFFFFF;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #16181C; }
+  ::-webkit-scrollbar-thumb { background: #2A2D35; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #E6C475; }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-gold text-bg-base font-semibold uppercase tracking-wider px-5 py-2.5 rounded-btn hover:bg-gold-light transition-all duration-200 text-sm;
+  }
+  .btn-outline {
+    @apply border border-bg-border text-text-secondary font-medium px-5 py-2.5 rounded-btn hover:border-gold hover:text-gold transition-all duration-200 text-sm;
+  }
+  .card {
+    @apply bg-bg-card border border-bg-border rounded-card p-5;
+  }
+  .nav-link {
+    @apply text-text-secondary hover:text-white transition-colors text-sm font-medium px-3 py-1.5 rounded;
+  }
+  .nav-link.active {
+    @apply text-white bg-bg-elevated;
+  }
+  .badge-gold {
+    @apply text-xs font-semibold uppercase tracking-wider text-gold border border-gold/30 bg-gold/10 px-2 py-0.5 rounded;
+  }
+  .input-field {
+    @apply bg-bg-elevated border border-bg-border text-white rounded-btn px-3 py-2 text-sm outline-none focus:border-gold/60 transition-colors w-full placeholder:text-text-muted;
+  }
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-text-muted mb-4;
+  }
+}

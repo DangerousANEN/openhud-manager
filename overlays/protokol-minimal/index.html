@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>OpenHUD Minimal HUD</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ════ MINIMAL TOP BAR ════ -->
+<div id="topbar" class="hidden">
+  <div class="score-line">
+    <span class="score ct-score" id="ct-score">0</span>
+    <span class="separator">:</span>
+    <span class="score t-score" id="t-score">0</span>
+  </div>
+  <div class="info-line">
+    <span class="map-name" id="map-name">de_dust2</span>
+    <span class="dot"> · </span>
+    <span class="round-text" id="round-text">Round 1</span>
+    <span class="dot"> · </span>
+    <span class="timer" id="timer">1:55</span>
+  </div>
+</div>
+
+<!-- ════ OBSERVER TARGET (bottom-left) ════ -->
+<div id="obs-info" class="hidden">
+  <div class="obs-row">
+    <span class="obs-slot" id="obs-slot"></span>
+    <span class="obs-name" id="obs-name"></span>
+  </div>
+  <div class="obs-stats">
+    <span class="stat">HP <b id="obs-hp"></b></span>
+    <span class="stat">K <b id="obs-k"></b></span>
+    <span class="stat">D <b id="obs-d"></b></span>
+    <span class="stat">$<b id="obs-money"></b></span>
+  </div>
+</div>
+
+<!-- ════ BOMB STATE ════ -->
+<div id="bomb-rail" class="hidden">
+  <span id="bomb-text"></span>
+</div>
+
+<!-- ════ SPONSOR ════ -->
+<div id="sponsor-slot">
+  <img src="sponsor.png" alt="" onerror="this.parentElement.style.display='none'">
+</div>
+
+<script src="events.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

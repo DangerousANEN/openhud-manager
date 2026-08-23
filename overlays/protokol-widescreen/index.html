@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1.0">
+<title>OpenHUD Widescreen HUD</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ════ CINEMATIC TOP BAR ════ -->
+<div id="topbar" class="hidden">
+  <div class="top-bg"></div>
+  <div class="top-content">
+    <div class="team-side left">
+      <div class="team-block ct">
+        <div class="team-tag" id="ct-tag">CT</div>
+        <div class="team-pct" id="ct-pct"></div>
+        <div class="team-name" id="ct-name">Counter-Terrorists</div>
+      </div>
+      <div class="big-score ct-color" id="ct-score">0</div>
+    </div>
+
+    <div class="center-pillar">
+      <div class="round-label" id="round-label">Round 1</div>
+      <div class="timer-wrap">
+        <div class="timer" id="timer">1:55</div>
+      </div>
+      <div class="bomb-state" id="bomb-state"></div>
+      <div class="map-pill" id="map-pill">de_dust2</div>
+    </div>
+
+    <div class="team-side right">
+      <div class="big-score t-color" id="t-score">0</div>
+      <div class="team-block t">
+        <div class="team-tag" id="t-tag">T</div>
+        <div class="team-pct" id="t-pct"></div>
+        <div class="team-name" id="t-name">Terrorists</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ LEFT PANEL: CT players ════ -->
+<div id="ct-panel" class="side-panel left hidden">
+  <div class="panel-header ct-bg">COUNTER-TERRORISTS</div>
+  <div class="player-cards" id="ct-cards"></div>
+</div>
+
+<!-- ════ RIGHT PANEL: T players ════ -->
+<div id="t-panel" class="side-panel right hidden">
+  <div class="panel-header t-bg">TERRORISTS</div>
+  <div class="player-cards" id="t-cards"></div>
+</div>
+
+<!-- ════ BOTTOM CENTER: Kill feed + observer ════ -->
+<div id="killfeed" class="hidden">
+  <div id="feed-entries"></div>
+</div>
+
+<!-- ════ SERIES BANNER ════ -->
+<div id="series-banner" class="hidden">
+  <div class="series-format" id="series-format">BO3</div>
+  <div class="series-score" id="series-maps">0 : 0</div>
+</div>
+
+<!-- ════ SPONSOR ════ -->
+<div id="sponsor-slot">
+  <div class="sponsor-label">POWERED BY</div>
+  <img src="sponsor.png" alt="" onerror="this.parentElement.style.display='none'">
+</div>
+
+<script src="events.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
