@@ -18,6 +18,14 @@ pub struct PlayerSnap {
     pub assists: i64,
     pub adr: i64,
     pub observer_slot: i64,
+    /// World position X (GSI "position": "x, y, z") — drives the radar.
+    pub pos_x: f64,
+    /// World position Y.
+    pub pos_y: f64,
+    /// Active weapon id, e.g. "ak47" (icon: assets/weapons/<id>.svg).
+    pub weapon: String,
+    pub ammo_clip: i64,
+    pub ammo_reserve: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -116,6 +124,40 @@ fn i(v: &Value, path: &[&str]) -> i64 {
     cur.as_i64().unwrap_or(0)
 }
 
+fn f(v: &Value, path: &[&str]) -> f64 {
+    // Positions arrive as "x, y, z" under player.position; path selects the axis.
+    if path == ["position", "x"] || path == ["position", "y"] {
+        let raw = s(v, &["position"]);
+        let axis = if path[1] == "x" { 0 } else { 1 };
+        return raw
+            .split(',')
+            .nth(axis)
+            .and_then(|n| n.trim().parse::<f64>().ok())
+            .unwrap_or(0.0);
+    }
+    let mut cur = v;
+    for k in path {
+        match cur.get(*k) {
+            Some(next) => cur = next,
+            None => return 0.0,
+        }
+    }
+    cur.as_f64().unwrap_or(0.0)
+}
+
+/// Map GSI weapon name to our icon id (assets/weapons/<id>.svg).
+fn weapon_id(p: &Value) -> String {
+    let raw = s(p, &["weapons", "active", "name"]);
+    let id = raw.rsplit('_').next().unwrap_or("").to_lowercase();
+    match id.as_str() {
+        "deagle" => "deserteagle".into(),
+        "c4" => "".into(), // bomb is drawn by the bomb layer
+        "flashbang" | "he" | "smoke" | "molotov" | "incendiary" | "decoy" => id.clone(),
+        "" => "".into(),
+        _ => id,
+    }
+}
+
 /// Flatten the CS2 GSI payload into a stable shape the overlays consume.
 fn normalize(v: &Value) -> GsiSnapshot {
     let mut players: Vec<PlayerSnap> = Vec::new();
@@ -134,6 +176,11 @@ fn normalize(v: &Value) -> GsiSnapshot {
                 assists: i(p, &["match_stats", "assists"]),
                 adr: i(p, &["state", "round_totaldmg"]),
                 observer_slot: i(p, &["observer_slot"]),
+                pos_x: f(p, &["position", "x"]),
+                pos_y: f(p, &["position", "y"]),
+                weapon: weapon_id(p),
+                ammo_clip: i(p, &["weapons", "active", "ammo_clip"]),
+                ammo_reserve: i(p, &["weapons", "active", "ammo_reserve"]),
             });
         }
         players.sort_by_key(|p| (p.team.clone(), p.observer_slot));

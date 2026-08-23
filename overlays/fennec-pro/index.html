@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OpenHUD Fennec Pro</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top-left radar (Eidetic style) -->
+  <div id="radar" class="radar hidden">
+    <img id="radar-img" class="radar-img" alt="" />
+    <div id="radar-dots"></div>
+    <div id="radar-bomb" class="radar-bomb hidden">💣</div>
+  </div>
+
+  <!-- Top-center score bar with series tracker -->
+  <div id="topbar" class="topbar hidden">
+    <div class="tb-team tb-left">
+      <div class="tb-logo" id="ct-logo"></div>
+      <div class="tb-name" id="ct-name">—</div>
+      <div class="tb-score sc-ct" id="ct-score">0</div>
+    </div>
+    <div class="tb-mid">
+      <div class="tb-timer" id="timer"></div>
+      <div class="tb-round" id="round-label"></div>
+    </div>
+    <div class="tb-team tb-right">
+      <div class="tb-score sc-t" id="t-score">0</div>
+      <div class="tb-name" id="t-name">—</div>
+      <div class="tb-logo" id="t-logo"></div>
+    </div>
+  </div>
+
+  <!-- Bottom rosters, Eidetic card style -->
+  <aside class="roster roster-left"><div id="ct-list"></div></aside>
+  <aside class="roster roster-right"><div id="t-list"></div></aside>
+
+  <!-- Bottom-center focused player card with webcam window -->
+  <div id="cam-wrap" class="cam-wrap">
+    <div class="cam-window" id="cam-window"></div>
+    <div class="cam-lower">
+      <span class="cam-hp" id="cam-hp">100</span>
+      <span class="cam-armor" id="cam-armor"></span>
+      <span class="cam-name" id="cam-name"></span>
+      <span class="cam-kd" id="cam-kd"></span>
+      <span class="cam-ammo" id="cam-ammo"></span>
+    </div>
+  </div>
+
+  <script src="../events.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
