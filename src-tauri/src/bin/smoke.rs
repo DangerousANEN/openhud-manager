@@ -2,7 +2,6 @@
 // so the whole pipeline can be exercised without launching the Tauri shell.
 use openhud_lib::gsi::GsiState;
 use openhud_lib::server::{self, AppState};
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

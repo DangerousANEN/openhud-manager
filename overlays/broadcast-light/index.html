@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OpenHUD Broadcast Light</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="topbar" class="hidden">
+    <div class="tb-team tb-left">
+      <span class="tb-name" id="ct-name">—</span>
+      <span class="tb-score" id="ct-score">0</span>
+    </div>
+    <div class="tb-center">
+      <div class="tb-round" id="round-label"></div>
+      <div class="tb-timer" id="timer"></div>
+    </div>
+    <div class="tb-team tb-right">
+      <span class="tb-score" id="t-score">0</span>
+      <span class="tb-name" id="t-name">—</span>
+    </div>
+  </div>
+
+  <aside class="roster roster-left"><div id="ct-list"></div></aside>
+  <aside class="roster roster-right"><div id="t-list"></div></aside>
+
+  <div id="cam-wrap" class="cam-wrap">
+    <div class="cam-window"></div>
+    <div class="cam-lower">
+      <span class="cam-name" id="cam-name"></span>
+      <span class="cam-team" id="cam-team"></span>
+      <span class="cam-stats" id="cam-stats"></span>
+    </div>
+    <div class="cam-accent"></div>
+  </div>
+
+  <script src="../events.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

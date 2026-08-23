@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OpenHUD Championship</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="topbar" class="hidden">
+    <div class="tb-team tb-left">
+      <div class="tb-alive"><span id="alive-ct">5</span>/5</div>
+      <div class="tb-name" id="ct-name">—</div>
+      <div class="tb-score score-ct" id="ct-score">0</div>
+    </div>
+    <div class="tb-center">
+      <div class="tb-round" id="round-label"></div>
+      <div class="tb-timer" id="timer"></div>
+      <div class="tb-map" id="map-tag"></div>
+    </div>
+    <div class="tb-team tb-right">
+      <div class="tb-score score-t" id="t-score">0</div>
+      <div class="tb-name" id="t-name">—</div>
+      <div class="tb-alive"><span id="alive-t">5</span>/5</div>
+    </div>
+  </div>
+
+  <aside class="roster roster-left" id="ct-roster">
+    <div class="roster-tag tag-ct">CT</div>
+    <div id="ct-list"></div>
+  </aside>
+
+  <aside class="roster roster-right" id="t-roster">
+    <div class="roster-tag tag-t">T</div>
+    <div id="t-list"></div>
+  </aside>
+
+  <!-- Webcam frame: OBS crops the actual camera into this window -->
+  <div id="cam-placeholder" class="cam-placeholder"></div>
+  <div id="cam-wrap" class="cam-wrap">
+    <div class="cam-header">
+      <span class="cam-name" id="cam-name"></span>
+      <span class="cam-team" id="cam-team"></span>
+    </div>
+    <div class="cam-window"></div>
+    <div class="cam-stats" id="cam-stats"></div>
+  </div>
+
+  <div id="bomb-banner" class="bomb-banner">💣 BOMB PLANTED</div>
+
+  <script src="../events.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

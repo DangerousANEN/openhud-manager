@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OpenHUD Esports Prime</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="topbar" class="hidden">
+    <div class="tb-side tb-left">
+      <div class="tb-name" id="ct-name">—</div>
+      <div class="tb-score sc-ct" id="ct-score">0</div>
+    </div>
+    <div class="tb-mid">
+      <div class="tb-timer" id="timer"></div>
+      <div class="tb-sub"><span id="round-label"></span><i>·</i><span id="map-tag"></span></div>
+    </div>
+    <div class="tb-side tb-right">
+      <div class="tb-score sc-t" id="t-score">0</div>
+      <div class="tb-name" id="t-name">—</div>
+    </div>
+  </div>
+
+  <aside class="roster roster-left"><div id="ct-list"></div></aside>
+
+  <!-- Webcam: angled cyber frame, bottom-right -->
+  <div id="cam-wrap" class="cam-wrap">
+    <div class="cam-frame">
+      <div class="cam-window"></div>
+      <div class="cam-scanline"></div>
+    </div>
+    <div class="cam-lower">
+      <span class="cam-tag"></span>
+      <span class="cam-name" id="cam-name"></span>
+      <span class="cam-team team-ct" id="cam-team"></span>
+      <span class="cam-stats" id="cam-stats"></span>
+    </div>
+  </div>
+
+  <aside class="roster roster-right"><div id="t-list"></div></aside>
+
+  <script src="../events.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

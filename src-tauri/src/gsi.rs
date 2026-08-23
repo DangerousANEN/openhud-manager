@@ -31,6 +31,8 @@ pub struct GsiSnapshot {
     pub t_name: String,
     pub bomb: String,
     pub round_time: String,
+    /// SteamID of the currently spectated player (drives webcam framing).
+    pub focused_steamid: String,
     pub players: Vec<PlayerSnap>,
     pub updated_at: String,
 }
@@ -147,6 +149,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
         t_name: s(v, &["map", "team_t", "name"]),
         bomb: s(v, &["round", "bomb"]),
         round_time: s(v, &["phase_countdowns", "phase_ends_in"]),
+        focused_steamid: s(v, &["player", "getSteamID"]),
         players,
         updated_at: chrono::Utc::now().to_rfc3339(),
     }

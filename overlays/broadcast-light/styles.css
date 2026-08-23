@@ -1,0 +1,84 @@
+/* OpenHUD "broadcast-light" — clean light style (ESL/IEM vibe) */
+:root {
+  --panel: rgba(255, 255, 255, 0.96);
+  --panel-soft: rgba(244, 246, 250, 0.97);
+  --ink: #10151c;
+  --muted: #5b6675;
+  --ct: #1f7aec;
+  --t: #e8a013;
+  --line: rgba(16, 21, 28, 0.09);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent;
+  font-family: 'Inter', 'Segoe UI', sans-serif; color: var(--ink); }
+.hidden { display: none !important; }
+
+/* ── Top bar ─────────────────────────────── */
+#topbar {
+  position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: stretch; height: 76px;
+  background: var(--panel); border-radius: 14px;
+  box-shadow: 0 10px 36px rgba(12, 20, 34, .18), 0 2px 6px rgba(12,20,34,.08);
+}
+.tb-team { display: flex; align-items: center; gap: 22px; padding: 0 32px; }
+.tb-name { font-size: 33px; font-weight: 800; letter-spacing: -.01em; min-width: 180px; }
+.tb-left  { justify-content: flex-end; color: var(--ct); }
+.tb-right { justify-content: flex-start; color: var(--t); }
+.tb-score { font-size: 46px; font-weight: 800; font-variant-numeric: tabular-nums;
+  min-width: 74px; text-align: center; padding: 15px 0;
+  background: linear-gradient(180deg, rgba(16,21,28,.05), transparent); }
+.tb-left  .tb-score { color: var(--ink); border-radius: 14px 4px 4px 14px; }
+.tb-right .tb-score { color: var(--ink); border-radius: 4px 14px 14px 4px; }
+.tb-center { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 36px; background: var(--panel-soft);
+  border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+.tb-round { font-size: 13px; letter-spacing: .26em; color: var(--muted); text-transform: uppercase; }
+.tb-timer { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+
+/* ── Rosters ─────────────────────────────── */
+.roster { position: absolute; top: 150px; width: 440px; background: var(--panel);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 10px 32px rgba(12, 20, 34, .14), 0 2px 6px rgba(12,20,34,.06); }
+.roster-left  { left: 40px; border-top: 5px solid var(--ct); }
+.roster-right { right: 40px; border-top: 5px solid var(--t); }
+
+.prow { display: grid; grid-template-columns: 1fr 76px 74px 80px;
+  align-items: center; gap: 12px; padding: 13px 16px 13px 22px; }
+.prow + .prow { border-top: 1px solid var(--line); }
+.prow-name { font-size: 21px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow-kd { font-size: 17px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }
+.prow-kd i { font-style: normal; opacity: .45; margin: 0 3px; }
+.prow-money { font-size: 17px; font-weight: 600; color: #1c7c46; font-variant-numeric: tabular-nums; text-align: right; }
+.prow-hp { height: 6px; background: rgba(16,21,28,.08); border-radius: 999px; overflow: hidden; }
+.prow-hp i { display: block; height: 100%; border-radius: 999px; transition: width .3s; }
+.prow.is-dead .prow-name,
+.prow.is-dead .prow-kd,
+.prow.is-dead .prow-money { opacity: .35; }
+.prow.is-dead .prow-name::after { content: ' ✕'; color: #c0392b; font-size: 15px; }
+.prow.is-dead .prow-hp i { width: 100% !important; background: #d8dee6 !important; }
+
+/* ── Webcam card ─────────────────────────── */
+.cam-wrap { position: absolute; left: 40px; bottom: 44px; width: 420px;
+  background: var(--panel); border-radius: 18px; overflow: visible;
+  box-shadow: 0 16px 48px rgba(12, 20, 34, .22), 0 3px 8px rgba(12,20,34,.08);
+  opacity: 0; transform: translateY(18px) scale(.98); transition: all .35s cubic-bezier(.2,.9,.3,1.2);
+  pointer-events: none; }
+.cam-wrap.visible { opacity: 1; transform: translateY(0) scale(1); }
+.cam-window { height: 236px; /* 420x236 ≈ 16:9 */
+  margin: 8px; border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(31,122,236,.16), transparent 64%),
+    repeating-linear-gradient(-45deg, rgba(16,21,28,.02) 0 10px, transparent 10px 20px),
+    #eef1f6; }
+.cam-accent { position: absolute; top: -5px; left: 40px; width: 110px; height: 10px;
+  border-radius: 999px; background: linear-gradient(90deg, var(--ct), var(--t)); }
+.cam-lower { display: flex; align-items: baseline; gap: 16px; padding: 6px 24px 18px; }
+.cam-name { font-size: 27px; font-weight: 800; letter-spacing: -.01em; }
+.cam-team { font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); }
+.team-ct { color: var(--ct); } .team-t { color: var(--t); }
+.cam-stats { margin-left: auto; display: flex; gap: 14px; font-size: 18px; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--ink); }
+.cam-stats span:not(.stat-hp):not(.stat-money) { color: var(--muted); }
+.stat-hp { color: #1c7c46; }
+.stat-money { color: #1c7c46; }

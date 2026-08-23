@@ -1,0 +1,95 @@
+/* OpenHUD "championship" — dark neon pro style */
+:root {
+  --bg: rgba(10, 12, 18, 0.92);
+  --bg-soft: rgba(16, 20, 30, 0.88);
+  --ct: #35d6ff;
+  --t: #ffc93c;
+  --text: #eef2f7;
+  --muted: #8a94a6;
+  --accent-grad: linear-gradient(135deg, #7b2ff7 0%, #35d6ff 100%);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif; color: var(--text); }
+.hidden { display: none !important; }
+
+/* ── Top bar ─────────────────────────────── */
+#topbar {
+  position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: stretch; height: 84px;
+  background: var(--bg); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06);
+}
+.tb-team { display: flex; align-items: center; gap: 18px; padding: 0 28px; }
+.tb-name { font-size: 34px; font-weight: 700; letter-spacing: .04em; min-width: 170px; text-transform: uppercase; }
+.tb-left  { justify-content: flex-end; border-bottom: 4px solid var(--ct); }
+.tb-right { justify-content: flex-start; border-bottom: 4px solid var(--t); }
+.tb-score { font-size: 52px; font-weight: 800; font-family: 'Chakra Petch', 'Consolas', monospace; line-height: 1; padding: 14px 22px; }
+.score-ct { background: linear-gradient(180deg, rgba(53,214,255,.25), transparent); color: var(--ct); }
+.score-t  { background: linear-gradient(180deg, rgba(255,201,60,.22), transparent); color: var(--t); }
+.tb-alive { font-size: 15px; color: var(--muted); text-align: center; line-height: 1.2; }
+.tb-alive span { font-size: 26px; font-weight: 700; color: var(--text); display: block; }
+.tb-center { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 34px; background: var(--bg-soft); border-left: 1px solid rgba(255,255,255,.07); border-right: 1px solid rgba(255,255,255,.07); }
+.tb-round { font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.tb-timer { font-size: 38px; font-weight: 700; font-family: 'Chakra Petch', 'Consolas', monospace; }
+.tb-map { font-size: 12px; letter-spacing: .22em; color: var(--muted); }
+
+/* ── Rosters ─────────────────────────────── */
+.roster { position: absolute; top: 140px; width: 420px; background: var(--bg);
+  border-radius: 10px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.05); }
+.roster-left  { left: 36px; border-top: 3px solid var(--ct); }
+.roster-right { right: 36px; border-top: 3px solid var(--t); }
+.roster-tag { padding: 8px 18px; font-size: 15px; font-weight: 700; letter-spacing: .2em; }
+.tag-ct { color: var(--ct); } .tag-t { color: var(--t); }
+
+.prow { display: grid; grid-template-columns: 30px 1fr 58px 66px 64px;
+  align-items: center; gap: 8px; padding: 9px 12px; position: relative; }
+.prow:nth-child(even) { background: rgba(255,255,255,.03); }
+.prow-slot { font-size: 13px; color: var(--muted); text-align: center;
+  font-family: 'Chakra Petch', monospace; }
+.prow-name { font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow-kd   { font-size: 15px; color: var(--muted); font-family: 'Chakra Petch', monospace; text-align: right; }
+.prow-money{ font-size: 15px; color: #9fe8b8; font-family: 'Chakra Petch', monospace; text-align: right; }
+.prow-hp { height: 5px; background: rgba(255,255,255,.09); border-radius: 3px; overflow: hidden; }
+.prow-hp i { display: block; height: 100%; background: var(--ct); border-radius: 3px; transition: width .3s; }
+.roster-right .prow-hp i { background: var(--t); }
+.prow.is-dead .prow-name,
+.prow.is-dead .prow-kd,
+.prow.is-dead .prow-money { opacity: .32; text-decoration: line-through; }
+.prow.is-dead .prow-hp i { background: #e2504f; width: 100% !important; opacity: .45; }
+
+/* ── Webcam frame ────────────────────────── */
+.cam-wrap { position: absolute; left: 36px; bottom: 40px; width: 400px;
+  background: var(--bg); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.08);
+  opacity: 0; transform: translateY(16px); transition: all .35s ease; pointer-events: none; }
+.cam-wrap.visible { opacity: 1; transform: translateY(0); }
+.cam-header { display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; background: var(--bg-soft); }
+.cam-name { font-size: 24px; font-weight: 700; letter-spacing: .02em; }
+.cam-team { font-size: 14px; font-weight: 700; letter-spacing: .16em; padding: 3px 12px;
+  border-radius: 999px; text-transform: uppercase; }
+.team-ct { color: var(--ct); background: rgba(53,214,255,.14); }
+.team-t  { color: var(--t); background: rgba(255,201,60,.14); }
+.cam-window { height: 225px; /* 400x225 = 16:9 webcam crop target */
+  background:
+    radial-gradient(circle at 50% 42%, rgba(123,47,247,.28), transparent 62%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 12px, transparent 12px 24px),
+    #0b0e15;
+  border-top: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid rgba(255,255,255,.06); }
+.cam-stats { display: flex; gap: 18px; align-items: center; justify-content: center;
+  padding: 11px 0; font-size: 17px; font-family: 'Chakra Petch', monospace; color: var(--muted); }
+.stat-hp { color: #7ce495; font-weight: 700; }
+.cam-placeholder { position: absolute; left: 36px; bottom: 40px; width: 400px; height: 300px;
+  border: 2px dashed rgba(255,255,255,.12); border-radius: 14px; pointer-events: none; }
+.cam-placeholder.hidden { display: none !important; }
+
+/* ── Bomb banner ─────────────────────────── */
+.bomb-banner { position: absolute; top: 130px; left: 50%; transform: translateX(-50%) scale(.9);
+  padding: 12px 44px; background: linear-gradient(135deg, #e2504f, #ff8c42);
+  font-size: 30px; font-weight: 800; letter-spacing: .18em; border-radius: 10px;
+  box-shadow: 0 0 48px rgba(226,80,79,.5); opacity: 0; transition: all .25s; pointer-events: none; }
+.bomb-banner.visible { opacity: 1; transform: translateX(-50%) scale(1); animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { box-shadow: 0 0 28px rgba(226,80,79,.4);} to { box-shadow: 0 0 68px rgba(226,80,79,.75);} }

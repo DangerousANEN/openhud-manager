@@ -1,0 +1,96 @@
+/* OpenHUD "esports-prime" — aggressive cyber style, skewed panels */
+:root {
+  --bg: rgba(8, 9, 14, 0.94);
+  --ct: #00e5ff;
+  --t: #ffb300;
+  --hot: #ff2d78;
+  --text: #f2f5fa;
+  --muted: #79839b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent;
+  font-family: 'Chakra Petch', 'Segoe UI', sans-serif; color: var(--text); }
+.hidden { display: none !important; }
+
+/* ── Top bar ─────────────────────────────── */
+#topbar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%) skewX(-8deg);
+  display: flex; align-items: stretch; height: 88px; background: var(--bg);
+  box-shadow: 0 10px 40px rgba(0,0,0,.55); overflow: hidden; }
+#topbar > * { transform: skewX(8deg); } /* un-skew content */
+.tb-side { display: flex; align-items: center; gap: 24px; padding: 0 34px; }
+.tb-name { font-size: 36px; font-weight: 700; letter-spacing: .05em; min-width: 190px;
+  text-transform: uppercase; font-style: italic; }
+.tb-left  { justify-content: flex-end; border-bottom: 4px solid var(--ct); }
+.tb-right { justify-content: flex-start; border-bottom: 4px solid var(--t); }
+.tb-score { font-size: 54px; font-weight: 800; line-height: 1; padding: 16px 24px;
+  font-variant-numeric: tabular-nums; }
+.sc-ct { color: #061018; background: linear-gradient(160deg, var(--ct), #00a8c4);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); margin-right: -18px; }
+.sc-t  { color: #140b00; background: linear-gradient(200deg, var(--t), #d68f00);
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%); margin-left: -18px; }
+.tb-mid { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 38px; background: rgba(255,255,255,.04);
+  border-left: 1px solid rgba(255,255,255,.08); border-right: 1px solid rgba(255,255,255,.08); }
+.tb-timer { font-size: 44px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.tb-sub { font-size: 13px; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; }
+.tb-sub i { font-style: normal; margin: 0 10px; color: var(--hot); }
+
+/* ── Rosters ─────────────────────────────── */
+.roster { position: absolute; top: 148px; width: 400px; background: var(--bg);
+  box-shadow: 0 10px 36px rgba(0,0,0,.5); overflow: hidden; }
+.roster-left  { left: 30px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+  border-top: 3px solid var(--ct); }
+.roster-right { right: 30px; clip-path: polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+  border-top: 3px solid var(--t); }
+
+.prow { display: grid; grid-template-columns: 46px 1fr 84px 84px;
+  align-items: center; gap: 12px; padding: 11px 20px 11px 6px; position: relative; }
+.prow + .prow { border-top: 1px solid rgba(255,255,255,.05); }
+.prow-cut { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+.roster-left  .prow-cut { background: linear-gradient(180deg, var(--ct), transparent); opacity: .85; }
+.roster-right .prow-cut { background: linear-gradient(180deg, var(--t), transparent); opacity: .85; }
+.prow-slot { font-size: 15px; color: var(--muted); text-align: center; font-weight: 700; }
+.prow-name { font-size: 21px; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+.prow-hpbar { height: 4px; margin-top: 5px; background: rgba(255,255,255,.09); overflow: hidden; }
+.prow-hpbar i { display: block; height: 100%; transition: width .3s; }
+.roster-left  .prow-hpbar i { background: var(--ct); }
+.roster-right .prow-hpbar i { background: var(--t); }
+.prow-kd { font-size: 17px; color: var(--muted); text-align: right; font-weight: 600; }
+.prow-money { font-size: 17px; color: #8ef0b1; text-align: right; font-weight: 700; }
+.prow.is-dead .prow-name,
+.prow.is-dead .prow-kd,
+.prow.is-dead .prow-money { opacity: .3; }
+.prow.is-dead .prow-hpbar i { width: 100% !important; background: var(--hot) !important; opacity: .4; }
+
+/* ── Webcam frame (bottom-right, angled) ─── */
+.cam-wrap { position: absolute; right: 30px; bottom: 42px; width: 430px;
+  opacity: 0; transform: translateY(20px) skewX(-4deg); transition: all .35s ease;
+  pointer-events: none; filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)); }
+.cam-wrap.visible { opacity: 1; transform: translateY(0) skewX(-4deg); }
+.cam-frame { position: relative; background: var(--bg); padding: 8px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 26px 100%, 0 calc(100% - 26px)); }
+.cam-frame::before { content: ''; position: absolute; inset: 0; padding: 3px;
+  background: linear-gradient(120deg, var(--ct), transparent 35%, transparent 65%, var(--t));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 26px 100%, 0 calc(100% - 26px));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; }
+.cam-window { height: 234px; /* ≈16:9 of inner width */
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,45,120,.22), transparent 62%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 14px, transparent 14px 28px),
+    #07080d; }
+.cam-scanline { position: absolute; left: 8px; right: 8px; top: 8px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,.5), transparent);
+  animation: scan 3.2s linear infinite; }
+@keyframes scan { from { top: 8px; } to { top: 238px; } }
+.cam-lower { display: flex; align-items: center; gap: 14px; padding: 10px 6px 0 26px; }
+.cam-tag { width: 34px; height: 6px; background: linear-gradient(90deg, var(--ct), var(--t));
+  clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+.cam-name { font-size: 27px; font-weight: 800; font-style: italic; letter-spacing: .03em; text-transform: uppercase; }
+.cam-team { font-size: 13px; font-weight: 700; letter-spacing: .18em; padding: 3px 12px; }
+.team-ct { color: #061018; background: var(--ct); clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.team-t  { color: #140b00; background: var(--t); clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.cam-stats { margin-left: auto; display: flex; gap: 16px; font-size: 18px; font-weight: 700;
+  color: var(--muted); font-variant-numeric: tabular-nums; }
+.cs-hp { color: #8ef0b1; }
