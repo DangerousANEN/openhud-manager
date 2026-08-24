@@ -19,7 +19,13 @@
   };
 
   var RADARS = {};
-  fetch('assets/radars.json').then(r => r.json()).then(j => { RADARS = j; }).catch(() => {});
+  function loadRadars(tries) {
+    fetch('assets/radars.json').then(r => { if (!r.ok) throw 0; return r.json(); })
+      .then(j => { RADARS = j; if (lastSnap) render(lastSnap); })
+      .catch(() => { if (tries > 0) setTimeout(() => loadRadars(tries - 1), 2000); });
+  }
+  loadRadars(15);
+  var lastSnap = null;
   var sidesReversed = false;
   var dotEls = new Map(); // steamid -> element
 
@@ -150,6 +156,7 @@
   }
 
   function render(snap) {
+    lastSnap = snap;
     if (!snap.players || !snap.players.length) return;
     els.topbar.classList.remove('hidden');
     var ctN = sidesReversed ? snap.t_name : snap.ct_name;
