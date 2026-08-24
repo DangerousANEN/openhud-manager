@@ -1,0 +1,146 @@
+{
+  "ar_baggage": {
+    "resolution": 0.393846,
+    "offset": {
+      "x": -1316.0,
+      "y": 1288.0
+    },
+    "image": "ar_baggage_radar_psd.png"
+  },
+  "ar_shoots": {
+    "resolution": 0.372093,
+    "offset": {
+      "x": -1368.0,
+      "y": 1952.0
+    },
+    "image": "ar_shoots_radar_psd.png"
+  },
+  "ar_shoots_night": {
+    "resolution": 0.372093,
+    "offset": {
+      "x": -1368.0,
+      "y": 1952.0
+    },
+    "image": "ar_shoots_night_radar_psd.png"
+  },
+  "cs_italy": {
+    "resolution": 0.217391,
+    "offset": {
+      "x": -2647.0,
+      "y": 2592.0
+    },
+    "image": "cs_italy_radar_psd.png"
+  },
+  "cs_office": {
+    "resolution": 0.243902,
+    "offset": {
+      "x": -1838.0,
+      "y": 1858.0
+    },
+    "image": "cs_office_radar_psd.png"
+  },
+  "de_ancient": {
+    "resolution": 0.2,
+    "offset": {
+      "x": -2953.0,
+      "y": 2164.0
+    },
+    "image": "de_ancient_radar_psd.png"
+  },
+  "de_ancient_night": {
+    "resolution": 0.2,
+    "offset": {
+      "x": -2953.0,
+      "y": 2164.0
+    },
+    "image": "de_ancient_night_radar_psd.png"
+  },
+  "de_ancient_v1": {
+    "resolution": 0.2,
+    "offset": {
+      "x": -2953.0,
+      "y": 2164.0
+    },
+    "image": "de_ancient_v1_radar_psd.png"
+  },
+  "de_anubis": {
+    "resolution": 0.191571,
+    "offset": {
+      "x": -2796.0,
+      "y": 3328.0
+    },
+    "image": "de_anubis_radar_psd.png"
+  },
+  "de_cache": {
+    "resolution": 0.181818,
+    "offset": {
+      "x": -2000.0,
+      "y": 3250.0
+    },
+    "image": "de_cache_radar_psd.png"
+  },
+  "de_dust2": {
+    "resolution": 0.227273,
+    "offset": {
+      "x": -2476.0,
+      "y": 3239.0
+    },
+    "image": "de_dust2_radar_psd.png"
+  },
+  "de_inferno": {
+    "resolution": 0.204082,
+    "offset": {
+      "x": -2087.0,
+      "y": 3870.0
+    },
+    "image": "de_inferno_radar_psd.png"
+  },
+  "de_mirage": {
+    "resolution": 0.2,
+    "offset": {
+      "x": -3230.0,
+      "y": 1713.0
+    },
+    "image": "de_mirage_radar_psd.png"
+  },
+  "de_nuke": {
+    "resolution": 0.142857,
+    "offset": {
+      "x": -3453.0,
+      "y": 2887.0
+    },
+    "image": "de_nuke_radar_psd.png"
+  },
+  "de_overpass": {
+    "resolution": 0.192308,
+    "offset": {
+      "x": -4831.0,
+      "y": 1781.0
+    },
+    "image": "de_overpass_radar_psd.png"
+  },
+  "de_train": {
+    "resolution": 0.244973,
+    "offset": {
+      "x": -2308.0,
+      "y": 2078.0
+    },
+    "image": "de_train_radar_psd.png"
+  },
+  "de_vertigo": {
+    "resolution": 0.25,
+    "offset": {
+      "x": -3168.0,
+      "y": 1762.0
+    },
+    "image": "de_vertigo_radar_psd.png"
+  },
+  "workshop_preview": {
+    "resolution": 0.588506,
+    "offset": {
+      "x": -2071.0,
+      "y": 711.0
+    },
+    "image": "workshop_preview_radar_psd.png"
+  }
+}
