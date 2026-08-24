@@ -243,7 +243,10 @@ fn normalize(v: &Value) -> GsiSnapshot {
         t_name: s(v, &["map", "team_t", "name"]),
         bomb: s(v, &["round", "bomb"]),
         round_time: s(v, &["phase_countdowns", "phase_ends_in"]),
-        focused_steamid: s(v, &["player", "getSteamID"]),
+        focused_steamid: {
+            let sid = s(v, &["player", "steamid"]);
+            if sid.is_empty() { s(v, &["player", "getSteamID"]) } else { sid }
+        },
         players,
         updated_at: chrono::Utc::now().to_rfc3339(),
     }
