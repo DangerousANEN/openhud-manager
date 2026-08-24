@@ -94,22 +94,34 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
 .pammo { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* ── Focused player card + webcam (bottom-center) ── */
-.cam-wrap { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
-  width: 420px; background: var(--card); border-radius: 12px; overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06);
-  opacity: 0; transition: opacity .3s; pointer-events: none; }
+.cam-wrap { position: absolute; bottom: 128px; left: 50%; transform: translateX(-50%);
+  width: 330px; opacity: 0; transition: opacity .3s; pointer-events: none; }
 .cam-wrap.visible { opacity: 1; }
-.cam-window { height: 236px; /* 420x236 ≈ 16:9 webcam crop */
-  background:
-    radial-gradient(circle at 50% 40%, rgba(61,139,255,.25), transparent 62%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 12px, transparent 12px 24px),
-    #07090f;
-  border-bottom: 2px solid rgba(255,255,255,.08); }
-.cam-lower { display: flex; align-items: center; gap: 14px; padding: 10px 18px 12px; }
-.cam-hp { font-size: 26px; font-weight: 800; color: #35e08b; font-variant-numeric: tabular-nums; }
-.cam-armor { font-size: 16px; color: var(--muted); }
-.cam-name { font-size: 24px; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; }
-.cam-kd { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.cam-ammo { margin-left: auto; font-size: 17px; font-weight: 700; color: var(--text);
-  font-variant-numeric: tabular-nums; }
+.fp-avatar { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 150px; background: rgba(0,0,0,.45) center/cover no-repeat;
+  border: 3px solid var(--t); border-bottom-color: transparent; border-radius: 4px 4px 0 0;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%);
+  mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%); }
+.fp-namebar { display: grid; grid-template-columns: 56px 1fr 74px; align-items: center;
+  height: 54px; padding: 6px 11px; font-size: 17px; white-space: nowrap;
+  background: rgba(75,75,75,.7); border-radius: 8px;
+  border-bottom: 5px solid var(--t); position: relative; z-index: 1; }
+.fp-armor { display: flex; align-items: center; gap: 5px; font-weight: 800; }
+.fp-armor img { height: 15px; }
+.fp-name { text-align: center; font-weight: 900; overflow: hidden; text-overflow: ellipsis;
+  color: #fff; background: rgb(28,28,30); border-radius: 4px; padding: 2px 8px;
+  margin: 0 6px; justify-self: stretch; position: relative; z-index: 2; }
+.fp-ammo { display: flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 16px; font-weight: 700; }
+.fp-ammo img { width: 20px; }
+.fp-ammo i { font-style: normal; font-size: 13px; color: #bababa; margin-left: 1px; }
+.fp-kda { display: grid; grid-template-columns: auto auto 1fr auto auto; gap: 10px;
+  align-items: center; width: 320px; height: 22px; margin: 0 auto;
+  padding-left: 25px; font-size: 14px; color: #eee;
+  border-top: 4px solid rgba(255,255,255,.4); background: rgba(20,20,20,.55);
+  border-radius: 0 0 8px 8px; }
+.fp-kda img { height: 15px; }
+
+.cam-wrap.ct .fp-namebar { border-bottom-color: var(--ct); }
+.cam-wrap.ct .fp-avatar { border-color: var(--ct); }

@@ -26,6 +26,7 @@ pub struct PlayerSnap {
     pub weapon: String,
     pub ammo_clip: i64,
     pub ammo_reserve: i64,
+    pub round_kills: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -228,6 +229,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
                 weapon: weapon_id(p),
                 ammo_clip: i(p, &["weapons", "active", "ammo_clip"]),
                 ammo_reserve: i(p, &["weapons", "active", "ammo_reserve"]),
+                round_kills: i(p, &["state", "round_kills"]),
             });
         }
         players.sort_by_key(|p| (p.team.clone(), p.observer_slot));

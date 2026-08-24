@@ -37,13 +37,17 @@
 
   <!-- Bottom-center focused player card with webcam window -->
   <div id="cam-wrap" class="cam-wrap">
-    <div class="cam-window" id="cam-window"></div>
-    <div class="cam-lower">
-      <span class="cam-hp" id="cam-hp">100</span>
-      <span class="cam-armor" id="cam-armor"></span>
-      <span class="cam-name" id="cam-name"></span>
-      <span class="cam-kd" id="cam-kd"></span>
-      <span class="cam-ammo" id="cam-ammo"></span>
+    <div class="fp-avatar" id="fp-avatar"></div>
+    <div class="fp-namebar">
+      <span class="fp-armor"><img src="assets/icons/armor-helmet.svg" alt=""><b id="cam-hp">100</b></span>
+      <span class="fp-name" id="cam-name"></span>
+      <span class="fp-ammo"><img src="assets/icons/bullets.png" alt=""><b id="cam-ammo">-</b><i id="cam-reserve">/-</i></span>
+    </div>
+    <div class="fp-kda">
+      <img src="assets/icons/hs.svg" alt="" class="fp-rk"><b id="cam-roundkills">0</b>
+      <span class="fp-kd" id="cam-kd">0/0/0</span>
+      <img id="fp-kit" src="assets/icons/defuser.svg" alt="" style="display:none">
+      <img id="fp-bomb" src="assets/icons/c4.svg" alt="" style="display:none">
     </div>
   </div>
 

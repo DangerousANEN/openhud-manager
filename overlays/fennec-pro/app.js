@@ -13,7 +13,8 @@
     ctList: $('ct-list'), tList: $('t-list'),
     radar: $('radar'), radarImg: $('radar-img'), radarDots: $('radar-dots'),
     radarBomb: $('radar-bomb'),
-    camWrap: $('cam-wrap'), camHp: $('cam-hp'), camArmor: $('cam-armor'),
+    camWrap: $('cam-wrap'), camHp: $('cam-hp'),
+    camRoundkills: $('cam-roundkills'),
     camName: $('cam-name'), camKd: $('cam-kd'), camAmmo: $('cam-ammo'),
   };
 
@@ -126,11 +127,26 @@
     var card = document.querySelector('.pcard[data-sid="' + f.steamid + '"]');
     if (card) card.classList.add('focused');
     els.camHp.textContent = Math.max(0, f.health);
-    els.camArmor.textContent = f.armor > 0 ? '🛡 ' + f.armor : '';
+    var hasHelmet = f.armor > 0;
+    document.querySelector('#cam-wrap .fp-armor img').src =
+      hasHelmet ? 'assets/icons/armor-helmet.svg' : 'assets/icons/armor.svg';
     els.camName.textContent = f.name;
-    els.camKd.textContent = f.kills + ' : ' + f.deaths;
-    els.camAmmo.textContent = (f.ammo_clip || f.ammo_reserve)
-      ? f.ammo_clip + ' / ' + f.ammo_reserve : '';
+    els.camKd.textContent = f.kills + '/' + f.assists + '/' + f.deaths;
+    if (els.camRoundkills) els.camRoundkills.textContent = f.round_kills || 0;
+    els.camAmmo.innerHTML = '';
+    els.camAmmo.textContent = (f.ammo_clip || 0) + '';
+    var resv = document.getElementById('cam-reserve');
+    if (resv) resv.textContent = '/' + (f.ammo_reserve || 0);
+    var wrapEl = els.camWrap;
+    wrapEl.classList.toggle('ct', (f.team || '').toUpperCase() === 'CT');
+    var av = document.getElementById('fp-avatar');
+    if (av) {
+      var side = (f.team || 'T').toUpperCase() === 'CT' ? 'ct' : 't';
+      av.style.backgroundImage = 'url(assets/agents-' + side + '.png)';
+    }
+    var kit = document.getElementById('fp-kit'), bomb = document.getElementById('fp-bomb');
+    if (kit) kit.style.display = 'none';
+    if (bomb) bomb.style.display = 'none';
   }
 
   function render(snap) {
