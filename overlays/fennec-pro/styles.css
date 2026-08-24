@@ -15,11 +15,9 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
 .hidden { display: none !important; }
 
 /* ── Radar (top-left, Eidetic position) ──── */
-.radar { position: absolute; top: 24px; left: 24px; width: 380px; height: 380px;
-  border-radius: 10px; overflow: hidden; background: rgba(6,8,14,.82);
-  box-shadow: 0 8px 28px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06); }
+.radar { position: absolute; top: 24px; left: 24px; width: 380px; height: 380px; }
 .radar-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
-  opacity: .94; filter: saturate(.85) brightness(.92); }
+  filter: drop-shadow(0 0 6px rgba(120,180,255,.35)); mix-blend-mode: screen; }
 .radar-dot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; color: #fff;

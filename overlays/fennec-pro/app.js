@@ -35,7 +35,7 @@
     var cfg = RADARS[key];
     if (!cfg || !snap.players.length) { els.radar.classList.add('hidden'); return; }
     els.radar.classList.remove('hidden');
-    var src = 'assets/radar-maps/' + (cfg.image || key + '.webp');
+    var src = 'assets/radar-maps-clean/' + (cfg.image || key + '.webp').replace('.webp', '.png');
     if (!els.radarImg.src.includes(key)) els.radarImg.src = src;
 
     var seen = new Set();
