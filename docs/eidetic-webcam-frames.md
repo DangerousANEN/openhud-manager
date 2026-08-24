@@ -36,3 +36,21 @@
 # см. docs/eidetic-overlay-images/ — можно отредактировать любой графическим редактором,
 # главное: прозрачное окно в центре, непрозрачная рамка по краям
 ```
+
+## Плейсхолдеры персонажей (аватары агентов)
+
+Кроме PNG-рамок, у оригинала есть «вебкам-заглушки» с рендерами агентов.
+Включаются опциями (config-панель → Displays, или API):
+
+```
+PUT http://127.0.0.1:31982/config/options
+{"series.ShowPlayerAgentAvatars": true, "series.ShowPlayerAgentAvatarsFP": true}
+```
+
+- `...Avatars` — агент-рендер за карточкой игрока в сайдбарах
+  (CT: SAS в противогазе, T: агент в кожаной куртке — из
+  `src/themes/fennec/img/icons/{Counter Terrorists,Terrorists}.png`)
+- `...AvatarsFP` — портрет агента в focused-player карточке
+
+Подмена на свою вебкам-картинку: положи свой PNG вместо этих файлов
+или правь CSS `.bodyshot` (`player.css`, `name-row.css`).
