@@ -311,7 +311,7 @@ const exportDb = async () => {
   if (!isDesktop) return
   dbBusyStart()
   try {
-    const dest = await pickSaveFile('Экспорт базы данных', `openhud-db-${new Date().toISOString().slice(0, 10)}.db`)
+    const dest = await pickSaveFile('Экспорт базы данных', `protokol-db-${new Date().toISOString().slice(0, 10)}.db`)
     if (!dest) return
     dbOk.value = true
     dbMessage.value = await dbExport(dest)

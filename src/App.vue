@@ -4,9 +4,9 @@
     <aside class="w-[220px] flex-shrink-0 flex flex-col border-r border-bg-border bg-bg-card">
       <!-- Logo -->
       <div class="flex items-center gap-3 px-5 py-4 border-b border-bg-border">
-        <img src="/openhud-mark.png" alt="OpenHUD" class="w-9 h-9 object-contain shrink-0" />
+        <img src="/protokol-mark.png" alt="PROTOKOL HUD" class="w-9 h-9 object-contain shrink-0" />
         <div>
-          <div class="text-white font-bold text-sm tracking-widest uppercase leading-none">OpenHUD</div>
+          <div class="text-white font-bold text-sm tracking-widest uppercase leading-none">PROTOKOL HUD</div>
           <div class="text-text-muted text-[10px] uppercase tracking-wider mt-0.5">HUD Manager</div>
         </div>
       </div>
@@ -90,7 +90,7 @@
           </button>
         </router-link>
         <div class="px-3 pt-3">
-          <div class="text-[10px] text-text-muted">OpenHUD Manager</div>
+          <div class="text-[10px] text-text-muted">PROTOKOL HUD Manager</div>
           <div class="text-[10px] text-text-muted">v0.2.0</div>
         </div>
       </div>

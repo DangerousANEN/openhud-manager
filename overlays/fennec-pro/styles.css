@@ -125,3 +125,28 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
 
 .cam-wrap.ct .fp-namebar { border-bottom-color: var(--ct); }
 .cam-wrap.ct .fp-avatar { border-color: var(--ct); }
+
+/* ── Integrated Live OBS Webcam & Avatar Mode ── */
+.fp-cam-window {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+/* When in Live OBS Camera Mode (user toggles via key 'c' or ?cam=live or events.js) */
+.cam-wrap.live-cam .fp-avatar {
+  background: transparent !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+.cam-wrap.live-cam .fp-cam-window {
+  /* Green/Magenta Chroma Key or clean alpha punch-through */
+  background: rgba(0, 0, 0, 0.0) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.cam-wrap.live-cam .fp-avatar::after {
+  display: none !important;
+}

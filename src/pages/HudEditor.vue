@@ -792,7 +792,7 @@ const resetToDefault = () => {
       opacity: 100,
       fontSize: 14,
       customCss: 'border-radius: 6px;',
-      content: 'OpenHUD PARTNER'
+      content: 'PROTOKOL HUD PARTNER'
     }
   ]
   selectedBlockId.value = 'block_score'
@@ -1036,7 +1036,7 @@ const deleteSavedLayout = async (id: string) => {
 
 // Standalone HTML Export Functionality
 const exportHtml = () => {
-  const layoutName = 'OpenHUD CS2 HUD'
+  const layoutName = 'PROTOKOL HUD CS2 HUD'
   const visibleBlocks = blocks.value.filter(b => b.visible)
 
   const blockHtmls = visibleBlocks.map(block => {
@@ -1119,7 +1119,7 @@ const exportHtml = () => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
-  <title>${layoutName} - OpenHUD HUD Overlay</title>
+  <title>${layoutName} - PROTOKOL HUD HUD Overlay</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -1153,7 +1153,7 @@ ${blockHtmls}
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `openhud_hud_${Date.now()}.html`
+  a.download = `protokol_hud_${Date.now()}.html`
   a.click()
   URL.revokeObjectURL(url)
 }

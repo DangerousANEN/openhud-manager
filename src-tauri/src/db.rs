@@ -1,4 +1,4 @@
-// SQLite storage layer for OpenHUD Manager
+// SQLite storage layer for PROTOKOL HUD Manager
 use anyhow::Result;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -6,9 +6,9 @@ use std::path::PathBuf;
 
 pub fn db_path() -> PathBuf {
     let mut p = dirs::data_dir().unwrap_or_else(|| PathBuf::from("."));
-    p.push("OpenHUD");
+    p.push("PROTOKOL HUD");
     std::fs::create_dir_all(&p).ok();
-    p.push("openhud.db");
+    p.push("protokol.db");
     p
 }
 

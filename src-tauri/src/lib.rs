@@ -1,4 +1,4 @@
-// OpenHUD Manager — Tauri application entry (library side).
+// PROTOKOL HUD Manager — Tauri application entry (library side).
 pub mod db;
 pub mod gsi;
 pub mod obs;
@@ -209,7 +209,7 @@ fn find_cs2_cfg_dir(override_path: Option<String>) -> Result<PathBuf, String> {
     )
 }
 
-/// Write gamestate_integration_openhud.cfg straight into the CS2 cfg folder.
+/// Write gamestate_integration_protokol.cfg straight into the CS2 cfg folder.
 #[tauri::command]
 fn gsi_cfg_install(state: tauri::State<Runtime>, cs2_cfg_path: Option<String>) -> Result<String, String> {
     let dir = find_cs2_cfg_dir(cs2_cfg_path)?;
@@ -217,7 +217,7 @@ fn gsi_cfg_install(state: tauri::State<Runtime>, cs2_cfg_path: Option<String>) -
     let _ = db::set_setting("cs2_cfg_path", &dir.to_string_lossy());
 
     let text = gsi_cfg_text_inner(state.port, &state.gsi.token.read().clone());
-    let file = dir.join("gamestate_integration_openhud.cfg");
+    let file = dir.join("gamestate_integration_protokol.cfg");
     std::fs::write(&file, &text).map_err(|e| format!("Не удалось записать {}: {e}", file.display()))?;
     Ok(format!(
         "GSI cfg установлен: {}",
@@ -291,9 +291,9 @@ fn db_import(src: String) -> Result<String, String> {
             [],
             |r| r.get(0),
         )
-        .map_err(|_| "В файле нет таблиц OpenHUD — импорт отменён".to_string())?;
+        .map_err(|_| "В файле нет таблиц PROTOKOL HUD — импорт отменён".to_string())?;
     if ok < 2 {
-        return Err("В файле нет таблиц OpenHUD — импорт отменён".into());
+        return Err("В файле нет таблиц PROTOKOL HUD — импорт отменён".into());
     }
 
     let dst = db::db_path();
@@ -377,7 +377,7 @@ fn huds_list(state: tauri::State<Runtime>) -> Vec<HudPack> {
 /// Build the GSI cfg body for the given port/token (shared by preview + install).
 fn gsi_cfg_text_inner(port: u16, token: &str) -> String {
     format!(
-        r#""OpenHUD Manager"
+        r#""PROTOKOL HUD Manager"
 {{
     "uri" "http://127.0.0.1:{port}/api/gsi"
     "timeout" "5.0"
@@ -455,7 +455,7 @@ pub fn run() {
                 Some(p) => {
                     if p != port {
                         eprintln!(
-                            "[openhud] port {port} busy — GSI + overlay server moved to {p}"
+                            "[protokol] port {port} busy — GSI + overlay server moved to {p}"
                         );
                     }
                     app.manage(Runtime {
@@ -466,13 +466,13 @@ pub fn run() {
                     // GSI ingest + overlay hosting run for the app's whole lifetime.
                     tauri::async_runtime::spawn(async move {
                         if let Err(e) = server::serve(state, p).await {
-                            eprintln!("[openhud] server failed on port {p}: {e}");
+                            eprintln!("[protokol] server failed on port {p}: {e}");
                         }
                     });
                 }
                 None => {
                     eprintln!(
-                        "[openhud] no free port in {port}..={} — GSI/overlay disabled",
+                        "[protokol] no free port in {port}..={} — GSI/overlay disabled",
                         port + 9
                     );
                     app.manage(Runtime {
@@ -537,5 +537,5 @@ pub fn run() {
             packs::huds_delete,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running OpenHUD Manager");
+        .expect("error while running PROTOKOL HUD Manager");
 }

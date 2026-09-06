@@ -1,12 +1,12 @@
 [package]
-name = "openhud-manager"
+name = "protokol-hud-manager"
 version = "0.1.0"
-description = "OpenHUD Manager - CS2 tournament production suite"
-authors = ["OpenHUD"]
+description = "PROTOKOL HUD Manager - CS2 tournament production suite"
+authors = ["PROTOKOL HUD"]
 edition = "2021"
 
 [lib]
-name = "openhud_lib"
+name = "protokol_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

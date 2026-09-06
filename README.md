@@ -1,6 +1,6 @@
 <div align="center">
 
-# OpenHUD Manager
+# PROTOKOL HUD Manager
 
 ### Десктопное приложение для турнирных трансляций CS2 — открытый аналог Lexogrine HUD Manager (LHM)
 
@@ -16,13 +16,13 @@ Tauri 2 · Vue 3 · Rust Axum · SQLite
 
 ---
 
-> **OpenHUD Manager** — менеджер киберспортивных трансляций CS2: приём Game State Integration,
+> **PROTOKOL HUD Manager** — менеджер киберспортивных трансляций CS2: приём Game State Integration,
 > хостинг оверлеев для OBS, каталог команд/игроков/матчей, визуальный редактор HUD, управление
 > OBS через obs-websocket v5 и серверами через RCON — всё в одном нативном окне (~15 МБ, без Chromium).
 
 ## Почему не LHM (Electron)
 
-| | LHM | OpenHUD Manager |
+| | LHM | PROTOKOL HUD Manager |
 |---|---|---|
 | Инсталлятор | ~200 MB | ~10–15 MB |
 | RAM (idle) | ~300 MB | ~30–60 MB |
@@ -45,8 +45,8 @@ Tauri 2 · Vue 3 · Rust Axum · SQLite
 ## Быстрый старт
 
 ```bash
-git clone https://github.com/DangerousANEN/openhud-manager.git
-cd openhud-manager
+git clone https://github.com/DangerousANEN/protokol-hud-manager.git
+cd protokol-hud-manager
 npm install
 npm run tauri dev     # разработка
 npm run tauri build   # релизный .exe

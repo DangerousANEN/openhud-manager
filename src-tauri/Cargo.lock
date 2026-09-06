@@ -2727,34 +2727,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "openhud-manager"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "base64 0.22.1",
- "chrono",
- "dirs 5.0.1",
- "futures-util",
- "parking_lot",
- "rcon",
- "reqwest 0.12.28",
- "rfd",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tokio",
- "tokio-tungstenite 0.30.0",
- "tower-http 0.5.2",
- "uuid",
- "zip",
-]
-
-[[package]]
 name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3071,6 +3043,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "protokol-hud-manager"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "base64 0.22.1",
+ "chrono",
+ "dirs 5.0.1",
+ "futures-util",
+ "parking_lot",
+ "rcon",
+ "reqwest 0.12.28",
+ "rfd",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tokio",
+ "tokio-tungstenite 0.30.0",
+ "tower-http 0.5.2",
+ "uuid",
+ "zip",
 ]
 
 [[package]]

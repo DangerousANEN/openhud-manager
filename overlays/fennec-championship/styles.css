@@ -1,0 +1,165 @@
+/* OpenHUD "fennec-pro" — 1:1 port of the EideticHM Fennec layout.
+   Dark cards, radar top-left, series tracker, focused-player card with cam. */
+:root {
+  --bg: rgba(14, 13, 11, 0.95);
+  --card: rgba(24, 21, 17, 0.96);
+  --ct: #4ca1af;
+  --t: #d4a373;
+  --text: #fefae0;
+  --muted: #a39b8b;
+  --hp-grad: linear-gradient(90deg, #e0a96d, #f9d423);
+  --armor-fill: #e0a96d;
+  --win-pip: #f9d423;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif; color: var(--text); }
+.hidden { display: none !important; }
+
+/* ── Radar (top-left, Eidetic position) ──── */
+.radar { position: absolute; top: 24px; left: 24px; width: 380px; height: 380px; }
+.radar-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(120,180,255,.35)); mix-blend-mode: screen; }
+.radar-dot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.5);
+  transition: left .35s linear, top .35s linear; }
+.radar-dot.ct { background: var(--ct); }
+.radar-dot.t  { background: var(--t); }
+.radar-dot.dead { background: transparent !important; box-shadow: none;
+  color: #aab; font-size: 16px; }
+.radar-dot.focused { z-index: 5; outline: 2px solid #fff; outline-offset: 1px; }
+.radar-bomb { position: absolute; font-size: 20px; transform: translate(-50%,-50%);
+  animation: bpulse 1s infinite alternate; }
+@keyframes bpulse { from { opacity:.55 } to { opacity:1 } }
+
+/* ── Top bar with team blocks (Eidetic proportions) ── */
+.topbar { position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: stretch; height: 88px; }
+.tb-team { display: flex; align-items: center; gap: 16px; padding: 0 22px;
+  background: var(--card); box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+.tb-left  { border-left: 4px solid var(--ct); border-radius: 10px 0 0 10px; }
+.tb-right { border-right: 4px solid var(--t); border-radius: 0 10px 10px 0; }
+.tb-logo { width: 52px; height: 52px; border-radius: 8px; background: rgba(255,255,255,.05)
+  center/contain no-repeat; }
+.tb-name { font-size: 30px; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; min-width: 150px; text-align: center; }
+.tb-score { font-size: 48px; font-weight: 800; line-height: 1; padding: 17px 20px;
+  font-variant-numeric: tabular-nums; color: #071018; }
+.sc-ct { background: var(--ct); clip-path: polygon(0 0,100% 0,100% 100%,14px 100%,0 calc(100% - 14px)); }
+.sc-t  { background: var(--t);  clip-path: polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%); }
+.tb-mid { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 170px; background: var(--bg);
+  border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+.tb-timer { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.05; }
+.tb-round { font-size: 13px; letter-spacing: .26em; color: var(--muted); text-transform: uppercase; }
+
+/* ── Bottom rosters: Eidetic player cards ── */
+.roster { position: absolute; bottom: 36px; width: 430px; display: flex;
+  flex-direction: column-reverse; gap: 8px; }
+.roster-left  { left: 24px; }
+.roster-right { right: 24px; }
+
+.pcard { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center;
+  padding: 10px 16px 10px 12px; background: var(--card); border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.04);
+  border-left: 4px solid transparent; }
+.roster-left  .pcard { border-left-color: var(--ct); }
+.roster-right .pcard { border-left-color: var(--t); }
+.pcard.focused { outline: 2px solid #fff; outline-offset: -1px; }
+.pcard.is-dead { opacity: .38; filter: grayscale(.7); }
+
+.pslot { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+  border-radius: 8px; font-size: 18px; font-weight: 800; color: #071018;
+  font-variant-numeric: tabular-nums; }
+.roster-left  .pslot { background: var(--ct); }
+.roster-right .pslot { background: var(--t); }
+
+.pmid { min-width: 0; }
+.prow1 { display: flex; align-items: baseline; gap: 10px; }
+.pname { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 190px; }
+.pkda { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pmoney { font-size: 15px; color: #8ef0b1; font-variant-numeric: tabular-nums; }
+.phpline { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.phpbar { flex: 1; height: 7px; border-radius: 999px; background: rgba(255,255,255,.09); overflow: hidden; }
+.phpbar i { display: block; height: 100%; background: var(--hp-grad); transition: width .3s; }
+.phpnum { font-size: 15px; font-weight: 800; min-width: 34px; text-align: right;
+  font-variant-numeric: tabular-nums; }
+.parmor { font-size: 13px; color: var(--muted); }
+
+.pweapon { justify-self: end; display: flex; align-items: center; gap: 8px; }
+.pweapon img { height: 26px; max-width: 86px; object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.pammo { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ── Focused player card + webcam (bottom-center) ── */
+.cam-wrap { position: absolute; bottom: 128px; left: 50%; transform: translateX(-50%);
+  width: 330px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.cam-wrap.visible { opacity: 1; }
+.fp-avatar { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 150px; background: rgba(0,0,0,.45) center/cover no-repeat;
+  border: 3px solid var(--t); border-bottom-color: transparent; border-radius: 4px 4px 0 0;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%);
+  mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%); }
+.fp-namebar { display: grid; grid-template-columns: 56px 1fr 74px; align-items: center;
+  height: 54px; padding: 6px 11px; font-size: 17px; white-space: nowrap;
+  background: rgba(75,75,75,.7); border-radius: 8px;
+  border-bottom: 5px solid var(--t); position: relative; z-index: 1; }
+.fp-armor { display: flex; align-items: center; gap: 5px; font-weight: 800; }
+.fp-armor img { height: 15px; }
+.fp-name { text-align: center; font-weight: 900; overflow: hidden; text-overflow: ellipsis;
+  color: #fff; background: rgb(28,28,30); border-radius: 4px; padding: 2px 8px;
+  margin: 0 6px; justify-self: stretch; position: relative; z-index: 2; }
+.fp-ammo { display: flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 16px; font-weight: 700; }
+.fp-ammo img { width: 20px; }
+.fp-ammo i { font-style: normal; font-size: 13px; color: #bababa; margin-left: 1px; }
+.fp-kda { display: grid; grid-template-columns: auto auto 1fr auto auto; gap: 10px;
+  align-items: center; width: 320px; height: 22px; margin: 0 auto;
+  padding-left: 25px; font-size: 14px; color: #eee;
+  border-top: 4px solid rgba(255,255,255,.4); background: rgba(20,20,20,.55);
+  border-radius: 0 0 8px 8px; }
+.fp-kda img { height: 15px; }
+
+.cam-wrap.ct .fp-namebar { border-bottom-color: var(--ct); }
+.cam-wrap.ct .fp-avatar { border-color: var(--ct); }
+
+
+/* ── Custom Theme Variations ── */
+
+/* Championship Major Tournament Aesthetic */
+.topbar { border-bottom: 2px solid #e0a96d; box-shadow: 0 8px 30px rgba(224, 169, 109, 0.15); }
+.tb-round { color: #f9d423; font-weight: 800; letter-spacing: 0.05em; }
+.pcard { border-top: 1px solid rgba(224, 169, 109, 0.15); }
+.pcard.active { box-shadow: 0 0 15px rgba(224, 169, 109, 0.4); }
+.fp-avatar { border: 2px solid #e0a96d; }
+.fp-namebar { border-bottom: 4px solid #e0a96d; }
+
+/* ── Integrated Live OBS Webcam & Avatar Mode ── */
+.fp-cam-window {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+/* When in Live OBS Camera Mode (user toggles via key 'c' or ?cam=live or events.js) */
+.cam-wrap.live-cam .fp-avatar {
+  background: transparent !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+.cam-wrap.live-cam .fp-cam-window {
+  /* Green/Magenta Chroma Key or clean alpha punch-through */
+  background: rgba(0, 0, 0, 0.0) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.cam-wrap.live-cam .fp-avatar::after {
+  display: none !important;
+}

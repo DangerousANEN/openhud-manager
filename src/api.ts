@@ -129,7 +129,7 @@ export const settings = {
 export const gsi = {
   snapshot: () => invoke<GsiSnapshot>('gsi_snapshot'),
   status: () => invoke<GsiStatus>('gsi_status'),
-  /** Contents of gamestate_integration_openhud.cfg for the CS2 cfg folder. */
+  /** Contents of gamestate_integration_protokol.cfg for the CS2 cfg folder. */
   cfgText: () => invoke<string>('gsi_cfg_text'),
   /** Write the cfg into the discovered (or provided) CS2 cfg folder. */
   cfgInstall: (cs2CfgPath?: string | null) =>
@@ -241,7 +241,7 @@ export interface HudLayout {
   updated_at?: string | null
 }
 
-const LOCAL_STORAGE_HUD_KEY = 'openhud_hud_layouts'
+const LOCAL_STORAGE_HUD_KEY = 'protokol_hud_layouts'
 
 interface LocalStorageHudEntry {
   id: string

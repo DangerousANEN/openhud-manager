@@ -1,7 +1,7 @@
 // Standalone harness: runs the real Axum router (GSI ingest + WS + overlays)
 // so the whole pipeline can be exercised without launching the Tauri shell.
-use openhud_lib::gsi::GsiState;
-use openhud_lib::server::{self, AppState};
+use protokol_lib::gsi::GsiState;
+use protokol_lib::server::{self, AppState};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

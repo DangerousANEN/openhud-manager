@@ -84,7 +84,7 @@
 
         <div>
           <label class="text-text-secondary text-xs mb-1.5 block">Название *</label>
-          <input v-model="draft.name" class="input-field" placeholder="OpenHUD Cup #1" @keyup.enter="save">
+          <input v-model="draft.name" class="input-field" placeholder="PROTOKOL HUD Cup #1" @keyup.enter="save">
         </div>
 
         <div>

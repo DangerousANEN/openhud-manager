@@ -26,7 +26,7 @@ pub struct AppState {
 /// Directory the OBS browser sources are served from.
 pub fn overlays_dir() -> PathBuf {
     let base = dirs::data_dir().unwrap_or_else(|| PathBuf::from("."));
-    let dir = base.join("OpenHUD").join("overlays");
+    let dir = base.join("PROTOKOL HUD").join("overlays");
     let _ = std::fs::create_dir_all(&dir);
     dir
 }
@@ -123,7 +123,7 @@ async fn ws_loop(mut socket: WebSocket, st: AppState) {
 pub async fn serve(state: AppState, port: u16) -> anyhow::Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    println!("[openhud] GSI + overlay server listening on http://{addr}");
+    println!("[protokol] GSI + overlay server listening on http://{addr}");
     axum::serve(listener, router(state)).await?;
     Ok(())
 }
