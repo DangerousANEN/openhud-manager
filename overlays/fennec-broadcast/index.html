@@ -18,6 +18,8 @@
   <div id="topbar" class="top-bar hidden">
     <div class="series-name" id="series-name"></div>
 
+    <!-- Scores live INSIDE each team block (as upstream), so the skewed panel
+         and its score slab form one continuous parallelogram. -->
     <div class="team --left">
       <div class="team-panel-wrapper --left --ct">
         <div class="inner">
@@ -25,19 +27,19 @@
           <div class="team-name" id="ct-name">—</div>
         </div>
       </div>
+      <div class="score --ct"><div class="inner" id="ct-score">0</div></div>
     </div>
 
     <div class="center">
-      <div class="score --left --ct"><div class="inner" id="ct-score">0</div></div>
       <div class="current-round">
         <div class="clock" id="timer">0:00</div>
         <div class="round-number" id="round-label">Round 1</div>
       </div>
-      <div class="score --right --t"><div class="inner" id="t-score">0</div></div>
       <div class="match-point-rounds" id="round-pips"></div>
     </div>
 
     <div class="team --right">
+      <div class="score --t"><div class="inner" id="t-score">0</div></div>
       <div class="team-panel-wrapper --right --t">
         <div class="inner">
           <div class="team-name" id="t-name">—</div>
@@ -57,42 +59,68 @@
     </div>
   </div>
 
-  <!-- Sidebars: two-row grid cards, health = row-1 background fill -->
-  <aside class="sidebar --left"><div id="ct-list"></div></aside>
-  <aside class="sidebar --right"><div id="t-list"></div></aside>
+  <!-- Sidebars: team equipment + utility summary, then two-row grid cards -->
+  <aside class="sidebar --left">
+    <div class="team-equipment --left" id="ct-equipment">
+      <div class="te-block"><span class="label">Loss Bonus</span><span class="value" id="ct-loss">$1400</span></div>
+      <div class="te-block"><span class="label">Team Money</span><span class="value" id="ct-money">$0</span></div>
+      <div class="te-block"><span class="label">Equipment</span><span class="value" id="ct-equip">$0</span></div>
+    </div>
+    <div class="team-grenades --left" id="ct-nades">
+      <div class="tg-total"><span class="value" id="ct-nade-total">0</span></div>
+      <div class="tg-types" id="ct-nade-types"></div>
+    </div>
+    <div id="ct-list"></div>
+  </aside>
+
+  <aside class="sidebar --right">
+    <div class="team-equipment --right" id="t-equipment">
+      <div class="te-block"><span class="label">Equipment</span><span class="value" id="t-equip">$0</span></div>
+      <div class="te-block"><span class="label">Team Money</span><span class="value" id="t-money">$0</span></div>
+      <div class="te-block"><span class="label">Loss Bonus</span><span class="value" id="t-loss">$1400</span></div>
+    </div>
+    <div class="team-grenades --right" id="t-nades">
+      <div class="tg-types" id="t-nade-types"></div>
+      <div class="tg-total"><span class="value" id="t-nade-total">0</span></div>
+    </div>
+    <div id="t-list"></div>
+  </aside>
 
   <!-- Focused player: skewed health | name+stats | ammo, webcam above -->
   <div id="cam-wrap" class="focused-player">
-    <div class="fp-avatar" id="fp-avatar">
-      <div class="fp-cam-window" id="fp-cam-window"></div>
+    <!-- webcam window is anchored above the bar, not inside the avatar -->
+    <div class="fp-cam-window" id="fp-cam-window">
+      <div class="fp-avatar" id="fp-avatar"></div>
     </div>
 
     <div class="health-and-armor" id="fp-ha">
       <div class="inner">
-        <span class="ha-item"><img src="assets/icons/health.svg" alt="" class="ha-icon"><b id="cam-hp">100</b></span>
-        <span class="ha-item"><img src="assets/icons/armor-helmet.svg" alt="" class="ha-icon" id="cam-armor-icon"><b id="cam-armor">100</b></span>
+        <span class="ha-item"><img src="assets/icons/health.svg" alt=""><b id="cam-hp">100</b></span>
+        <span class="ha-item fp-armor"><img src="assets/icons/armor-helmet.svg" alt="" id="cam-armor-icon"><b id="cam-armor">100</b></span>
       </div>
     </div>
 
     <div class="name-and-stats" id="fp-ns">
       <div class="name-row"><span id="cam-name"></span></div>
       <div class="data-row">
+        <!-- original keeps K/A/D/ADR together; utility lives in its own slot -->
+        <div class="dr-stats">
+          <div class="stat"><span class="label">K</span><span class="value" id="cam-k">0</span></div>
+          <div class="stat"><span class="label">A</span><span class="value" id="cam-a">0</span></div>
+          <div class="stat"><span class="label">D</span><span class="value" id="cam-d">0</span></div>
+          <div class="stat"><span class="label">ADR</span><span class="value" id="cam-adr">0</span></div>
+        </div>
         <div class="dr-kit">
-          <img id="fp-weapon" src="" alt="" hidden>
           <span class="dr-nades" id="fp-nades"></span>
           <img id="fp-kit" src="assets/icons/defuser.svg" alt="" hidden>
           <img id="fp-bomb" src="assets/icons/c4.svg" alt="" hidden>
         </div>
-        <div class="stat"><span class="stat-label">K</span><span class="stat-value" id="cam-k">0</span></div>
-        <div class="stat"><span class="stat-label">A</span><span class="stat-value" id="cam-a">0</span></div>
-        <div class="stat"><span class="stat-label">D</span><span class="stat-value" id="cam-d">0</span></div>
-        <div class="stat"><span class="stat-label">HS</span><span class="stat-value" id="cam-roundkills">0</span></div>
       </div>
     </div>
 
     <div class="ammo" id="fp-ammo">
       <div class="inner">
-        <b id="cam-ammo">-</b><i class="reserve" id="cam-reserve">/ -</i>
+        <span><b id="cam-ammo">-</b><i class="fp-reserve" id="cam-reserve">/ -</i></span>
       </div>
     </div>
   </div>

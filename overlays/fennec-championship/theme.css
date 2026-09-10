@@ -22,27 +22,27 @@
 .player-wrapper { width: 16.5rem; }
 .player-wrapper:not(:last-child) { margin-bottom: 0; }
 
-/* tall portrait-ish cards: stats stack UNDER the name, centred */
+/* deck cards are 165px: give them a dedicated 5-column map */
+.player { width: 16.5rem; }
 .player.--left, .player.--right {
-  grid-template-rows: var(--sidebar-row-height) 2.2rem;
-  grid-template-columns: .4rem 1fr 3.4rem .4rem;
+  grid-template-columns: .4rem 1fr 1fr 1fr .4rem;
   grid-template-areas:
-    'start name     health end'
-    'start money-kd grenades end';
+    'start name  name  health end'
+    'start money kills deaths end';
   text-align: center;
 }
-.p-slot, .p-primary, .p-secondary, .p-equip, .p-round-kills { display: none; }
-.p-name { justify-content: center; font-size: 1.8rem; letter-spacing: .04em; }
+.p-slot, .p-primary, .p-secondary, .p-equip, .p-round-kills,
+.p-taser, .p-grenades { display: none; }
+.p-name { justify-content: center; font-size: 1.6rem; letter-spacing: .02em; padding: 0 .3rem; }
 .player.--right .p-name { justify-content: center; text-align: center; }
-.p-moneykd { justify-content: center; font-size: 1.4rem; gap: .9rem; }
-.player.--right .p-moneykd { justify-content: center; }
-.p-grenades { justify-content: center; }
-.player.--right .p-grenades { justify-content: center; }
+.p-health { font-size: 1.5rem; }
+.p-money { font-size: 1.3rem; text-align: center; }
+.p-kills, .p-deaths { font-size: 1.3rem; }
+.p-kills i, .p-deaths i { font-size: 1rem; margin-right: .15rem; }
 .player {
   background: linear-gradient(180deg, rgba(26,22,16,.84), rgba(13,11,8,.9));
   box-shadow: inset 0 0 0 1px rgba(232,195,122,.22);
 }
-/* bevelled top corners give the deck a ceremonial plinth look */
 .player.--left, .player.--right {
   clip-path: polygon(1rem 0, 100% 0, 100% 100%, 0 100%, 0 1rem);
 }
@@ -54,8 +54,9 @@
 
 /* ── focused player: compact island floating above the deck ── */
 .focused-player {
-  bottom: 9.5rem; --focused-player-width: 38%;
-  grid-template-columns: 18fr 40fr 18fr;
+  /* deck occupies the bottom ~7rem; float the island above it */
+  bottom: 12rem; --focused-player-width: 76rem;
+  grid-template-columns: 18rem 40rem 14rem;
 }
 .name-row { text-transform: uppercase; letter-spacing: .14em;
   box-shadow: inset 0 -2px 0 rgba(232,195,122,.55); }

@@ -20,35 +20,37 @@
 .player-wrapper { width: 17.5rem; }
 .player-wrapper:not(:last-child) { margin-bottom: 0; }
 
-/* compact 2-row cards that work side-by-side */
-.player.--left, .player.--right {
-  grid-template-rows: var(--sidebar-row-height) 1.6rem;
-  grid-template-columns: .3rem 3.2rem 1.2rem 1fr 2rem .3rem;
-  grid-template-areas:
-    'start health observer-slot name     round-kills end'
-    'start equip  equip         money-kd grenades    end';
-}
-.p-primary, .p-secondary { display: none; }
-.player { background: rgba(var(--scrim), .72); backdrop-filter: blur(6px);
+/* compact 2-row cards that work side-by-side (own grid, base is 435px) */
+.player { width: 17.5rem;
+  background: rgba(var(--scrim), .72); backdrop-filter: blur(6px);
   border-radius: 2px; box-shadow: 0 .4rem 1.6rem rgba(0,0,0,.45); }
-.p-name { font-size: 1.5rem; }
-.player.--right .p-name { justify-content: flex-start; text-align: left; }
-.player.--right .p-moneykd { justify-content: flex-start; }
-.p-moneykd { font-size: 1.15rem; gap: .5rem; }
+.player.--left, .player.--right {
+  grid-template-columns: .3rem 3.2rem 1fr 2.4rem 2.4rem .3rem;
+  grid-template-areas:
+    'start health name  name  round-kills end'
+    'start equip  money kills deaths      end';
+}
+.p-primary, .p-secondary, .p-taser, .p-grenades, .p-slot { display: none; }
+.p-name { font-size: 1.4rem; }
+.player.--right .p-name { text-align: left; }
 .p-money { font-size: 1.15rem; }
-.p-grenades img, .dr-nades img { height: 1.4rem; min-width: 1.1rem; }
-.c4-mark { height: 1.5rem; min-width: 1.4rem; }
+.p-kills, .p-deaths { font-size: 1.15rem; }
+.p-kills i, .p-deaths i { display: none; }
+.p-equip img { height: 1.4rem; }
+.p-health { font-size: 1.4rem; }
 
 /* ── radar: top-right, under the alive widget ── */
 .radar {
-  /* right roster strip occupies ~11.5-16rem; keep the radar clear of it */
-  top: 19rem; left: auto; right: 2rem; width: 17%;
+  /* right roster strip ends ~17rem; keep well clear */
+  top: 24rem; left: auto; right: 2rem; width: 16%;
 }
 .radar-img { filter: drop-shadow(0 0 .5rem rgba(var(--ct-rgb), .30)); }
 
 /* ── focused player: WIDE lower-third strip, full-bleed ── */
 .focused-player {
-  left: 0; right: 0; bottom: 0; --focused-player-width: 100%;
+  left: 50%; right: auto; bottom: 0;
+  width: 100%; --focused-player-width: 100%;
+  transform: translateX(-50%);   /* base centres via translate; keep it */
   grid-template-columns: 22fr 56fr 22fr;
   background: linear-gradient(180deg, rgba(13,17,23,0), rgba(13,17,23,.92) 38%);
   padding: 2.4rem 6rem .8rem;

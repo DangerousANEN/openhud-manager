@@ -19,7 +19,7 @@
     camWrap: $('cam-wrap'), camHp: $('cam-hp'), camArmor: $('cam-armor'),
     camArmorIcon: $('cam-armor-icon'), camName: $('cam-name'),
     camK: $('cam-k'), camA: $('cam-a'), camD: $('cam-d'),
-    camRoundkills: $('cam-roundkills'),
+    camAdr: $('cam-adr'),
     camAmmo: $('cam-ammo'), camReserve: $('cam-reserve'),
     alive: $('alive'), paCt: $('pa-ct'), paT: $('pa-t'),
     pips: $('round-pips'), seriesName: $('series-name'),
@@ -54,8 +54,20 @@
     var cfg = RADARS[key];
     if (!cfg || !snap.players.length) { els.radar.classList.add('hidden'); return; }
     els.radar.classList.remove('hidden');
-    var src = 'assets/radar-maps-clean/' + (cfg.image || key + '.webp').replace('.webp', '.png');
-    if (els.radarImg.src.indexOf(key) === -1) els.radarImg.src = src;
+    /* original art first (SimpleRadar, then in-game), outline mask last */
+    if (els.radarImg.dataset.map !== key) {
+      els.radarImg.dataset.map = key;
+      var chain = ['assets/radars/simpleradar/' + key + '.webp',
+                   'assets/radars/ingame/' + key + '.webp',
+                   'assets/radar-maps-clean/' + key + '.png'];
+      var idx = 0;
+      els.radarImg.onerror = function () {
+        idx += 1;
+        if (idx < chain.length) els.radarImg.src = chain[idx];
+        else els.radarImg.onerror = null;
+      };
+      els.radarImg.src = chain[0];
+    }
 
     var seen = new Set();
     snap.players.forEach(function (p) {
@@ -103,34 +115,19 @@
   }
 
   function playerHtml(p, side, focusedId) {
+    /* 1:1 with the original fennec card: 11 columns x 2 rows.
+       Row 1: health | slot | name | round-kills | primary
+       Row 2: equipment | money | kills | deaths | taser | grenades | secondary */
     var dead = p.health <= 0;
     var hp = Math.max(0, Math.min(100, p.health));
     var team = String(p.team || '').toUpperCase() === 'CT' ? 'ct' : 't';
     var armorIcon = p.armor > 0
       ? (p.helmet ? 'assets/icons/armor-helmet.svg' : 'assets/icons/armor.svg') : '';
-    var rk = p.round_kills > 0
-      ? '<img src="assets/icons/hs.svg" alt=""><b>' + p.round_kills + '</b>' : '';
 
-    var health = '<div class="p-health">' + hp + '</div>';
-    var slot = '<div class="p-slot">' + (p.observer_slot || '') + '</div>';
-    var name = '<div class="p-name">' + esc(p.name) + '</div>';
-    var kills = '<div class="p-round-kills">' + rk + '</div>';
-    var primary = '<div class="p-primary">' + weaponImg(p.weapon, 'w-primary') + '</div>';
-    var equip = '<div class="p-equip">' +
-      (armorIcon ? '<img src="' + armorIcon + '" alt="">' : '') +
-      (p.defusekit ? '<img src="assets/icons/defuser.svg" alt="">' : '') + '</div>';
-    var moneykd = '<div class="p-moneykd">' +
-      '<span class="p-money">$' + (p.money || 0) + '</span>' +
-      '<span class="p-kd"><i>K</i>' + (p.kills || 0) + ' <i>D</i>' + (p.deaths || 0) + '</span>' +
-      '</div>';
-    var nades = '<div class="p-grenades">' +
-      (p.grenades || []).slice(0, 4).map(function (g) {
-        return '<img class="nade-' + esc(g) + '" src="assets/weapons/' + esc(g) +
-          '.svg" alt="" onerror="this.style.display=\'none\'">';
-      }).join('') + '</div>';
-    var secondary = '<div class="p-secondary">' +
-      (p.has_bomb ? '<img class="c4-mark" src="assets/icons/c4.svg" alt="C4">' : '') +
-      '</div>';
+    var nades = (p.grenades || []).slice(0, 4).map(function (g) {
+      return '<img class="nade-' + esc(g) + '" src="assets/weapons/' + esc(g) +
+        '.svg" alt="" onerror="this.style.display=\'none\'">';
+    }).join('');
 
     return '<div class="player-wrapper --' + side +
       (p.steamid === focusedId ? ' --focused' : '') + '" data-sid="' + esc(p.steamid) + '">' +
@@ -138,8 +135,25 @@
         '<div class="health-bar-background">' +
           '<div class="health-fill" style="transform:scaleX(' + (hp / 100) + ')"></div>' +
         '</div>' +
-        health + slot + name + kills + primary +
-        equip + moneykd + nades + secondary +
+        '<div class="p-health">' + hp + '</div>' +
+        '<div class="p-slot">' + (p.observer_slot || '') + '</div>' +
+        '<div class="p-name">' + esc(p.name) + '</div>' +
+        '<div class="p-round-kills">' + (p.round_kills > 0
+          ? '<img src="assets/icons/hs.svg" alt=""><b>' + p.round_kills + '</b>' : '') + '</div>' +
+        '<div class="p-primary">' + weaponImg(p.weapon, 'w-primary') + '</div>' +
+        '<div class="p-equip">' +
+          (armorIcon ? '<img src="' + armorIcon + '" alt="">' : '') +
+          (p.defusekit ? '<img src="assets/icons/defuser.svg" alt="">' : '') + '</div>' +
+        '<div class="p-money">$' + (p.money || 0) + '</div>' +
+        '<div class="p-kills"><i>K</i>' + (p.kills || 0) + '</div>' +
+        '<div class="p-deaths"><i>D</i>' + (p.deaths || 0) + '</div>' +
+        '<div class="p-taser">' +
+          (p.has_bomb ? '<img class="c4-mark" src="assets/icons/c4.svg" alt="C4">' : '') +
+        '</div>' +
+        '<div class="p-grenades">' + nades + '</div>' +
+        '<div class="p-secondary">' +
+          weaponImg(p.secondary, 'w-secondary') +
+        '</div>' +
       '</div>' +
       '<div class="fp-highlight"></div>' +
       '</div>';
@@ -158,10 +172,52 @@
       return playerHtml(p, 'right', snap.focused_steamid);
     }).join('');
 
+    renderTeamBars(left, 'ct', snap.ct_loss_streak || 0);
+    renderTeamBars(right, 't', snap.t_loss_streak || 0);
+    /* money strip is a freezetime-only widget upstream */
+    var freeze = snap.phase === 'freezetime' || snap.phase === 'warmup';
+    ['ct-equipment', 't-equipment'].forEach(function (id) {
+      var e = $(id); if (e) e.classList.toggle('--active', freeze);
+    });
+
     if (els.alive) {
       els.alive.classList.remove('hidden');
       els.paCt.textContent = left.filter(function (p) { return p.health > 0; }).length;
       els.paT.textContent = right.filter(function (p) { return p.health > 0; }).length;
+    }
+  }
+
+  /* ── Team equipment + utility summary bars (upstream TeamEquipment/TeamGrenades) ── */
+  var LOSS_BONUS = [1400, 1900, 2400, 2900, 3400];
+  var NADE_TYPES = ['smokegrenade', 'molotov', 'flashbang', 'hegrenade'];
+
+  function renderTeamBars(players, side, lossStreak) {
+    var money = 0, equip = 0, counts = {};
+    NADE_TYPES.forEach(function (t) { counts[t] = 0; });
+    players.forEach(function (p) {
+      money += p.money || 0;
+      equip += p.equip_value || 0;
+      (p.grenades || []).forEach(function (g) {
+        var key = g === 'incgrenade' ? 'molotov' : g;
+        if (counts[key] !== undefined) counts[key] += 1;
+      });
+    });
+    var total = NADE_TYPES.reduce(function (a, t) { return a + counts[t]; }, 0);
+
+    var set = function (id, v) { var e = $(id); if (e) e.textContent = v; };
+    set(side + '-money', '$' + money);
+    set(side + '-equip', '$' + equip);
+    set(side + '-loss', '$' + LOSS_BONUS[Math.max(0, Math.min(4, lossStreak))]);
+    set(side + '-nade-total', total);
+
+    var box = $(side + '-nade-types');
+    if (box) {
+      box.innerHTML = NADE_TYPES.map(function (t) {
+        return '<div class="tg-type' + (counts[t] ? ' --active' : '') + '">' +
+          '<img class="nade-' + t + '" src="assets/weapons/' + t +
+          '.svg" alt="" onerror="this.style.display=\'none\'">' +
+          '<span class="value">' + counts[t] + '</span></div>';
+      }).join('');
     }
   }
 
@@ -187,7 +243,7 @@
     els.camK.textContent = f.kills || 0;
     els.camA.textContent = f.assists || 0;
     els.camD.textContent = f.deaths || 0;
-    els.camRoundkills.textContent = f.round_kills || 0;
+    els.camAdr.textContent = f.adr || 0;
     els.camAmmo.textContent = (f.ammo_clip == null ? '-' : f.ammo_clip);
     els.camReserve.textContent = '/ ' + (f.ammo_reserve == null ? '-' : f.ammo_reserve);
 
@@ -198,20 +254,12 @@
       av.style.backgroundImage = live
         ? 'none' : 'url(assets/agents-' + (isCt ? 'ct' : 't') + '.png)';
     }
+    var camWin = $('fp-cam-window');
+    if (camWin) camWin.setAttribute('data-steamid', f.steamid || '');
     var kit = $('fp-kit'), bomb = $('fp-bomb');
     if (kit) kit.hidden = !(f.defusekit && isCt);
     if (bomb) bomb.hidden = !f.has_bomb;
 
-    var wIcon = $('fp-weapon');
-    if (wIcon) {
-      if (f.weapon) {
-        wIcon.src = 'assets/weapons/' + f.weapon + '.svg';
-        wIcon.hidden = false;
-        wIcon.onerror = function () { wIcon.hidden = true; };
-      } else {
-        wIcon.hidden = true;
-      }
-    }
     var nadeBox = $('fp-nades');
     if (nadeBox) {
       nadeBox.innerHTML = (f.grenades || []).slice(0, 4).map(function (g) {
@@ -227,8 +275,24 @@
     var tN = sidesReversed ? snap.ct_name : snap.t_name;
     els.ctName.textContent = ctN || '';
     els.tName.textContent = tN || '';
-    if (ctN) els.ctLogo.style.backgroundImage = 'url(team-logos/' + encodeURIComponent(ctN) + '.png)';
-    if (tN) els.tLogo.style.backgroundImage = 'url(team-logos/' + encodeURIComponent(tN) + '.png)';
+    /* probe the logo first; a missing file must not leave a coloured square */
+    [[ctN, els.ctLogo], [tN, els.tLogo]].forEach(function (pair) {
+      var nm = pair[0], el = pair[1];
+      if (!nm || el.dataset.team === nm) return;
+      el.dataset.team = nm;
+      var probe = new Image();
+      probe.onload = function () {
+        /* reject 1x1 placeholder stubs; they render as coloured squares */
+        if (probe.naturalWidth < 16 || probe.naturalHeight < 16) {
+          el.classList.remove('--loaded');
+          return;
+        }
+        el.style.backgroundImage = 'url(team-logos/' + encodeURIComponent(nm) + '.png)';
+        el.classList.add('--loaded');
+      };
+      probe.onerror = function () { el.classList.remove('--loaded'); };
+      probe.src = 'team-logos/' + encodeURIComponent(nm) + '.png';
+    });
     els.ctScore.textContent = sidesReversed ? snap.t_score : snap.ct_score;
     els.tScore.textContent = sidesReversed ? snap.ct_score : snap.t_score;
     els.timer.textContent = snap.phase === 'live'

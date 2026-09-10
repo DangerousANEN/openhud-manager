@@ -24,6 +24,9 @@ pub struct PlayerSnap {
     pub pos_y: f64,
     /// Active weapon id, e.g. "ak47" (icon: assets/weapons/<id>.svg).
     pub weapon: String,
+    /// Holstered pistol id — the original fennec card shows it on row 2.
+    #[serde(default)]
+    pub secondary: String,
     pub ammo_clip: i64,
     pub ammo_reserve: i64,
     /// Kevlar+helmet vs kevlar only — picks the armor icon.
@@ -38,6 +41,9 @@ pub struct PlayerSnap {
     /// True when this player is carrying the C4.
     #[serde(default)]
     pub has_bomb: bool,
+    /// Value of everything the player is holding (for the team equipment bar).
+    #[serde(default)]
+    pub equip_value: i64,
     pub round_kills: i64,
 }
 
@@ -52,6 +58,11 @@ pub struct GsiSnapshot {
     pub t_name: String,
     pub bomb: String,
     pub round_time: String,
+    /// Consecutive round losses per side — drives the Loss Bonus pips.
+    #[serde(default)]
+    pub ct_loss_streak: i64,
+    #[serde(default)]
+    pub t_loss_streak: i64,
     /// SteamID of the currently spectated player (drives webcam framing).
     pub focused_steamid: String,
     pub players: Vec<PlayerSnap>,
@@ -124,6 +135,8 @@ impl GsiState {
             "t_name": snap.t_name,
             "bomb": snap.bomb,
             "round_time": snap.round_time,
+            "ct_loss_streak": snap.ct_loss_streak,
+            "t_loss_streak": snap.t_loss_streak,
             "focused_steamid": snap.focused_steamid,
             "players": snap.players,
             "updated_at": snap.updated_at
@@ -333,11 +346,30 @@ fn normalize(v: &Value) -> GsiSnapshot {
                 kills: i(p, &["match_stats", "kills"]),
                 deaths: i(p, &["match_stats", "deaths"]),
                 assists: i(p, &["match_stats", "assists"]),
+                /* ADR = total damage / rounds played. GSI only exposes damage
+                   for the CURRENT round (`round_totaldmg`), so a true ADR needs
+                   accumulation across rounds; until that exists, report the
+                   round damage this snapshot actually carries. */
                 adr: i(p, &["state", "round_totaldmg"]),
                 observer_slot: i(p, &["observer_slot"]),
                 pos_x: f(p, &["position", "x"]),
                 pos_y: f(p, &["position", "y"]),
                 weapon: weapon_id(p),
+                secondary: p
+                    .get("weapons")
+                    .and_then(|w| w.as_object())
+                    .and_then(|slots| {
+                        slots.values().find_map(|w| {
+                            if w.get("type").and_then(|t| t.as_str()) == Some("Pistol") {
+                                w.get("name")
+                                    .and_then(|n| n.as_str())
+                                    .map(|n| n.trim_start_matches("weapon_").to_lowercase())
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .unwrap_or_default(),
                 ammo_clip: active_weapon(p)
                     .and_then(|w| w.get("ammo_clip"))
                     .and_then(|a| a.as_i64())
@@ -366,6 +398,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
                         })
                     })
                     .unwrap_or(false),
+                equip_value: i(p, &["state", "equip_value"]),
                 round_kills: i(p, &["state", "round_kills"]),
             });
         }
@@ -379,6 +412,8 @@ fn normalize(v: &Value) -> GsiSnapshot {
         ct_score: i(v, &["map", "team_ct", "score"]),
         t_score: i(v, &["map", "team_t", "score"]),
         ct_name: s(v, &["map", "team_ct", "name"]),
+        ct_loss_streak: i(v, &["map", "team_ct", "consecutive_round_losses"]),
+        t_loss_streak: i(v, &["map", "team_t", "consecutive_round_losses"]),
         t_name: s(v, &["map", "team_t", "name"]),
         bomb: s(v, &["round", "bomb"]),
         round_time: s(v, &["phase_countdowns", "phase_ends_in"]),
