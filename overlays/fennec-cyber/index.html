@@ -4,53 +4,96 @@
 <meta charset="UTF-8" />
 <title>PROTOKOL Fennec Cyber</title>
 <link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="theme.css" />
 </head>
 <body>
-  <!-- Top-left radar (Eidetic style) -->
+  <!-- Radar (top-left) -->
   <div id="radar" class="radar hidden">
     <img id="radar-img" class="radar-img" alt="" />
     <div id="radar-dots"></div>
-    <div id="radar-bomb" class="radar-bomb hidden">💣</div>
+    <div id="radar-bomb" class="radar-bomb hidden"></div>
   </div>
 
-  <!-- Top-center score bar with series tracker -->
-  <div id="topbar" class="topbar hidden">
-    <div class="tb-team tb-left">
-      <div class="tb-logo" id="ct-logo"></div>
-      <div class="tb-name" id="ct-name">—</div>
-      <div class="tb-score sc-ct" id="ct-score">0</div>
+  <!-- Top bar: skewed team panels + rectangular score/center (Fennec geometry) -->
+  <div id="topbar" class="top-bar hidden">
+    <div class="series-name" id="series-name"></div>
+
+    <div class="team --left">
+      <div class="team-panel-wrapper --left --ct">
+        <div class="inner">
+          <div class="team-logo" id="ct-logo"></div>
+          <div class="team-name" id="ct-name">—</div>
+        </div>
+      </div>
     </div>
-    <div class="tb-mid">
-      <div class="tb-timer" id="timer"></div>
-      <div class="tb-round" id="round-label"></div>
+
+    <div class="center">
+      <div class="score --left --ct"><div class="inner" id="ct-score">0</div></div>
+      <div class="current-round">
+        <div class="clock" id="timer">0:00</div>
+        <div class="round-number" id="round-label">Round 1</div>
+      </div>
+      <div class="score --right --t"><div class="inner" id="t-score">0</div></div>
+      <div class="match-point-rounds" id="round-pips"></div>
     </div>
-    <div class="tb-team tb-right">
-      <div class="tb-score sc-t" id="t-score">0</div>
-      <div class="tb-name" id="t-name">—</div>
-      <div class="tb-logo" id="t-logo"></div>
+
+    <div class="team --right">
+      <div class="team-panel-wrapper --right --t">
+        <div class="inner">
+          <div class="team-name" id="t-name">—</div>
+          <div class="team-logo" id="t-logo"></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Bottom rosters, Eidetic card style -->
-  <aside class="roster roster-left"><div id="ct-list"></div></aside>
-  <aside class="roster roster-right"><div id="t-list"></div></aside>
+  <!-- Players alive widget -->
+  <div id="alive" class="players-alive hidden">
+    <div class="pa-head">PLAYERS ALIVE</div>
+    <div class="pa-body">
+      <span class="pa-ct" id="pa-ct">5</span>
+      <span class="pa-vs">VS</span>
+      <span class="pa-t" id="pa-t">5</span>
+    </div>
+  </div>
 
-  <!-- Bottom-center focused player card with webcam window -->
-  <div id="cam-wrap" class="cam-wrap">
-    <!-- Dual-Mode: 3D Agent Avatar OR Live OBS Camera Cutout -->
+  <!-- Sidebars: two-row grid cards, health = row-1 background fill -->
+  <aside class="sidebar --left"><div id="ct-list"></div></aside>
+  <aside class="sidebar --right"><div id="t-list"></div></aside>
+
+  <!-- Focused player: skewed health | name+stats | ammo, webcam above -->
+  <div id="cam-wrap" class="focused-player">
     <div class="fp-avatar" id="fp-avatar">
       <div class="fp-cam-window" id="fp-cam-window"></div>
     </div>
-    <div class="fp-namebar">
-      <span class="fp-armor"><img src="assets/icons/armor-helmet.svg" alt=""><b id="cam-hp">100</b></span>
-      <span class="fp-name" id="cam-name"></span>
-      <span class="fp-ammo"><img src="assets/icons/bullets.png" alt=""><b id="cam-ammo">-</b><i id="cam-reserve">/-</i></span>
+
+    <div class="health-and-armor" id="fp-ha">
+      <div class="inner">
+        <span class="ha-item"><img src="assets/icons/health.svg" alt="" class="ha-icon"><b id="cam-hp">100</b></span>
+        <span class="ha-item"><img src="assets/icons/armor-helmet.svg" alt="" class="ha-icon" id="cam-armor-icon"><b id="cam-armor">100</b></span>
+      </div>
     </div>
-    <div class="fp-kda">
-      <img src="assets/icons/hs.svg" alt="" class="fp-rk"><b id="cam-roundkills">0</b>
-      <span class="fp-kd" id="cam-kd">0/0/0</span>
-      <img id="fp-kit" src="assets/icons/defuser.svg" alt="" style="display:none">
-      <img id="fp-bomb" src="assets/icons/c4.svg" alt="" style="display:none">
+
+    <div class="name-and-stats" id="fp-ns">
+      <div class="name-row"><span id="cam-name"></span></div>
+      <div class="data-row">
+        <div class="dr-kit">
+          <img id="fp-weapon" src="" alt="" hidden>
+          <span class="dr-nades" id="fp-nades"></span>
+          <img id="fp-kit" src="assets/icons/defuser.svg" alt="" hidden>
+          <img id="fp-bomb" src="assets/icons/c4.svg" alt="" hidden>
+        </div>
+        <div class="stat"><span class="stat-label">K</span><span class="stat-value" id="cam-k">0</span></div>
+        <div class="stat"><span class="stat-label">A</span><span class="stat-value" id="cam-a">0</span></div>
+        <div class="stat"><span class="stat-label">D</span><span class="stat-value" id="cam-d">0</span></div>
+        <div class="stat"><span class="stat-label">HS</span><span class="stat-value" id="cam-roundkills">0</span></div>
+      </div>
+    </div>
+
+    <div class="ammo" id="fp-ammo">
+      <div class="inner">
+        <b id="cam-ammo">-</b><i class="reserve" id="cam-reserve">/ -</i>
+      </div>
     </div>
   </div>
 

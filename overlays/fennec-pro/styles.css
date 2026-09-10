@@ -1,170 +1,500 @@
-/* OpenHUD "fennec-pro" — 1:1 port of the EideticHM Fennec layout.
-   Dark cards, radar top-left, series tracker, focused-player card with cam. */
+/* PROTOKOL Fennec Pro — faithful port of drweissbrot/cs-hud "fennec" geometry.
+   Key design rules taken from the original theme:
+   - everything scales from --scale-factor (1rem ≈ 10px at 1080p)
+   - zero border-radius anywhere; the only diagonals are skewX(±20deg)
+   - health is the BACKGROUND FILL of the player row, not a thin bar
+   - sidebar player card = 2 rows x 11 columns grid, mirrored on the right
+   - CT #1d9ede / T #c18803 (original Valve-ish fennec palette)            */
+
+@import url('assets/fonts/quantico.css');
+
 :root {
-  --bg: rgba(12, 14, 22, 0.92);
-  --card: rgba(18, 21, 32, 0.96);
-  --ct: #3d8bff;
-  --t: #ff4fa0;
-  --text: #f0f3f9;
-  --muted: #8b95a8;
-  --hp-grad: linear-gradient(90deg, #35e08b, #7ef0b2);
+  --scale-factor: 0.925925926vh;         /* ≈10px on 1080p, as in the original */
+  font-size: var(--scale-factor);
+
+  --black-rgb: 0, 0, 0;
+  --white-rgb: 255, 255, 255;
+  --red-rgb: 255, 51, 51;
+  --green-rgb: 51, 204, 77;
+
+  --ct-rgb: 29, 158, 222;                /* #1d9ede */
+  --t-rgb: 193, 136, 3;                  /* #c18803 */
+
+  --ct: rgb(var(--ct-rgb));
+  --t: rgb(var(--t-rgb));
+
+  /* health-fill colours: ALWAYS dark enough for white text (WCAG-ish).
+     Themes override --ct-fill-rgb / --t-fill-rgb, never reuse a neon accent. */
+  --ct-fill-rgb: var(--ct-rgb);
+  --t-fill-rgb: var(--t-rgb);
+  --ct-50: rgba(var(--ct-rgb), .5);
+  --t-50: rgba(var(--t-rgb), .5);
+  --ct-60: rgba(var(--ct-rgb), .6);
+  --t-60: rgba(var(--t-rgb), .6);
+
+  --black-30: rgba(var(--black-rgb), .3);
+  --black-50: rgba(var(--black-rgb), .5);
+  --black-60: rgba(var(--black-rgb), .6);
+  --black-75: rgba(var(--black-rgb), .75);
+  --white: rgb(var(--white-rgb));
+  --muted: rgba(var(--white-rgb), .55);
+  --money: rgb(var(--green-rgb));
+  --red: rgb(var(--red-rgb));
+
+  --viewport-margin-x: 2rem;
+  --viewport-margin-y: 1.5rem;
+  --top-bar-width: 50%;
+  --top-bar-padding-x: .8rem;
+  --top-bar-score-font-size: 3rem;
+  --top-bar-row-height: calc(2 * var(--top-bar-padding-x) + var(--top-bar-score-font-size));
+  --focused-player-width: 50%;
+  --radar-width: 25%;
+
+  --sidebar-row-height: 3rem;
+  --polygon-bordered-by-diagonals: polygon(-1% -1%, 101% -1%, calc(101% - 1.5rem) 101%, 1.5rem 101%);
+  --box-shadow: 0 0 .6rem rgba(var(--black-rgb), .4);
+  --filter-drop-shadow: drop-shadow(var(--box-shadow));
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent;
-  font-family: 'Rajdhani', 'Segoe UI', sans-serif; color: var(--text); }
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: transparent; overflow: hidden;
+  font-family: 'Quantico', 'Noto Sans', system-ui, sans-serif;
+  color: var(--white);
+  -webkit-font-smoothing: antialiased;
+}
+
 .hidden { display: none !important; }
+img { display: block; }
+/* HTML `hidden` must beat the blanket img display rule above, otherwise
+   #fp-kit / #fp-bomb stay visible for the wrong team. */
+[hidden] { display: none !important; }
 
-/* ── Radar (top-left, Eidetic position) ──── */
-.radar { position: absolute; top: 24px; left: 24px; width: 380px; height: 380px; }
-.radar-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(120,180,255,.35)); mix-blend-mode: screen; }
-.radar-dot { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; color: #fff;
-  box-shadow: 0 0 0 2px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.5);
-  transition: left .35s linear, top .35s linear; }
-.radar-dot.ct { background: var(--ct); }
-.radar-dot.t  { background: var(--t); }
-.radar-dot.dead { background: transparent !important; box-shadow: none;
-  color: #aab; font-size: 16px; }
-.radar-dot.focused { z-index: 5; outline: 2px solid #fff; outline-offset: 1px; }
-.radar-bomb { position: absolute; font-size: 20px; transform: translate(-50%,-50%);
-  animation: bpulse 1s infinite alternate; }
-@keyframes bpulse { from { opacity:.55 } to { opacity:1 } }
+/* ─────────────────────────── Top bar ─────────────────────────── */
 
-/* ── Top bar with team blocks (Eidetic proportions) ── */
-.topbar { position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: stretch; height: 88px; }
-.tb-team { display: flex; align-items: center; gap: 16px; padding: 0 22px;
-  background: var(--card); box-shadow: 0 8px 28px rgba(0,0,0,.45); }
-.tb-left  { border-left: 4px solid var(--ct); border-radius: 10px 0 0 10px; }
-.tb-right { border-right: 4px solid var(--t); border-radius: 0 10px 10px 0; }
-.tb-logo { width: 52px; height: 52px; border-radius: 8px; background: rgba(255,255,255,.05)
-  center/contain no-repeat; }
-.tb-name { font-size: 30px; font-weight: 700; letter-spacing: .03em;
-  text-transform: uppercase; min-width: 150px; text-align: center; }
-.tb-score { font-size: 48px; font-weight: 800; line-height: 1; padding: 17px 20px;
-  font-variant-numeric: tabular-nums; color: #071018; }
-.sc-ct { background: var(--ct); clip-path: polygon(0 0,100% 0,100% 100%,14px 100%,0 calc(100% - 14px)); }
-.sc-t  { background: var(--t);  clip-path: polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%); }
-.tb-mid { display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 170px; background: var(--bg);
-  border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07);
-  box-shadow: 0 8px 28px rgba(0,0,0,.45); }
-.tb-timer { font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.05; }
-.tb-round { font-size: 13px; letter-spacing: .26em; color: var(--muted); text-transform: uppercase; }
+.top-bar {
+  position: fixed;
+  top: var(--viewport-margin-y);
+  left: calc((100% - var(--top-bar-width)) / 2);
+  right: calc((100% - var(--top-bar-width)) / 2);
+  display: grid;
+  grid-template-columns: 20fr 13fr 20fr;
+  grid-template-areas:
+    'series-name series-name series-name'
+    'team-left   center      team-right';
+  align-items: start;
+  filter: var(--filter-drop-shadow);
+  text-align: center;
+}
 
-/* ── Bottom rosters: Eidetic player cards ── */
-.roster { position: absolute; bottom: 36px; width: 470px; display: flex;
-  flex-direction: column-reverse; gap: 8px; }
-.roster-left  { left: 24px; }
-.roster-right { right: 24px; }
+.series-name {
+  grid-area: series-name;
+  font-size: 1.5rem; letter-spacing: .2em; color: var(--muted);
+  padding-bottom: .4rem; text-transform: uppercase;
+}
 
-.pcard { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center;
-  padding: 10px 16px 10px 12px; background: var(--card); border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.04);
-  border-left: 4px solid transparent; }
-.roster-left  .pcard { border-left-color: var(--ct); }
-.roster-right .pcard { border-left-color: var(--t); }
-.pcard.focused { outline: 2px solid #fff; outline-offset: -1px; }
-.pcard.is-dead { opacity: .38; filter: grayscale(.7); }
+/* Team panels are skewed parallelograms — the signature Fennec shape. */
+.team { transform-origin: top; }
+.team.--left  { grid-area: team-left;  transform: skewX(20deg)  translateX(-1.65rem); }
+.team.--right { grid-area: team-right; transform: skewX(-20deg) translateX(1.65rem); }
 
-.pslot { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-  border-radius: 8px; font-size: 18px; font-weight: 800; color: #071018;
-  font-variant-numeric: tabular-nums; }
-.roster-left  .pslot { background: var(--ct); }
-.roster-right .pslot { background: var(--t); }
+.team-panel-wrapper { display: grid; grid-template-rows: 1fr; overflow: visible clip; }
+.team-panel-wrapper.--left  { grid-template-columns: 2rem 1fr; }
+.team-panel-wrapper.--right { grid-template-columns: 1fr 2rem; }
+.team-panel-wrapper::before { content: ''; display: block; }
+.team-panel-wrapper.--right::before { grid-area: 1/2; }
+.team-panel-wrapper.--ct::before { background: var(--ct); }
+.team-panel-wrapper.--t::before  { background: var(--t); }
 
-.pmid { min-width: 0; }
-.prow1 { display: flex; align-items: baseline; gap: 10px; }
-.pname { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 240px; }
-.pkda { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.pmoney { font-size: 15px; color: #8ef0b1; font-variant-numeric: tabular-nums; }
-.phpline { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.phpbar { flex: 1; height: 7px; border-radius: 999px; background: rgba(255,255,255,.09); overflow: hidden; }
-.phpbar i { display: block; height: 100%; background: var(--hp-grad); transition: width .3s; }
-.phpnum { font-size: 15px; font-weight: 800; min-width: 34px; text-align: right;
-  font-variant-numeric: tabular-nums; }
-.parmor { font-size: 13px; color: var(--muted); }
+.team-panel-wrapper .inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.5rem; height: var(--top-bar-row-height);
+  padding: 0 1rem;
+}
+.team-panel-wrapper.--ct .inner { background: var(--ct-50); }
+.team-panel-wrapper.--t  .inner { background: var(--t-50); }
 
-.pweapon { justify-self: end; display: flex; align-items: center; gap: 8px; }
-.pweapon img { height: 26px; max-width: 86px; object-fit: contain;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
-.pammo { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* counter-skew the contents so text/logos stay upright */
+.team.--left  .inner > * { transform: skewX(-20deg); }
+.team.--right .inner > * { transform: skewX(20deg); }
 
-/* ── Focused player card + webcam (bottom-center) ── */
-.cam-wrap { position: absolute; bottom: 128px; left: 50%; transform: translateX(-50%);
-  width: 330px; opacity: 0; transition: opacity .3s; pointer-events: none; }
-.cam-wrap.visible { opacity: 1; }
-.fp-avatar { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%);
-  width: 150px; height: 150px; background: rgba(0,0,0,.45) center/cover no-repeat;
-  border: 3px solid var(--t); border-bottom-color: transparent; border-radius: 4px 4px 0 0;
+.team-name { font-size: 2.5rem; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.team-logo { width: 3.4rem; height: 3.4rem; background: center/contain no-repeat; }
+
+.center {
+  grid-area: center;
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  grid-template-areas:
+    'score-left current-round score-right'
+    'match-point-rounds match-point-rounds match-point-rounds';
+}
+
+.score { display: flex; font-size: var(--top-bar-score-font-size); font-weight: 700; }
+.score.--left  { grid-area: score-left; }
+.score.--right { grid-area: score-right; }
+.score .inner { padding: var(--top-bar-padding-x) 0; min-width: 2ch; width: 100%; text-align: center; }
+.score.--ct .inner { background: var(--ct); }
+.score.--t  .inner { background: var(--t); }
+
+.current-round {
+  grid-area: current-round;
+  background: var(--black-75);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: var(--top-bar-row-height);
+}
+.clock { font-size: 2.6rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.round-number { font-size: 1.3rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+.match-point-rounds {
+  grid-area: match-point-rounds;
+  display: flex; justify-content: center; gap: .3rem;
+  padding-top: .4rem;
+}
+.pip { width: 1rem; height: .5rem; background: rgba(var(--white-rgb), .25); }
+.pip.--ct { background: var(--ct); }
+.pip.--t  { background: var(--t); }
+
+/* ───────────────────────── Players alive ─────────────────────── */
+
+.players-alive {
+  position: fixed; top: var(--viewport-margin-y); right: var(--viewport-margin-x);
+  filter: var(--filter-drop-shadow); text-align: center; min-width: 14rem;
+}
+.pa-head {
+  background: var(--black-75); font-size: 1.2rem; letter-spacing: .18em;
+  padding: .4rem .8rem; color: var(--muted); text-transform: uppercase;
+}
+.pa-body { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 2.2rem; font-weight: 700; }
+.pa-ct { background: var(--ct); padding: .4rem 0; }
+.pa-t  { background: var(--t);  padding: .4rem 0; }
+.pa-vs { background: var(--black-75); padding: .4rem 0; font-size: 1.5rem; color: var(--muted); align-self: stretch; }
+
+/* ─────────────────────────── Sidebars ────────────────────────── */
+
+.sidebar {
+  position: fixed; bottom: 12rem;
+  filter: var(--filter-drop-shadow);
+  font-size: 1.8rem;
+}
+.sidebar.--left  { left: var(--viewport-margin-x); }
+.sidebar.--right { right: var(--viewport-margin-x); }
+
+.player-wrapper { display: grid; }
+.player-wrapper:not(:last-child) { margin-bottom: .5rem; }
+.player-wrapper.--left  { grid-template-columns: 1fr .5rem; grid-template-areas: 'player highlight'; }
+.player-wrapper.--right { grid-template-columns: .5rem 1fr; grid-template-areas: 'highlight player'; }
+
+.fp-highlight { grid-area: highlight; background: transparent; }
+.player-wrapper.--focused.--left  .fp-highlight,
+.player-wrapper.--focused.--right .fp-highlight { background: var(--white); }
+
+/* Two-row card, exactly like the original grid-template-areas. */
+.player {
+  grid-area: player;
+  display: grid;
+  grid-template-rows: repeat(2, var(--sidebar-row-height));
+  background: var(--black-60);
+  isolation: isolate;
+  position: relative;
+}
+.player.--left {
+  grid-template-columns: .5rem 5rem 1.5rem 1fr 3rem 8rem .5rem;
+  grid-template-areas:
+    'start health observer-slot name        round-kills primary   end'
+    'start equip  equip         money-kd    grenades    secondary end';
+}
+.player.--right {
+  grid-template-columns: .5rem 8rem 3rem 1fr 1.5rem 5rem .5rem;
+  grid-template-areas:
+    'start primary   round-kills name     observer-slot health end'
+    'start secondary grenades    money-kd equip         equip  end';
+}
+
+/* health = animated background fill of row 1 (the Fennec signature) */
+.health-bar-background {
+  grid-area: 1 / 1 / 1 / -1;
+  display: grid; background: var(--black-30); z-index: -1;
+}
+.health-fill { grid-area: 1/1; height: 100%; transition: transform .3s ease; }
+.player.--left  .health-fill { transform-origin: left; }
+.player.--right .health-fill { transform-origin: right; }
+.player.--ct .health-fill { background: rgb(var(--ct-fill-rgb)); }
+.player.--t  .health-fill { background: rgb(var(--t-fill-rgb)); }
+
+.p-health { grid-area: health; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-variant-numeric: tabular-nums; }
+.p-slot { grid-area: observer-slot; display: flex; align-items: center; justify-content: center;
+  color: rgba(var(--white-rgb), .75); font-size: 1.5rem; }
+.p-name { grid-area: name; display: flex; align-items: center; padding: 0 .5rem;
+  font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.player.--right .p-name { justify-content: flex-end; text-align: right; }
+.p-round-kills { grid-area: round-kills; display: flex; align-items: center; justify-content: center;
+  gap: .3rem; font-size: 1.5rem; }
+.p-round-kills img { height: 1.5rem; opacity: .9;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.9)); }
+.p-primary { grid-area: primary; display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 .5rem; }
+.player.--right .p-primary { justify-content: flex-start; }
+.p-primary img { height: 2rem; max-width: 100%; object-fit: contain;
+  /* dark outline keeps white silhouettes readable on top of the health fill */
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+
+.p-row2 { display: contents; }
+.p-equip { grid-area: equip; display: flex; align-items: center; justify-content: center; gap: .3rem; }
+.p-equip img { height: 1.7rem; }
+.p-moneykd { grid-area: money-kd; display: flex; align-items: center; gap: 1rem; padding: 0 .5rem;
+  font-size: 1.5rem; background: rgba(var(--black-rgb), .35); }
+.player.--right .p-moneykd { justify-content: flex-end; }
+.p-money { color: var(--money); font-variant-numeric: tabular-nums; }
+.p-kd { display: flex; gap: .6rem; font-variant-numeric: tabular-nums; }
+.p-kd i { font-style: normal; }
+.player.--ct .p-kd i { color: var(--ct); }
+.player.--t  .p-kd i { color: var(--t); }
+.p-grenades { grid-area: grenades; display: flex; align-items: center; gap: .2rem;
+  justify-content: flex-start; width: 100%; overflow: hidden; }
+.player.--right .p-grenades { justify-content: flex-end; }
+.p-grenades img { height: 1.6rem; }
+.p-secondary { grid-area: secondary; display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 .5rem; }
+.player.--right .p-secondary { justify-content: flex-start; }
+.p-secondary img { height: 1.5rem; max-width: 100%; object-fit: contain; opacity: .85; }
+
+.player.--dead { opacity: .42; filter: grayscale(.75); }
+
+/* ─────────────────────── Focused player bar ──────────────────── */
+
+.focused-player {
+  position: fixed;
+  bottom: var(--viewport-margin-y);
+  left: calc((100% - var(--focused-player-width)) / 2);
+  right: calc((100% - var(--focused-player-width)) / 2);
+  display: grid;
+  grid-template-columns: 16fr 35fr 16fr;
+  filter: var(--filter-drop-shadow);
+  opacity: 0; transition: opacity .25s ease;
+}
+.focused-player.visible { opacity: 1; }
+
+/* health/armor + ammo caps are skewed slabs (::before/::after wings) */
+.health-and-armor, .ammo { display: flex; flex: 1; font-size: 3rem; align-self: end; }
+.health-and-armor .inner, .ammo .inner {
+  flex: 1; padding: .75rem .5rem; display: flex; align-items: center;
+}
+.health-and-armor .inner { justify-content: space-between; }
+.ammo .inner { align-items: flex-end; justify-content: center; }
+.health-and-armor::before, .health-and-armor::after,
+.ammo::before, .ammo::after { content: ''; width: 2rem; z-index: -1; }
+.health-and-armor::before { transform: skewX(20deg) translateX(50%); }
+.health-and-armor::after  { transform: skewX(20deg) translateX(-50%); }
+.ammo::before { transform: skewX(160deg) translateX(50%); }
+.ammo::after  { transform: skewX(160deg) translateX(-50%); }
+
+.focused-player.--ct .health-and-armor .inner,
+.focused-player.--ct .health-and-armor::before,
+.focused-player.--ct .health-and-armor::after,
+.focused-player.--ct .ammo .inner,
+.focused-player.--ct .ammo::before,
+.focused-player.--ct .ammo::after { background: var(--ct); }
+.focused-player.--t .health-and-armor .inner,
+.focused-player.--t .health-and-armor::before,
+.focused-player.--t .health-and-armor::after,
+.focused-player.--t .ammo .inner,
+.focused-player.--t .ammo::before,
+.focused-player.--t .ammo::after { background: var(--t); }
+
+.ha-item { display: flex; align-items: center; gap: .5rem; font-weight: 700; }
+.ha-icon { height: 2rem; }
+.reserve { font-size: 2rem; font-style: normal; margin-left: .5rem; transform: translateY(-2px); }
+
+.name-and-stats {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content;
+  grid-template-rows: 1fr 1fr;
+  grid-template-areas: 'before name-row after' 'before data-row after';
+}
+.name-and-stats::before, .name-and-stats::after { content: ''; display: block; width: 1.5rem; z-index: 1; }
+.name-and-stats::before { grid-area: before; transform: skewX(20deg); }
+.name-and-stats::after  { grid-area: after;  transform: skewX(-20deg); }
+.focused-player.--ct .name-and-stats::before,
+.focused-player.--ct .name-and-stats::after { background: var(--ct); }
+.focused-player.--t .name-and-stats::before,
+.focused-player.--t .name-and-stats::after { background: var(--t); }
+
+.name-row {
+  grid-area: name-row; margin: 0 -1.75rem; padding: 0 2.5rem;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--black-50);
+  clip-path: var(--polygon-bordered-by-diagonals);
+  font-size: 2.5rem; font-weight: 700;
+}
+.focused-player.--ct .name-row { background: var(--ct-60); }
+.focused-player.--t  .name-row { background: var(--t-60); }
+
+.data-row {
+  grid-area: data-row;
+  display: grid; grid-template-columns: max-content repeat(4, 1fr);
+  align-items: center; padding: .5rem 2rem;
+  background: var(--black-50);
+  clip-path: var(--polygon-bordered-by-diagonals);
+}
+.dr-kit { display: flex; align-items: center; gap: .4rem; min-width: 2rem; }
+.dr-kit img { height: 1.8rem; }
+.stat { display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.stat-label { font-size: 1.2rem; color: var(--muted); letter-spacing: .1em; }
+.stat-value { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ── webcam / agent avatar above the bar ── */
+.fp-avatar {
+  position: absolute; bottom: calc(100% - .2rem); left: 50%; transform: translateX(-50%);
+  width: 15rem; height: 15rem;
+  background: rgba(var(--black-rgb), .45) center/cover no-repeat;
   z-index: 0;
   -webkit-mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%);
-  mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%); }
-.fp-namebar { display: grid; grid-template-columns: 56px 1fr 74px; align-items: center;
-  height: 54px; padding: 6px 11px; font-size: 17px; white-space: nowrap;
-  background: rgba(75,75,75,.7); border-radius: 8px;
-  border-bottom: 5px solid var(--t); position: relative; z-index: 1; }
-.fp-armor { display: flex; align-items: center; gap: 5px; font-weight: 800; }
-.fp-armor img { height: 15px; }
-.fp-name { text-align: center; font-weight: 900; overflow: hidden; text-overflow: ellipsis;
-  color: #fff; background: rgb(28,28,30); border-radius: 4px; padding: 2px 8px;
-  margin: 0 6px; justify-self: stretch; position: relative; z-index: 2; }
-.fp-ammo { display: flex; align-items: center; justify-content: center; gap: 4px;
-  font-size: 16px; font-weight: 700; }
-.fp-ammo img { width: 20px; }
-.fp-ammo i { font-style: normal; font-size: 13px; color: #bababa; margin-left: 1px; }
-.fp-kda { display: grid; grid-template-columns: auto auto 1fr auto auto; gap: 10px;
-  align-items: center; width: 320px; height: 22px; margin: 0 auto;
-  padding-left: 25px; font-size: 14px; color: #eee;
-  border-top: 4px solid rgba(255,255,255,.4); background: rgba(20,20,20,.55);
-  border-radius: 0 0 8px 8px; }
-.fp-kda img { height: 15px; }
+  mask-image: linear-gradient(to bottom, #fff 55%, rgba(255,255,255,0) 96%);
+}
+.fp-cam-window { position: absolute; inset: 0; background: transparent; pointer-events: none; }
 
-.cam-wrap.ct .fp-namebar { border-bottom-color: var(--ct); }
-.cam-wrap.ct .fp-avatar { border-color: var(--ct); }
+/* live-cam mode: real 16:9 window, agent render hidden */
+.focused-player.live-cam .fp-avatar {
+  width: 28.8rem; height: 16.2rem;
+  background: transparent !important;
+  -webkit-mask-image: none !important; mask-image: none !important;
+  border: 2px solid var(--white); border-bottom: 0;
+}
+.focused-player.--ct.live-cam .fp-avatar { border-color: var(--ct); }
+.focused-player.--t.live-cam  .fp-avatar { border-color: var(--t); }
+.focused-player.live-cam .fp-cam-window { box-shadow: inset 0 0 0 1px rgba(var(--white-rgb), .12); }
+.focused-player.live-cam .fp-cam-window::before {
+  content: 'LIVE'; position: absolute; top: .6rem; left: .6rem;
+  font: 700 1.1rem/1 'Quantico', sans-serif; letter-spacing: .14em;
+  padding: .3rem .6rem; color: var(--white); background: var(--red);
+}
 
-/* ── Integrated Live OBS Webcam & Avatar Mode ── */
-.fp-cam-window {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+/* ───────────────────────────── Radar ─────────────────────────── */
+
+.radar {
+  position: fixed; top: var(--viewport-margin-y); left: var(--viewport-margin-x);
+  width: var(--radar-width); aspect-ratio: 1;
   background: transparent;
+}
+.radar-img {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 0 .6rem rgba(var(--ct-rgb), .35));
+}
+#radar-dots { position: absolute; inset: 0; }
+.radar-dot {
+  position: absolute; width: 2.2rem; height: 2.2rem; margin: -1.1rem 0 0 -1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-weight: 700; color: #05080b;
+  border: 2px solid rgba(var(--black-rgb), .55);
+}
+.radar-dot.--ct { background: var(--ct); }
+.radar-dot.--t  { background: var(--t); }
+.radar-dot.--focused { outline: 2px solid var(--white); outline-offset: 1px; }
+.radar-dot.--dead { opacity: .3; }
+.radar-bomb {
+  position: absolute; width: 1.8rem; height: 1.8rem; margin: -.9rem 0 0 -.9rem;
+  background: var(--red);
+}
+
+/* focused-bar weapon icon + carried utility */
+.dr-kit { min-width: 8rem; }
+.dr-kit #fp-weapon { height: 2.2rem; max-width: 7rem; object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+.dr-nades { display: inline-flex; align-items: center; gap: .2rem; }
+.dr-nades img { height: 1.6rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+
+/* players-alive widget adopts the fennec skew instead of a plain pill */
+.players-alive { transform: skewX(-20deg); }
+.players-alive > * > *, .players-alive .pa-head { transform: skewX(20deg); }
+
+/* ── Readability over the health fill ──────────────────────────
+   The T fill (#c18803) is bright: plain white text on it fails contrast.
+   Row-1 content gets a dark scrim + text shadow so names, slots and
+   silhouettes stay legible at any health percentage and on any map. */
+.p-health, .p-slot, .p-name, .p-round-kills, .p-primary {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .95), 0 0 6px rgba(0, 0, 0, .75);
+  position: relative; z-index: 1;
+}
+.player .health-bar-background { position: relative; }
+.player .health-bar-background::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,.34), rgba(0,0,0,.14));
   pointer-events: none;
 }
-/* When in Live OBS Camera Mode (user toggles via key 'c' or ?cam=live or events.js) */
-.cam-wrap.live-cam .fp-avatar {
-  background: transparent !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  box-shadow: 0 0 20px rgba(0,0,0,0.8);
-}
-.cam-wrap.live-cam .fp-cam-window {
-  /* Green/Magenta Chroma Key or clean alpha punch-through */
-  background: rgba(0, 0, 0, 0.0) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
-}
-.cam-wrap.live-cam .fp-avatar::after {
-  display: none !important;
+
+/* fixed-width equipment box keeps $money aligned whether or not a kit is held */
+.p-equip { min-width: 5rem; }
+
+/* radar gets a subtle scrim so it survives bright maps */
+.radar::before {
+  content: ''; position: absolute; inset: -.5rem;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,.12) 70%, transparent);
+  z-index: -1;
 }
 
-/* ── Live webcam frame 16:9 (PROTOKOL) ── */
-.cam-wrap.live-cam .fp-avatar {
-  width: 284px; height: 160px;               /* true 16:9 */
-  border: 2px solid var(--t); border-bottom-color: transparent;
-  border-radius: 6px 6px 0 0; background: rgba(0,0,0,.18) !important; }
-.cam-wrap.ct.live-cam .fp-avatar { border-color: var(--ct); }
-.cam-wrap.live-cam .fp-cam-window { box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
-.cam-wrap.live-cam .fp-cam-window::before {
-  content: 'LIVE'; position: absolute; top: 6px; left: 6px;
-  font: 800 10px/1 system-ui, sans-serif; letter-spacing: .12em;
-  padding: 3px 6px; border-radius: 3px; color: #fff;
-  background: #e5372f; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+/* spectated player is now obvious, not a 5px sliver */
+.player-wrapper.--focused .player {
+  outline: 2px solid rgba(255, 255, 255, .95);
+  outline-offset: -1px;
+  box-shadow: 0 0 1.2rem rgba(255, 255, 255, .3);
+}
 
-/* ── Roster row: never wrap long nicknames / KDA (electroNic overflowed) ── */
-.prow1 { flex-wrap: nowrap; }
-.pname { flex: 0 1 auto; min-width: 0; }
-.pkda { flex: 0 0 auto; white-space: nowrap; }
+/* C4 carrier marker on the roster row */
+.c4-mark { height: 1.8rem; filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); }
+.p-secondary .c4-mark { opacity: 1; }
+
+/* grenades read as distinct icons, not thin slivers */
+.p-grenades img { height: 1.7rem; min-width: 1.4rem; object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.85)); }
+
+/* row-2 secondary text bumped for broadcast legibility */
+.p-moneykd { font-size: 1.6rem; }
+.p-money { font-weight: 700; }
+
+/* utility icons large enough to tell smoke from flash on a stream */
+.p-grenades img { height: 2rem; min-width: 1.6rem; }
+.dr-nades img { height: 1.9rem; }
+
+/* ── Utility colour coding ────────────────────────────────────
+   At roster scale (~20px) monochrome grenade silhouettes are
+   indistinguishable. Tint per type, matching in-game conventions. */
+.p-grenades img, .dr-nades img { height: 2.1rem; min-width: 1.7rem; }
+.p-grenades img.nade-smokegrenade, .dr-nades img.nade-smokegrenade { filter: brightness(0) saturate(100%)
+  invert(72%) sepia(12%) saturate(600%) hue-rotate(150deg) brightness(95%)
+  drop-shadow(0 1px 2px rgba(0,0,0,.9)); }              /* pale teal */
+.p-grenades img.nade-flashbang, .dr-nades img.nade-flashbang { filter: brightness(0) saturate(100%)
+  invert(88%) sepia(60%) saturate(700%) hue-rotate(1deg) brightness(105%)
+  drop-shadow(0 1px 2px rgba(0,0,0,.9)); }              /* bright yellow */
+.p-grenades img.nade-hegrenade, .dr-nades img.nade-hegrenade { filter: brightness(0) saturate(100%)
+  invert(45%) sepia(60%) saturate(1200%) hue-rotate(78deg) brightness(92%)
+  drop-shadow(0 1px 2px rgba(0,0,0,.9)); }              /* olive green */
+.nade-molotov, .p-grenades img.nade-incgrenade, .dr-nades img.nade-incgrenade { filter: brightness(0) saturate(100%)
+  invert(45%) sepia(85%) saturate(2000%) hue-rotate(2deg) brightness(98%)
+  drop-shadow(0 1px 2px rgba(0,0,0,.9)); }              /* fire orange */
+.p-grenades img.nade-decoy, .dr-nades img.nade-decoy { filter: brightness(0) saturate(100%) invert(75%)
+  drop-shadow(0 1px 2px rgba(0,0,0,.9)); }              /* grey */
+
+/* C4 carrier: red, unmistakable, slightly larger than utility */
+.c4-mark { height: 2.2rem; min-width: 2rem;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%)
+    hue-rotate(352deg) brightness(95%) drop-shadow(0 1px 3px rgba(0,0,0,.95)); }
+
+/* ── Contrast on light-coloured slabs ─────────────────────────
+   Score digits and the focused health/ammo numbers sit on solid team fills.
+   With a light theme fill (bronze/tan/amber) white-on-light washes out on
+   stream, so the text colour follows the fill's luminance instead of being
+   hard-coded white. Themes set --on-ct / --on-t when their fill is light. */
+:root { --on-ct: #ffffff; --on-t: #ffffff; }
+.score.--ct .inner { color: var(--on-ct); }
+.score.--t  .inner { color: var(--on-t); }
+.focused-player.--ct .health-and-armor .inner,
+.focused-player.--ct .ammo .inner { color: var(--on-ct); }
+.focused-player.--t .health-and-armor .inner,
+.focused-player.--t .ammo .inner { color: var(--on-t); }
+.focused-player .health-and-armor .inner,
+.focused-player .ammo .inner { text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+.score .inner { text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }

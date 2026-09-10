@@ -1,0 +1,58 @@
+/* ════ PROTOKOL / CYBER ════ neon sci-fi rebrand of the Fennec skeleton.
+   Keeps every fennec structure rule; swaps palette, chamfers and glow.   */
+:root {
+  --ct-rgb: 0, 240, 255;      /* neon cyan  — accents/borders only */
+  --t-rgb: 255, 0, 110;       /* neon magenta — accents/borders only */
+  --ct-fill-rgb: 0, 96, 122;  /* dark teal   — health fill, white text safe */
+  --t-fill-rgb: 138, 0, 62;   /* dark magenta— health fill, white text safe */
+  --on-ct: #00151a;           /* neon cyan slab -> near-black ink */
+  --scrim: 6, 10, 18;
+}
+body { letter-spacing: .02em; }
+
+/* panels sit on a deep techno scrim instead of neutral black */
+.player { background: rgba(var(--scrim), .72);
+  box-shadow: inset 0 0 0 1px rgba(var(--ct-rgb), .16); }
+.player.--t { box-shadow: inset 0 0 0 1px rgba(var(--t-rgb), .16); }
+.current-round, .pa-head, .pa-vs { background: rgba(var(--scrim), .88); }
+
+/* chamfered corners: the cyber signature (mirrored, so both sides match) */
+.player.--left  { clip-path: polygon(0 0, 100% 0, 100% 72%, calc(100% - 1.1rem) 100%, 0 100%); }
+.player.--right { clip-path: polygon(0 0, 100% 0, 100% 100%, 1.1rem 100%, 0 72%); }
+/* keep icon separation, but never clobber the per-type tints below */
+.p-primary img { filter: drop-shadow(0 0 3px rgba(0,0,0,.95)); }
+
+/* everything glows */
+.top-bar, .focused-player, .sidebar { filter:
+  drop-shadow(0 0 .5rem rgba(0,0,0,.55)) drop-shadow(0 0 1.4rem rgba(var(--ct-rgb), .18)); }
+.score.--ct .inner { box-shadow: 0 0 1.6rem rgba(var(--ct-rgb), .55); }
+.score.--t  .inner { box-shadow: 0 0 1.6rem rgba(var(--t-rgb), .55); }
+.radar-img { filter: drop-shadow(0 0 .8rem rgba(var(--ct-rgb), .55)) saturate(1.15); }
+.radar-dot { border-color: rgba(var(--scrim), .9); box-shadow: 0 0 .8rem rgba(var(--ct-rgb), .5); }
+.radar-dot.--t { box-shadow: 0 0 .8rem rgba(var(--t-rgb), .5); }
+
+/* name row keeps a scanline tint */
+.name-row { text-transform: uppercase; letter-spacing: .1em; }
+.data-row { background: rgba(var(--scrim), .78); }
+
+/* webcam: chamfered neon window with an animated LIVE CAM tag */
+.focused-player.live-cam .fp-avatar {
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 90% 100%, 0 100%);
+  border-width: 2px;
+  box-shadow: 0 0 2.2rem rgba(var(--ct-rgb), .40), inset 0 0 1.8rem rgba(var(--ct-rgb), .10);
+}
+.focused-player.--t.live-cam .fp-avatar {
+  box-shadow: 0 0 2.2rem rgba(var(--t-rgb), .40), inset 0 0 1.8rem rgba(var(--t-rgb), .10);
+}
+.focused-player.live-cam .fp-cam-window::before {
+  content: '\25B8 LIVE CAM';
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+  padding: .3rem 1rem .3rem .7rem;
+  background: rgb(var(--ct-rgb)); color: #00151a;
+  box-shadow: 0 0 1.2rem rgba(var(--ct-rgb), .6);
+}
+.focused-player.--t.live-cam .fp-cam-window::before {
+  background: rgb(var(--t-rgb)); color: #1a0010;
+  box-shadow: 0 0 1.2rem rgba(var(--t-rgb), .6);
+}
+.players-alive { filter: drop-shadow(0 0 1rem rgba(var(--ct-rgb), .3)); }

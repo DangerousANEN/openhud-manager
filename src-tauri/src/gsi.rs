@@ -26,6 +26,18 @@ pub struct PlayerSnap {
     pub weapon: String,
     pub ammo_clip: i64,
     pub ammo_reserve: i64,
+    /// Kevlar+helmet vs kevlar only — picks the armor icon.
+    #[serde(default)]
+    pub helmet: bool,
+    /// CT defuse kit — shown next to armor in the roster row.
+    #[serde(default)]
+    pub defusekit: bool,
+    /// Carried grenade icon ids, one entry per grenade held.
+    #[serde(default)]
+    pub grenades: Vec<String>,
+    /// True when this player is carrying the C4.
+    #[serde(default)]
+    pub has_bomb: bool,
     pub round_kills: i64,
 }
 
@@ -238,14 +250,68 @@ fn f(v: &Value, path: &[&str]) -> f64 {
     cur.as_f64().unwrap_or(0.0)
 }
 
+/// Locate the player's ACTIVE weapon slot.
+///
+/// Real CS2 GSI sends `weapons: { weapon_0: {...}, weapon_1: {..., state:"active"} }`
+/// — there is NO `weapons.active` key. Reading `weapons.active` silently yields an
+/// empty weapon and 0/0 ammo for every player, which blanks the weapon icons and
+/// the focused-player ammo slab. Fall back to `weapons.active` only for legacy
+/// bridge payloads that pre-flatten it.
+fn active_weapon(p: &Value) -> Option<&Value> {
+    if let Some(slots) = p.get("weapons").and_then(|w| w.as_object()) {
+        // prefer the slot explicitly marked active
+        for (_k, w) in slots {
+            if w.get("state").and_then(|s| s.as_str()) == Some("active") {
+                return Some(w);
+            }
+        }
+        // otherwise fall back to the best non-knife/non-grenade slot
+        let mut fallback: Option<&Value> = None;
+        for (_k, w) in slots {
+            let ty = w.get("type").and_then(|t| t.as_str()).unwrap_or("");
+            if ty != "Knife" && ty != "Grenade" && ty != "C4" {
+                fallback = Some(w);
+            }
+        }
+        if fallback.is_some() {
+            return fallback;
+        }
+    }
+    p.get("weapons").and_then(|w| w.get("active"))
+}
+
+/// Grenades the player is carrying, as icon ids (e.g. ["flashbang","smokegrenade"]).
+fn grenade_ids(p: &Value) -> Vec<String> {
+    let mut out = Vec::new();
+    if let Some(slots) = p.get("weapons").and_then(|w| w.as_object()) {
+        for (_k, w) in slots {
+            if w.get("type").and_then(|t| t.as_str()) == Some("Grenade") {
+                let raw = w.get("name").and_then(|n| n.as_str()).unwrap_or("");
+                let id = raw.trim_start_matches("weapon_").to_lowercase();
+                if !id.is_empty() {
+                    let count = w.get("ammo_reserve").and_then(|a| a.as_i64()).unwrap_or(1);
+                    for _ in 0..count.max(1) {
+                        out.push(id.clone());
+                    }
+                }
+            }
+        }
+    }
+    out.sort();
+    out
+}
+
 /// Map GSI weapon name to our icon id (assets/weapons/<id>.svg).
 fn weapon_id(p: &Value) -> String {
-    let raw = s(p, &["weapons", "active", "name"]);
-    let id = raw.rsplit('_').next().unwrap_or("").to_lowercase();
+    let raw = active_weapon(p)
+        .and_then(|w| w.get("name"))
+        .and_then(|n| n.as_str())
+        .unwrap_or("")
+        .to_string();
+    // icon files are named after the full GSI id minus the `weapon_` prefix
+    let id = raw.trim_start_matches("weapon_").to_lowercase();
     match id.as_str() {
-        "deagle" => "deserteagle".into(),
         "c4" => "".into(), // bomb is drawn by the bomb layer
-        "flashbang" | "he" | "smoke" | "molotov" | "incendiary" | "decoy" => id.clone(),
         "" => "".into(),
         _ => id,
     }
@@ -272,8 +338,34 @@ fn normalize(v: &Value) -> GsiSnapshot {
                 pos_x: f(p, &["position", "x"]),
                 pos_y: f(p, &["position", "y"]),
                 weapon: weapon_id(p),
-                ammo_clip: i(p, &["weapons", "active", "ammo_clip"]),
-                ammo_reserve: i(p, &["weapons", "active", "ammo_reserve"]),
+                ammo_clip: active_weapon(p)
+                    .and_then(|w| w.get("ammo_clip"))
+                    .and_then(|a| a.as_i64())
+                    .unwrap_or(0),
+                ammo_reserve: active_weapon(p)
+                    .and_then(|w| w.get("ammo_reserve"))
+                    .and_then(|a| a.as_i64())
+                    .unwrap_or(0),
+                helmet: p
+                    .get("state")
+                    .and_then(|st| st.get("helmet"))
+                    .and_then(|h| h.as_bool())
+                    .unwrap_or(false),
+                defusekit: p
+                    .get("state")
+                    .and_then(|st| st.get("defusekit"))
+                    .and_then(|d| d.as_bool())
+                    .unwrap_or(false),
+                grenades: grenade_ids(p),
+                has_bomb: p
+                    .get("weapons")
+                    .and_then(|w| w.as_object())
+                    .map(|slots| {
+                        slots.values().any(|w| {
+                            w.get("name").and_then(|n| n.as_str()) == Some("weapon_c4")
+                        })
+                    })
+                    .unwrap_or(false),
                 round_kills: i(p, &["state", "round_kills"]),
             });
         }
