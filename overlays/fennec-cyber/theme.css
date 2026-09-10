@@ -1,44 +1,82 @@
-/* ════ PROTOKOL / CYBER ════ neon sci-fi rebrand of the Fennec skeleton.
-   Keeps every fennec structure rule; swaps palette, chamfers and glow.   */
+/* ════ PROTOKOL / CYBER ════ VERTICAL layout.
+   Rosters become tall top-anchored columns, cards collapse to a single
+   compact row, the radar drops to the bottom-left corner and the focused
+   player becomes a vertical panel on the left instead of a bottom bar. */
 :root {
-  --ct-rgb: 0, 240, 255;      /* neon cyan  — accents/borders only */
-  --t-rgb: 255, 0, 110;       /* neon magenta — accents/borders only */
-  --ct-fill-rgb: 0, 96, 122;  /* dark teal   — health fill, white text safe */
-  --t-fill-rgb: 138, 0, 62;   /* dark magenta— health fill, white text safe */
-  --on-ct: #00151a;           /* neon cyan slab -> near-black ink */
+  --ct-rgb: 0, 240, 255;
+  --t-rgb: 255, 0, 110;
+  --ct-fill-rgb: 0, 96, 122;
+  --t-fill-rgb: 138, 0, 62;
+  --on-ct: #00151a;
   --scrim: 6, 10, 18;
+  --sidebar-row-height: 2.6rem;
 }
-body { letter-spacing: .02em; }
 
-/* panels sit on a deep techno scrim instead of neutral black */
-.player { background: rgba(var(--scrim), .72);
-  box-shadow: inset 0 0 0 1px rgba(var(--ct-rgb), .16); }
-.player.--t { box-shadow: inset 0 0 0 1px rgba(var(--t-rgb), .16); }
-.current-round, .pa-head, .pa-vs { background: rgba(var(--scrim), .88); }
+/* ── rosters: vertical columns pinned to the top, not the bottom ── */
+.sidebar { top: 13rem; bottom: auto; font-size: 1.5rem; }
+.sidebar.--left  { left: 1.4rem; }
+.sidebar.--right { right: 1.4rem; }
+.player.--right { padding-right: .4rem; }
+.player-wrapper:not(:last-child) { margin-bottom: .35rem; }
 
-/* chamfered corners: the cyber signature (mirrored, so both sides match) */
-.player.--left  { clip-path: polygon(0 0, 100% 0, 100% 72%, calc(100% - 1.1rem) 100%, 0 100%); }
-.player.--right { clip-path: polygon(0 0, 100% 0, 100% 100%, 1.1rem 100%, 0 72%); }
-/* keep icon separation, but never clobber the per-type tints below */
-.p-primary img { filter: drop-shadow(0 0 3px rgba(0,0,0,.95)); }
+/* ── cards collapse to ONE row: row 2 content folds into a thin strip ── */
+.player { background: rgba(var(--scrim), .74);
+  box-shadow: inset 0 0 0 1px rgba(var(--ct-rgb), .18); }
+.player.--t { box-shadow: inset 0 0 0 1px rgba(var(--t-rgb), .18); }
+.player.--left {
+  grid-template-rows: var(--sidebar-row-height) 1.5rem;
+  grid-template-columns: .4rem 3.6rem 1.3rem 1fr 2.2rem 6rem .4rem;
+}
+.player.--right {
+  grid-template-rows: var(--sidebar-row-height) 1.5rem;
+  grid-template-columns: .4rem 6rem 2.2rem 1fr 1.3rem 3.6rem .4rem;
+}
+.p-moneykd { font-size: 1.2rem; gap: .6rem; padding: 0 .4rem; }
+.p-money { font-size: 1.2rem; }
+.p-name { font-size: 1.6rem; }
+.p-primary img { height: 1.5rem; }
+.p-grenades img, .dr-nades img { height: 1.5rem; min-width: 1.2rem; }
+.c4-mark { height: 1.6rem; min-width: 1.5rem; }
 
-/* everything glows */
-.top-bar, .focused-player, .sidebar { filter:
-  drop-shadow(0 0 .5rem rgba(0,0,0,.55)) drop-shadow(0 0 1.4rem rgba(var(--ct-rgb), .18)); }
-.score.--ct .inner { box-shadow: 0 0 1.6rem rgba(var(--ct-rgb), .55); }
-.score.--t  .inner { box-shadow: 0 0 1.6rem rgba(var(--t-rgb), .55); }
+/* angular chamfer on the outer edge of each column */
+.player.--left  { clip-path: polygon(0 0, 100% 0, 100% 70%, calc(100% - .9rem) 100%, 0 100%); }
+.player.--right { clip-path: polygon(0 0, 100% 0, 100% 100%, .9rem 100%, 0 70%); }
+
+/* ── radar: bottom-left corner, smaller ── */
+.radar { top: auto; bottom: 2rem; left: 2rem; width: 19%; }
 .radar-img { filter: drop-shadow(0 0 .8rem rgba(var(--ct-rgb), .55)) saturate(1.15); }
 .radar-dot { border-color: rgba(var(--scrim), .9); box-shadow: 0 0 .8rem rgba(var(--ct-rgb), .5); }
 .radar-dot.--t { box-shadow: 0 0 .8rem rgba(var(--t-rgb), .5); }
 
-/* name row keeps a scanline tint */
-.name-row { text-transform: uppercase; letter-spacing: .1em; }
-.data-row { background: rgba(var(--scrim), .78); }
+/* ── focused player: VERTICAL panel, centre-right, stacked slabs ── */
+.focused-player {
+  /* sits BELOW the right roster (which ends ~34rem down) so the webcam
+     window can never overlap the last player card */
+  left: auto; right: 2rem; bottom: 2rem; top: auto;
+  width: 23rem; transform: none;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  gap: .3rem;
+}
+.health-and-armor, .ammo { font-size: 2.4rem; align-self: stretch; }
+.health-and-armor::before, .health-and-armor::after,
+.ammo::before, .ammo::after { display: none; }
+.health-and-armor .inner, .ammo .inner {
+  clip-path: polygon(0 0, 100% 0, 100% 76%, calc(100% - 1rem) 100%, 0 100%);
+}
+.name-and-stats { grid-template-columns: 1fr; grid-template-rows: auto auto;
+  grid-template-areas: 'name-row' 'data-row'; }
+.name-and-stats::before, .name-and-stats::after { display: none; }
+.name-row { margin: 0; padding: .4rem .8rem; clip-path: none; font-size: 2rem;
+  text-transform: uppercase; letter-spacing: .08em; }
+.data-row { padding: .5rem .8rem; clip-path: none;
+  background: rgba(var(--scrim), .8); }
 
-/* webcam: chamfered neon window with an animated LIVE CAM tag */
+/* webcam sits ON TOP of the vertical panel; it must not exceed the panel
+   width or it runs off the right edge of frame */
 .focused-player.live-cam .fp-avatar {
+  width: 23rem; height: 12.94rem;   /* 16:9 within the panel */
   clip-path: polygon(0 0, 100% 0, 100% 78%, 90% 100%, 0 100%);
-  border-width: 2px;
   box-shadow: 0 0 2.2rem rgba(var(--ct-rgb), .40), inset 0 0 1.8rem rgba(var(--ct-rgb), .10);
 }
 .focused-player.--t.live-cam .fp-avatar {
@@ -53,6 +91,17 @@ body { letter-spacing: .02em; }
 }
 .focused-player.--t.live-cam .fp-cam-window::before {
   background: rgb(var(--t-rgb)); color: #1a0010;
-  box-shadow: 0 0 1.2rem rgba(var(--t-rgb), .6);
 }
-.players-alive { filter: drop-shadow(0 0 1rem rgba(var(--ct-rgb), .3)); }
+
+/* top bar slimmer, glow everywhere */
+.top-bar { --top-bar-width: 42%; }
+.current-round, .pa-head, .pa-vs { background: rgba(var(--scrim), .88); }
+.top-bar, .sidebar, .focused-player { filter:
+  drop-shadow(0 0 .5rem rgba(0,0,0,.55)) drop-shadow(0 0 1.4rem rgba(var(--ct-rgb), .18)); }
+.score.--ct .inner { box-shadow: 0 0 1.6rem rgba(var(--ct-rgb), .55); }
+.score.--t  .inner { box-shadow: 0 0 1.6rem rgba(var(--t-rgb), .55); }
+.p-primary img { filter: drop-shadow(0 0 3px rgba(0,0,0,.95)); }
+.players-alive {
+  /* right roster owns the upper-right; park the counter under the top bar */
+  top: 9rem; bottom: auto; right: 50%; transform: translateX(50%);
+}

@@ -48,7 +48,7 @@
   --top-bar-score-font-size: 3rem;
   --top-bar-row-height: calc(2 * var(--top-bar-padding-x) + var(--top-bar-score-font-size));
   --focused-player-width: 50%;
-  --radar-width: 25%;
+  --radar-width: 23%;
 
   --sidebar-row-height: 3rem;
   --polygon-bordered-by-diagonals: polygon(-1% -1%, 101% -1%, calc(101% - 1.5rem) 101%, 1.5rem 101%);
