@@ -150,6 +150,7 @@ export interface HudPack {
   path: string
   url_path: string
   has_index: boolean
+  hud_type?: string
 }
 
 export interface HudImportResult {

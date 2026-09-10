@@ -1,0 +1,14 @@
+<SvgFilters />
+
+<template v-if="$map.name">
+	<Radar />
+	<TopBar />
+	<PlayersAlive />
+
+	<Sidebars />
+	<FocusedPlayer />
+
+	<SeriesGraph />
+</template>
+
+<Corners v-else />

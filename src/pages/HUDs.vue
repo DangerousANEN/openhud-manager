@@ -90,7 +90,17 @@
             <Layers :size="18" :class="activeHudId === pack.id ? 'text-gold' : 'text-text-secondary'" />
           </div>
           <div class="flex-1 min-w-0">
-            <div class="font-semibold text-white text-sm truncate">{{ pack.name }}</div>
+            <div class="flex items-center gap-2">
+              <div class="font-semibold text-white text-sm truncate">{{ pack.name }}</div>
+              <span v-if="pack.hud_type" class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded border"
+                :class="{
+                  'bg-cyan-500/10 text-cyan-400 border-cyan-500/30': pack.hud_type === 'cs-hud',
+                  'bg-purple-500/10 text-purple-400 border-purple-500/30': pack.hud_type === 'lhm',
+                  'bg-gold/10 text-gold border-gold/30': pack.hud_type === 'native'
+                }">
+                {{ pack.hud_type }}
+              </span>
+            </div>
             <div class="text-xs font-mono text-text-muted truncate">{{ pack.url_path }}</div>
           </div>
           <span v-if="activeHudId === pack.id" class="badge-gold flex-shrink-0">Активен</span>

@@ -334,6 +334,7 @@ pub struct HudPack {
     pub path: String,
     pub url_path: String,
     pub has_index: bool,
+    pub hud_type: String,
 }
 
 /// Scan the overlays folder: the root itself plus every immediate subfolder
@@ -350,6 +351,7 @@ fn huds_list(state: tauri::State<Runtime>) -> Vec<HudPack> {
             path: root.to_string_lossy().to_string(),
             url_path: format!("http://127.0.0.1:{}/overlay/", state.port),
             has_index: true,
+            hud_type: "native".into(),
         });
     }
 
@@ -360,12 +362,21 @@ fn huds_list(state: tauri::State<Runtime>) -> Vec<HudPack> {
                 continue;
             }
             let name = entry.file_name().to_string_lossy().to_string();
+            let hud_type = if p.join("theme.json").is_file() {
+                "cs-hud".to_string()
+            } else if p.join("hud.json").is_file() {
+                "lhm".to_string()
+            } else {
+                "native".to_string()
+            };
+
             out.push(HudPack {
                 id: name.clone(),
                 name: name.clone(),
                 path: p.to_string_lossy().to_string(),
                 url_path: format!("http://127.0.0.1:{}/overlay/{}/", state.port, name),
                 has_index: p.join("index.html").is_file(),
+                hud_type,
             });
         }
     }

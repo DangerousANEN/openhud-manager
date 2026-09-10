@@ -72,7 +72,52 @@ impl GsiState {
         *self.snapshot.write() = snap.clone();
         *self.raw.write() = Some(payload.clone());
         *self.last_seen.write() = Some(chrono::Utc::now().timestamp());
-        if let Ok(json) = serde_json::to_string(&snap) {
+
+        // Universal multiplexed broadcast payload:
+        // Supports cs-hud / EHM (event: "state", body: { gsiState }),
+        // native OpenHUD overlays (map, players, ct_score...), and raw GSI.
+        let active = crate::server::active_hud_dir();
+        let radars: Value = std::fs::read_to_string(active.join("radars.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(|| serde_json::json!({}));
+        let bombsites: Value = std::fs::read_to_string(active.join("bombsites.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(|| serde_json::json!({}));
+
+        let universal = serde_json::json!({
+            "event": "state",
+            "body": {
+                "gsiState": payload,
+                "additionalState": {
+                    "lastKnownMapName": snap.map,
+                    "lastKnownBombPlantedCountdown": {},
+                    "lastKnownPlayerObserverSlot": {},
+                    "moneyAtStartOfRound": {},
+                    "roundDamages": {}
+                },
+                "bombsites": bombsites,
+                "options": {},
+                "radars": radars,
+                "unixTimestamp": chrono::Utc::now().timestamp_millis()
+            },
+            "snapshot": snap,
+            "map": snap.map,
+            "phase": snap.phase,
+            "round": snap.round,
+            "ct_score": snap.ct_score,
+            "t_score": snap.t_score,
+            "ct_name": snap.ct_name,
+            "t_name": snap.t_name,
+            "bomb": snap.bomb,
+            "round_time": snap.round_time,
+            "focused_steamid": snap.focused_steamid,
+            "players": snap.players,
+            "updated_at": snap.updated_at
+        });
+
+        if let Ok(json) = serde_json::to_string(&universal) {
             let _ = self.tx.send(json);
         }
         // Forward the untouched GSI payload to a native cs-hud server (Eidetic
