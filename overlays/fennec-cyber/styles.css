@@ -57,7 +57,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
 .tb-round { font-size: 13px; letter-spacing: .26em; color: var(--muted); text-transform: uppercase; }
 
 /* ── Bottom rosters: Eidetic player cards ── */
-.roster { position: absolute; bottom: 36px; width: 430px; display: flex;
+.roster { position: absolute; bottom: 36px; width: 470px; display: flex;
   flex-direction: column-reverse; gap: 8px; }
 .roster-left  { left: 24px; }
 .roster-right { right: 24px; }
@@ -80,7 +80,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
 .pmid { min-width: 0; }
 .prow1 { display: flex; align-items: baseline; gap: 10px; }
 .pname { font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 190px; }
+  text-overflow: ellipsis; max-width: 240px; }
 .pkda { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .pmoney { font-size: 15px; color: #8ef0b1; font-variant-numeric: tabular-nums; }
 .phpline { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
@@ -180,3 +180,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: transp
   padding: 3px 7px; color: #001014; background: var(--ct);
   clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
   text-shadow: none; box-shadow: 0 0 12px rgba(0,240,255,.6); }
+
+/* ── Roster row: never wrap long nicknames / KDA (electroNic overflowed) ── */
+.prow1 { flex-wrap: nowrap; }
+.pname { flex: 0 1 auto; min-width: 0; }
+.pkda { flex: 0 0 auto; white-space: nowrap; }
