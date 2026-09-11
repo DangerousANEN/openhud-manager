@@ -1,0 +1,234 @@
+/* PROTOKOL BROADCAST — television scoreboard HUD stylesheet.
+   Components unique to this HUD: a centre score bug, an economy flow strip,
+   TABLE-style roster sheets with header rows, an inset radar box and a
+   lower-third strap. Flat TV graphics, no neon, no chamfers. */
+
+:root {
+  --u: 0.925925926vh;
+  --ct: #2f81f7;
+  --t: #f59e0b;
+  --panel: rgba(12, 16, 22, .90);
+  --panel-soft: rgba(20, 26, 34, .82);
+  --line: rgba(255, 255, 255, .10);
+  --dim: rgba(232, 240, 248, .55);
+  font-size: var(--u);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+img { display: block; }
+[hidden], .hidden { display: none !important; }
+
+body {
+  width: 1920px; height: 1080px; overflow: hidden;
+  background: transparent;
+  font-family: 'Quantico', 'Noto Sans', sans-serif;
+  color: #e8f0f8;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════ SCORE BUG ══════════ compact centre block */
+.bug {
+  position: absolute; top: 2.4rem; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: stretch; height: 6.4rem;
+  background: var(--panel);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 .6rem 2.4rem rgba(0, 0, 0, .5);
+}
+.bug-team { display: flex; align-items: center; gap: 1.6rem; padding: 0 2rem; min-width: 26rem; }
+.bug-team--ct { justify-content: flex-end; border-bottom: 3px solid var(--ct); }
+.bug-team--t  { border-bottom: 3px solid var(--t); }
+.bug-name {
+  font-size: 2.4rem; font-weight: 700; letter-spacing: .04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 17rem;
+}
+.bug-score {
+  font-size: 3.4rem; font-weight: 700; line-height: 1; min-width: 4.4rem; text-align: center;
+}
+.bug-team--ct .bug-score { color: var(--ct); }
+.bug-team--t  .bug-score { color: var(--t); }
+.bug-mid {
+  display: grid; place-content: center; gap: .2rem; padding: 0 2rem;
+  background: rgba(0, 0, 0, .45);
+  min-width: 12rem; text-align: center;
+}
+.bug-clock { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+.bug-round { font-size: 1.2rem; letter-spacing: .2em; color: var(--dim); }
+
+/* ══════════ ECONOMY STRIP ══════════ round flow + team money */
+.econ {
+  position: absolute; top: 9.4rem; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 1.4rem;
+  padding: .4rem 1.4rem; height: 3rem;
+  background: var(--panel-soft);
+  border-radius: 2px;
+}
+.econ-side { font-size: 1.5rem; font-weight: 700; min-width: 7rem; text-align: center; }
+.econ-side--ct { color: var(--ct); }
+.econ-side--t  { color: var(--t); }
+.econ-flow { display: flex; gap: .2rem; }
+.econ-flow i { width: .9rem; height: .9rem; background: rgba(255, 255, 255, .16); border-radius: 1px; }
+.econ-flow i.is-played { background: rgba(255, 255, 255, .6); }
+
+/* ══════════ ROSTER SHEETS ══════════ real tables, header + rows */
+.sheet {
+  position: absolute; top: 14rem; width: 47rem;
+  background: var(--panel);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45);
+}
+.sheet--ct { left: 2.4rem; }
+.sheet--t  { right: 2.4rem; }
+
+.sheet-head, .row {
+  display: grid;
+  grid-template-columns: 1rem 2.6rem 1fr 8rem 8.4rem 4.6rem 9rem;
+  align-items: center;
+  gap: .6rem;
+  padding: 0 1rem;
+}
+.sheet-head {
+  height: 3rem;
+  background: rgba(0, 0, 0, .42);
+  border-bottom: 1px solid var(--line);
+}
+.sh { font-size: 1.15rem; letter-spacing: .14em; color: var(--dim); }
+.sh--name { letter-spacing: .16em; }
+.sh--hp, .sh--kda, .sh--adr { text-align: center; }
+.sh--tag { font-size: 0; }
+.sheet--ct .sheet-head { border-bottom-color: rgba(47, 129, 247, .5); }
+.sheet--t  .sheet-head { border-bottom-color: rgba(245, 158, 11, .5); }
+
+.row { height: 4.2rem; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row--out { opacity: .38; }
+.row--on { background: rgba(255, 255, 255, .07); }
+
+.tick { display: block; width: 4px; height: 2.4rem; border-radius: 1px; }
+.tick--ct { background: var(--ct); }
+.tick--t  { background: var(--t); }
+.rc--num { font-size: 1.3rem; color: var(--dim); text-align: center; }
+.rc--name {
+  font-size: 1.9rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rc--hp { display: flex; align-items: center; gap: .5rem; }
+.hpbar { flex: 1; height: .8rem; background: rgba(255, 255, 255, .12); border-radius: 1px; overflow: hidden; }
+.hpbar-fill { display: block; height: 100%; }
+.hpbar-fill--ct { background: var(--ct); }
+.hpbar-fill--t  { background: var(--t); }
+.rc--hp u { text-decoration: none; font-size: 1.4rem; min-width: 2.6rem; text-align: right; }
+.rc--kda { font-size: 1.5rem; text-align: center; letter-spacing: .02em; }
+.rc--kda s { text-decoration: none; color: var(--dim); margin: 0 .15rem; }
+.rc--adr { font-size: 1.5rem; text-align: center; color: #9fe8a8; font-weight: 700; }
+.rc--eq { display: flex; gap: .3rem; justify-content: flex-end; }
+
+/* ══════════ INSET RADAR ══════════ boxed, with a caption bar */
+.inset {
+  position: absolute; top: 14rem; left: 50%; transform: translateX(-50%);
+  width: 30rem;
+  background: var(--panel);
+  border-radius: 3px; overflow: hidden;
+  box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45);
+}
+.inset-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .4rem .9rem; height: 2.6rem;
+  background: rgba(0, 0, 0, .5);
+  font-size: 1.15rem; letter-spacing: .16em; color: var(--dim);
+}
+.inset-live { color: #ff4d4d; letter-spacing: .1em; }
+.inset-body { position: relative; aspect-ratio: 1; }
+.inset-map-img { width: 100%; height: 100%; object-fit: contain; }
+.inset-dots { position: absolute; inset: 0; }
+.blip {
+  position: absolute; width: 2rem; height: 2rem; margin: -1rem 0 0 -1rem;
+  display: grid; place-items: center; border-radius: 50%;
+  font-size: 1.2rem; font-weight: 700; color: #fff;
+  border: 2px solid rgba(0, 0, 0, .6);
+}
+.blip--ct { background: var(--ct); }
+.blip--t  { background: var(--t); color: #2a1a02; }
+.blip--out { background: rgba(120, 120, 120, .7); }
+.blip--on { box-shadow: 0 0 0 2px #fff; }
+.inset-bomb {
+  position: absolute; left: 50%; top: 50%; width: 2.2rem; height: 2.2rem;
+  margin: -1.1rem 0 0 -1.1rem;
+  background: url(assets/icons/c4.svg) center/contain no-repeat;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg);
+}
+
+/* ══════════ LOWER THIRD STRAP ══════════ */
+.strap {
+  position: absolute; left: 2.4rem; bottom: 2.4rem;
+  display: flex; align-items: flex-end; gap: 1.2rem;
+}
+.strap-cam { display: none; }
+.strap.is-cam .strap-cam { display: block; }
+.strap-cam-inner {
+  width: 28.8rem; height: 16.2rem;          /* strict 16:9 */
+  border: 2px solid rgba(255, 255, 255, .28);
+  border-radius: 4px;
+  position: relative;
+}
+.strap.is-ct .strap-cam-inner { border-color: rgba(47, 129, 247, .8); }
+.strap.is-t  .strap-cam-inner { border-color: rgba(245, 158, 11, .8); }
+.strap-cam-inner::before {
+  content: '● LIVE';
+  position: absolute; top: .7rem; left: .7rem;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: .1em;
+  padding: .3rem .8rem; border-radius: 999px;
+  background: rgba(229, 55, 47, .95); color: #fff;
+}
+
+.strap-body {
+  min-width: 62rem;
+  background: var(--panel);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 .6rem 2.4rem rgba(0, 0, 0, .5);
+}
+.strap-top {
+  display: flex; align-items: center; gap: 1.4rem;
+  padding: .8rem 1.6rem; height: 5.4rem;
+}
+.strap.is-ct .strap-top { background: linear-gradient(90deg, rgba(47,129,247,.35), transparent 70%); }
+.strap.is-t  .strap-top { background: linear-gradient(90deg, rgba(245,158,11,.35), transparent 70%); }
+.strap-team {
+  font-size: 1.3rem; letter-spacing: .2em; color: var(--dim);
+  padding-right: 1.4rem; border-right: 1px solid var(--line);
+}
+.strap-name { font-size: 3rem; font-weight: 700; letter-spacing: .02em; }
+.strap-gun { margin-left: auto; }
+.strap-gun img { height: 2.6rem; width: 9rem; object-fit: contain; }
+
+.strap-bottom {
+  display: flex; align-items: center; gap: 2rem;
+  padding: .6rem 1.6rem; height: 4rem;
+  background: rgba(0, 0, 0, .4);
+}
+.sv { display: flex; align-items: baseline; gap: .5rem; }
+.sv i { font-style: normal; font-size: 1.1rem; letter-spacing: .14em; color: var(--dim); }
+.sv b { font-size: 2rem; }
+.sv u { text-decoration: none; font-size: 1.4rem; color: var(--dim); }
+.strap-kit { display: flex; gap: .4rem; margin-left: auto; }
+
+/* ══════════ UTILITY ICON SPRITES ══════════ */
+.ux { width: 1.8rem; height: 2.3rem; display: inline-block;
+  background: center/contain no-repeat; }
+.nade-smokegrenade { background-image: url(assets/weapons/smokegrenade.svg);
+  filter: brightness(0) saturate(100%) invert(72%) sepia(12%) saturate(600%) hue-rotate(150deg); }
+.nade-flashbang { background-image: url(assets/weapons/flashbang.svg);
+  filter: brightness(0) saturate(100%) invert(88%) sepia(60%) saturate(700%) hue-rotate(1deg); }
+.nade-hegrenade { background-image: url(assets/weapons/hegrenade.svg);
+  filter: brightness(0) saturate(100%) invert(45%) sepia(60%) saturate(1200%) hue-rotate(78deg); }
+.nade-molotov, .nade-incgrenade { background-image: url(assets/weapons/molotov.svg);
+  filter: brightness(0) saturate(100%) invert(45%) sepia(85%) saturate(2000%) hue-rotate(2deg); }
+.nade-decoy { background-image: url(assets/weapons/decoy.svg);
+  filter: brightness(0) saturate(100%) invert(75%); }
+.ux--vest { background-image: url(assets/icons/armor.svg); }
+.ux--helm { background-image: url(assets/icons/armor-helmet.svg); }
+.ux--kit  { background-image: url(assets/icons/defuser.svg); }
+.ux--bomb { background-image: url(assets/icons/c4.svg); width: 2.6rem;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg); }

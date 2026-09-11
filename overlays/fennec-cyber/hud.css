@@ -1,0 +1,270 @@
+/* PROTOKOL CYBER — vertical tactical HUD stylesheet.
+   Components unique to this HUD: hexagonal score pods, vertical draining
+   HP columns, a segmented ammo ladder, a utility rail and a scanline scope. */
+
+:root {
+  --u: 0.925925926vh;          /* 1u = 10px at 1080p */
+  --ct: #00e5ff;
+  --t: #ff2d78;
+  --ink: #05080f;
+  --glass: rgba(6, 10, 20, .72);
+  --edge: rgba(0, 229, 255, .22);
+  font-size: var(--u);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+img { display: block; }
+[hidden], .hidden { display: none !important; }
+
+body {
+  width: 1920px; height: 1080px; overflow: hidden;
+  background: transparent;
+  font-family: 'Quantico', 'Noto Sans', sans-serif;
+  color: #eaf6ff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════ MATCH PODS ══════════ hexagonal capsules + round rail */
+.pods {
+  position: absolute; top: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: stretch; gap: 1.2rem;
+}
+.pod {
+  display: flex; align-items: center; gap: 1.4rem;
+  padding: 0 2.4rem; height: 7.2rem;
+  background: var(--glass);
+  /* hexagonal capsule — the cyber signature shape */
+  clip-path: polygon(2.4rem 0, 100% 0, calc(100% - 2.4rem) 100%, 0 100%);
+}
+.pod--ct { box-shadow: inset 0 -3px 0 var(--ct), inset 0 0 0 1px var(--edge); }
+.pod--t  { box-shadow: inset 0 -3px 0 var(--t), inset 0 0 0 1px rgba(255,45,120,.22); }
+.pod-score { font-size: 4.4rem; font-weight: 700; line-height: 1; }
+.pod--ct .pod-score { color: var(--ct); text-shadow: 0 0 1.8rem rgba(0,229,255,.55); }
+.pod--t  .pod-score { color: var(--t); text-shadow: 0 0 1.8rem rgba(255,45,120,.55); }
+.pod-meta { display: grid; gap: .2rem; }
+.pod--t .pod-meta { text-align: right; }
+.pod-name { font-size: 2.2rem; font-weight: 700; letter-spacing: .06em; }
+.pod-tag { font-size: 1.1rem; letter-spacing: .34em; color: rgba(234,246,255,.42); }
+
+.rail {
+  display: grid; justify-items: center; align-content: center; gap: .5rem;
+  min-width: 20rem; padding: 0 1.6rem;
+  background: rgba(5, 8, 15, .85);
+  clip-path: polygon(1.6rem 0, calc(100% - 1.6rem) 0, 100% 100%, 0 100%);
+}
+.rail-clock { font-size: 3rem; font-weight: 700; line-height: 1; letter-spacing: .04em; }
+.rail-track { display: flex; gap: .25rem; }
+.rail-track i { width: .5rem; height: .5rem; background: rgba(234,246,255,.2); }
+.rail-track i.is-done { background: var(--ct); box-shadow: 0 0 .5rem var(--ct); }
+.rail-state { font-size: 1.2rem; letter-spacing: .26em; color: rgba(234,246,255,.5); }
+
+/* ══════════ VERTICAL HP COLUMNS ══════════ health drains top→down */
+.columns {
+  position: absolute; top: 12rem; display: flex; flex-direction: column; gap: .8rem;
+}
+.columns--ct { left: 2.4rem; }
+.columns--t  { right: 2.4rem; }
+
+.col {
+  display: grid;
+  grid-template-columns: 2.2rem 2.6rem 18.2rem;
+  align-items: stretch;
+  height: 7.4rem;
+  background: var(--glass);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 1.2rem), calc(100% - 1.2rem) 100%, 0 100%);
+}
+.columns--t .col {
+  grid-template-columns: 18.2rem 2.6rem 2.2rem;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 1.2rem 100%, 0 calc(100% - 1.2rem));
+}
+.columns--t .col .col-slot { order: 3; }
+.columns--t .col .col-bar  { order: 2; }
+.columns--t .col .col-body { order: 1; text-align: right; }
+
+.col-slot {
+  display: grid; place-items: center;
+  font-size: 1.5rem; font-weight: 700;
+  color: rgba(234,246,255,.5);
+  background: rgba(0,0,0,.3);
+}
+/* the vertical bar: fill anchored to the BOTTOM so it drains downward */
+.col-bar { position: relative; overflow: hidden; background: rgba(0,0,0,.42); }
+.col-fill { position: absolute; left: 0; right: 0; bottom: 0; }
+.col-fill--ct { background: linear-gradient(180deg, var(--ct), #006e80); }
+.col-fill--t  { background: linear-gradient(180deg, var(--t), #7a0034); }
+.col-hp {
+  /* pinned to the TOP of the bar: the bottom is where utility icons sit and
+     the two collided on every card */
+  position: absolute; inset: .3rem 0 auto 0; text-align: center;
+  font-size: 1.1rem; font-weight: 700;
+  text-shadow: 0 1px 3px #000, 0 0 5px rgba(0,0,0,.9);
+}
+
+.col-body { display: grid; align-content: center; gap: .25rem; padding: 0 .9rem; }
+.col-name {
+  font-size: 1.9rem; font-weight: 700; letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.col-sub { display: flex; gap: 1rem; font-size: 1.3rem; }
+.columns--t .col-sub { justify-content: flex-end; }
+.col-kd { color: rgba(234,246,255,.75); }
+.col-kd b { color: #fff; }
+.col-cash { color: #2fe36b; font-weight: 700; }
+.col-util { display: flex; gap: .35rem; min-height: 1.8rem; align-items: center; }
+.columns--t .col-util { justify-content: flex-end; }
+
+.col--dead { opacity: .4; filter: grayscale(.8); }
+.col--live { box-shadow: inset 0 0 0 2px rgba(255,255,255,.75), 0 0 1.6rem rgba(0,229,255,.3); }
+
+/* ══════════ UTILITY RAIL ══════════ single strip, bottom centre */
+.urail {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 1.6rem;
+  padding: .6rem 2rem; height: 4.4rem;
+  background: rgba(5,8,15,.82);
+  clip-path: polygon(1.4rem 0, calc(100% - 1.4rem) 0, 100% 100%, 0 100%);
+}
+.urail-side { display: flex; align-items: center; gap: 1.1rem; }
+.urail-div { font-size: 1.1rem; letter-spacing: .3em; color: rgba(234,246,255,.35); }
+.urail-alive {
+  font-size: 2rem; font-weight: 700; min-width: 3rem; text-align: center;
+}
+.urail-alive--ct { color: var(--ct); }
+.urail-alive--t  { color: var(--t); }
+.ucount { display: flex; align-items: center; gap: .35rem; font-size: 1.4rem; opacity: .35; }
+.ucount.is-on { opacity: 1; }
+
+/* ══════════ SCOPE (radar) ══════════ corner, scanline sweep */
+.scope { position: absolute; bottom: 8rem; left: 2.4rem; width: 34rem; }
+.scope-frame {
+  position: relative; aspect-ratio: 1; overflow: hidden;
+  clip-path: polygon(2.4rem 0, 100% 0, 100% calc(100% - 2.4rem), calc(100% - 2.4rem) 100%, 0 100%);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+.scope-map {
+  width: 100%; height: 100%; object-fit: contain;
+  filter: saturate(1.2) drop-shadow(0 0 .8rem rgba(0,229,255,.4));
+}
+.scope-sweep {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0,229,255,.16) 50%, transparent 55%);
+  animation: sweep 3.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes sweep { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+.scope-dots { position: absolute; inset: 0; }
+.scope-label {
+  margin-top: .5rem; font-size: 1.2rem; letter-spacing: .3em;
+  color: rgba(234,246,255,.5); text-align: center;
+}
+.pip {
+  position: absolute; width: 2.4rem; height: 2.4rem; margin: -1.2rem 0 0 -1.2rem;
+  display: grid; place-items: center;
+  font-size: 1.3rem; font-weight: 700; color: #04121a;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);   /* diamond pips */
+}
+.pip--ct { background: var(--ct); }
+.pip--t  { background: var(--t); color: #1c0010; }
+.pip--dead { background: rgba(120,120,120,.7); }
+.pip--live { box-shadow: 0 0 0 2px #fff; }
+.scope-bomb {
+  position: absolute; left: 50%; top: 50%; width: 2.6rem; height: 2.6rem;
+  margin: -1.3rem 0 0 -1.3rem;
+  background: url(assets/icons/c4.svg) center/contain no-repeat;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg);
+}
+
+/* ══════════ DOSSIER ══════════ vertical operator panel, right side */
+.dossier {
+  position: absolute; right: 2.4rem; bottom: 8rem; width: 30rem;
+  display: grid; gap: .6rem;
+  padding: 1.2rem;
+  background: var(--glass);
+  clip-path: polygon(0 2.4rem, 2.4rem 0, 100% 0, 100% 100%, 0 100%);
+}
+.dossier.is-ct { box-shadow: inset 0 0 0 1px var(--edge), 0 0 2.4rem rgba(0,229,255,.2); }
+.dossier.is-t  { box-shadow: inset 0 0 0 1px rgba(255,45,120,.25), 0 0 2.4rem rgba(255,45,120,.2); }
+
+.dossier-cam { display: none; }
+.dossier.is-cam .dossier-cam { display: block; }
+.dossier-cam-inner {
+  width: 27.6rem; height: 15.52rem;         /* strict 16:9 inside the panel */
+  border: 2px solid rgba(255,255,255,.28);
+  position: relative;
+}
+.dossier.is-ct .dossier-cam-inner { border-color: rgba(0,229,255,.7); }
+.dossier.is-t  .dossier-cam-inner { border-color: rgba(255,45,120,.7); }
+.dossier-cam-inner::before {
+  content: '▸ LIVE CAM';
+  position: absolute; top: .6rem; left: .6rem;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: .12em;
+  padding: .25rem .7rem;
+  background: var(--ct); color: #00151a;
+  clip-path: polygon(0 0, 100% 0, calc(100% - .5rem) 100%, 0 100%);
+}
+.dossier.is-t .dossier-cam-inner::before { background: var(--t); color: #1a0010; }
+
+.dossier-id { display: flex; align-items: baseline; gap: .8rem; }
+.dossier-slot {
+  font-size: 1.4rem; font-weight: 700; color: rgba(234,246,255,.45);
+  min-width: 2.2rem;
+}
+.dossier-name {
+  font-size: 2.6rem; font-weight: 700; letter-spacing: .03em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* vitals meters */
+.meter { display: grid; grid-template-columns: 2.6rem 1fr 4.4rem; align-items: center; gap: .6rem; }
+.meter-key { font-size: 1.2rem; color: rgba(234,246,255,.45); letter-spacing: .1em; }
+.meter-track { height: 1rem; background: rgba(0,0,0,.45); overflow: hidden; }
+.meter-fill { height: 100%; }
+.meter-fill--hp { background: linear-gradient(90deg, #00e5ff, #0090a8); }
+.meter-fill--ar { background: linear-gradient(90deg, #7c8dff, #3a49b8); }
+.meter-val { font-size: 1.8rem; font-weight: 700; text-align: right; }
+
+/* segmented ammo ladder */
+.ladder { display: grid; gap: .3rem; }
+.ladder-notches { display: flex; gap: 1px; height: 1.4rem; }
+.notch { flex: 1; background: rgba(255,255,255,.12); }
+.notch.is-live { background: var(--ct); }
+.dossier.is-t .notch.is-live { background: var(--t); }
+.ladder-num { font-size: 2.2rem; font-weight: 700; text-align: right; }
+.ladder-num i { font-size: 1.5rem; font-style: normal; opacity: .6; }
+
+.dossier-gun { min-height: 2.6rem; display: grid; justify-items: end; }
+.dossier-gun img { height: 2.6rem; max-width: 100%; object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+
+.chips { display: flex; gap: .4rem; }
+.chip {
+  flex: 1; display: grid; justify-items: center; gap: .1rem;
+  padding: .4rem 0; background: rgba(0,0,0,.38);
+}
+.chip i { font-style: normal; font-size: 1.1rem; color: rgba(234,246,255,.45); }
+.chip b { font-size: 1.8rem; }
+.chip--wide { flex: 1.4; }
+.dossier-kit { display: flex; gap: .4rem; min-height: 2rem; }
+
+/* ══════════ UTILITY ICON SPRITES ══════════
+   Colour-coded because mono silhouettes are identical at this size. */
+.ux { width: 1.9rem; height: 2.4rem; display: inline-block;
+  background: center/contain no-repeat; }
+.nade-smokegrenade { background-image: url(assets/weapons/smokegrenade.svg);
+  filter: brightness(0) saturate(100%) invert(72%) sepia(12%) saturate(600%) hue-rotate(150deg) drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.nade-flashbang { background-image: url(assets/weapons/flashbang.svg);
+  filter: brightness(0) saturate(100%) invert(88%) sepia(60%) saturate(700%) hue-rotate(1deg) drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.nade-hegrenade { background-image: url(assets/weapons/hegrenade.svg);
+  filter: brightness(0) saturate(100%) invert(45%) sepia(60%) saturate(1200%) hue-rotate(78deg) drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.nade-molotov, .nade-incgrenade { background-image: url(assets/weapons/molotov.svg);
+  filter: brightness(0) saturate(100%) invert(45%) sepia(85%) saturate(2000%) hue-rotate(2deg) drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.nade-decoy { background-image: url(assets/weapons/decoy.svg);
+  filter: brightness(0) saturate(100%) invert(75%) drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.ux--vest { background-image: url(assets/icons/armor.svg);
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.ux--helm { background-image: url(assets/icons/armor-helmet.svg);
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.ux--kit  { background-image: url(assets/icons/defuser.svg);
+  filter: drop-shadow(0 0 2px rgba(0,0,0,.95)); }
+.ux--bomb { background-image: url(assets/icons/c4.svg); width: 2.7rem;
+  filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg); }

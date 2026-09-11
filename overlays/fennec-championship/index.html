@@ -2,130 +2,88 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>PROTOKOL Fennec Championship</title>
-<link rel="stylesheet" href="styles.css" />
-<link rel="stylesheet" href="theme.css" />
+<title>PROTOKOL Championship</title>
+<link rel="stylesheet" href="assets/fonts/quantico.css" />
+<link rel="stylesheet" href="hud.css" />
 </head>
 <body>
-  <!-- Radar (top-left) -->
-  <div id="radar" class="radar hidden">
-    <img id="radar-img" class="radar-img" alt="" />
-    <div id="radar-dots"></div>
-    <div id="radar-bomb" class="radar-bomb hidden"></div>
+
+<!-- ═══ CHAMPIONSHIP: an arena ceremony HUD.
+     Its own components: a crest banner with a laurel score, RADIAL health
+     dials (SVG rings, not bars), a player podium deck, a trophy-style
+     spotlight card and a framed map plate. ═══ -->
+
+<!-- Crest banner -->
+<header id="crest" class="crest hidden">
+  <div class="crest-side crest-side--ct">
+    <span class="crest-name" id="ct-name">—</span>
+    <span class="crest-val" id="ct-score">0</span>
   </div>
 
-  <!-- Top bar: skewed team panels + rectangular score/center (Fennec geometry) -->
-  <div id="topbar" class="top-bar hidden">
-    <div class="series-name" id="series-name"></div>
-
-    <!-- Scores live INSIDE each team block (as upstream), so the skewed panel
-         and its score slab form one continuous parallelogram. -->
-    <div class="team --left">
-      <div class="team-panel-wrapper --left --ct">
-        <div class="inner">
-          <div class="team-logo" id="ct-logo"></div>
-          <div class="team-name" id="ct-name">—</div>
-        </div>
-      </div>
-      <div class="score --ct"><div class="inner" id="ct-score">0</div></div>
+  <div class="crest-core">
+    <div class="crest-laurel">
+      <span class="crest-clock" id="clock">0:00</span>
     </div>
-
-    <div class="center">
-      <div class="current-round">
-        <div class="clock" id="timer">0:00</div>
-        <div class="round-number" id="round-label">Round 1</div>
-      </div>
-      <div class="match-point-rounds" id="round-pips"></div>
-    </div>
-
-    <div class="team --right">
-      <div class="score --t"><div class="inner" id="t-score">0</div></div>
-      <div class="team-panel-wrapper --right --t">
-        <div class="inner">
-          <div class="team-name" id="t-name">—</div>
-          <div class="team-logo" id="t-logo"></div>
-        </div>
-      </div>
-    </div>
+    <span class="crest-round" id="round-state">ROUND 1</span>
+    <div class="crest-beads" id="round-beads"></div>
   </div>
 
-  <!-- Players alive widget -->
-  <div id="alive" class="players-alive hidden">
-    <div class="pa-head">PLAYERS ALIVE</div>
-    <div class="pa-body">
-      <span class="pa-ct" id="pa-ct">5</span>
-      <span class="pa-vs">VS</span>
-      <span class="pa-t" id="pa-t">5</span>
-    </div>
+  <div class="crest-side crest-side--t">
+    <span class="crest-val" id="t-score">0</span>
+    <span class="crest-name" id="t-name">—</span>
   </div>
+</header>
 
-  <!-- Sidebars: team equipment + utility summary, then two-row grid cards -->
-  <aside class="sidebar --left">
-    <div class="team-equipment --left" id="ct-equipment">
-      <div class="te-block"><span class="label">Loss Bonus</span><span class="value" id="ct-loss">$1400</span></div>
-      <div class="te-block"><span class="label">Team Money</span><span class="value" id="ct-money">$0</span></div>
-      <div class="te-block"><span class="label">Equipment</span><span class="value" id="ct-equip">$0</span></div>
-    </div>
-    <div class="team-grenades --left" id="ct-nades">
-      <div class="tg-total"><span class="value" id="ct-nade-total">0</span></div>
-      <div class="tg-types" id="ct-nade-types"></div>
-    </div>
-    <div id="ct-list"></div>
-  </aside>
+<!-- Podium deck: five plinths per side along the bottom, each with a radial dial -->
+<section class="podium podium--ct" id="ct-podium"></section>
+<section class="podium podium--t" id="t-podium"></section>
 
-  <aside class="sidebar --right">
-    <div class="team-equipment --right" id="t-equipment">
-      <div class="te-block"><span class="label">Equipment</span><span class="value" id="t-equip">$0</span></div>
-      <div class="te-block"><span class="label">Team Money</span><span class="value" id="t-money">$0</span></div>
-      <div class="te-block"><span class="label">Loss Bonus</span><span class="value" id="t-loss">$1400</span></div>
-    </div>
-    <div class="team-grenades --right" id="t-nades">
-      <div class="tg-types" id="t-nade-types"></div>
-      <div class="tg-total"><span class="value" id="t-nade-total">0</span></div>
-    </div>
-    <div id="t-list"></div>
-  </aside>
+<!-- Framed map plate, centre-left -->
+<div class="plate hidden" id="plate">
+  <div class="plate-frame">
+    <img class="plate-map" id="radar-img" alt="" />
+    <div class="plate-dots" id="radar-dots"></div>
+    <div class="plate-bomb hidden" id="radar-bomb"></div>
+  </div>
+  <div class="plate-name" id="plate-name">MAP</div>
+</div>
 
-  <!-- Focused player: skewed health | name+stats | ammo, webcam above -->
-  <div id="cam-wrap" class="focused-player">
-    <!-- webcam window is anchored above the bar, not inside the avatar -->
-    <div class="fp-cam-window" id="fp-cam-window">
-      <div class="fp-avatar" id="fp-avatar"></div>
-    </div>
+<!-- Spotlight: the spectated player, presented like a trophy plaque -->
+<div class="spotlight hidden" id="spotlight">
+  <div class="spot-cam" id="cam-slot"><div class="spot-cam-inner" id="cam-inner"></div></div>
 
-    <div class="health-and-armor" id="fp-ha">
-      <div class="inner">
-        <span class="ha-item"><img src="assets/icons/health.svg" alt=""><b id="cam-hp">100</b></span>
-        <span class="ha-item fp-armor"><img src="assets/icons/armor-helmet.svg" alt="" id="cam-armor-icon"><b id="cam-armor">100</b></span>
-      </div>
+  <div class="spot-plaque">
+    <div class="spot-rank" id="op-slot">0</div>
+    <div class="spot-id">
+      <span class="spot-name" id="op-name">—</span>
+      <span class="spot-team" id="op-team">—</span>
     </div>
-
-    <div class="name-and-stats" id="fp-ns">
-      <div class="name-row"><span id="cam-name"></span></div>
-      <div class="data-row">
-        <!-- original keeps K/A/D/ADR together; utility lives in its own slot -->
-        <div class="dr-stats">
-          <div class="stat"><span class="label">K</span><span class="value" id="cam-k">0</span></div>
-          <div class="stat"><span class="label">A</span><span class="value" id="cam-a">0</span></div>
-          <div class="stat"><span class="label">D</span><span class="value" id="cam-d">0</span></div>
-          <div class="stat"><span class="label">ADR</span><span class="value" id="cam-adr">0</span></div>
-        </div>
-        <div class="dr-kit">
-          <span class="dr-nades" id="fp-nades"></span>
-          <img id="fp-kit" src="assets/icons/defuser.svg" alt="" hidden>
-          <img id="fp-bomb" src="assets/icons/c4.svg" alt="" hidden>
-        </div>
-      </div>
-    </div>
-
-    <div class="ammo" id="fp-ammo">
-      <div class="inner">
-        <span><b id="cam-ammo">-</b><i class="fp-reserve" id="cam-reserve">/ -</i></span>
-      </div>
+    <div class="spot-dials">
+      <svg class="dial" viewBox="0 0 44 44" aria-hidden="true">
+        <circle class="dial-bg" cx="22" cy="22" r="18"></circle>
+        <circle class="dial-fg dial-fg--hp" id="op-hp-ring" cx="22" cy="22" r="18"></circle>
+      </svg>
+      <span class="dial-val" id="op-hp">0</span>
+      <svg class="dial" viewBox="0 0 44 44" aria-hidden="true">
+        <circle class="dial-bg" cx="22" cy="22" r="18"></circle>
+        <circle class="dial-fg dial-fg--ar" id="op-ar-ring" cx="22" cy="22" r="18"></circle>
+      </svg>
+      <span class="dial-val" id="op-ar">0</span>
     </div>
   </div>
 
-  <script src="events.js"></script>
-  <script src="app.js"></script>
+  <div class="spot-line">
+    <span class="sl"><i>K</i><b id="op-k">0</b></span>
+    <span class="sl"><i>A</i><b id="op-a">0</b></span>
+    <span class="sl"><i>D</i><b id="op-d">0</b></span>
+    <span class="sl"><i>DMG</i><b id="op-adr">0</b></span>
+    <span class="sl sl--ammo"><b id="op-ammo">0</b><u id="op-reserve">/0</u></span>
+    <span class="spot-gun" id="op-gun"></span>
+    <span class="spot-kit" id="op-kit"></span>
+  </div>
+</div>
+
+<script src="../_core/core.js"></script>
+<script src="hud.js"></script>
 </body>
 </html>
