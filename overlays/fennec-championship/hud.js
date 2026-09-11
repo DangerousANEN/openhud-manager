@@ -129,6 +129,10 @@
     $('clock').textContent = s.round_time || '0:00';
     $('round-state').textContent = 'ROUND ' + (s.round || 1);
 
+    show($('tally'), true);
+    $('ct-alive').textContent = ctx.ct.filter(function (p) { return p.health > 0; }).length;
+    $('t-alive').textContent = ctx.t.filter(function (p) { return p.health > 0; }).length;
+
     var beads = $('round-beads');
     if (beads.childElementCount !== 24) {
       var h = '';

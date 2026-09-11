@@ -60,10 +60,12 @@ body {
 
 /* ══════════ VERTICAL HP COLUMNS ══════════ health drains top→down */
 .columns {
-  position: absolute; top: 12rem; display: flex; flex-direction: column; gap: .8rem;
+  /* original roster anchor: cards start at y=745 and run to 1065 */
+  position: absolute; bottom: 1.5rem;
+  display: flex; flex-direction: column; gap: .6rem;
 }
-.columns--ct { left: 2.4rem; }
-.columns--t  { right: 2.4rem; }
+.columns--ct { left: 2rem; }
+.columns--t  { right: 2rem; }
 
 .col {
   display: grid;
@@ -118,9 +120,10 @@ body {
 
 /* ══════════ UTILITY RAIL ══════════ single strip, bottom centre */
 .urail {
-  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 1.6rem;
-  padding: .6rem 2rem; height: 4.4rem;
+  /* original players-alive anchor: top-right corner */
+  position: absolute; top: 1.5rem; right: 2rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: .5rem 1.4rem; height: 5.8rem;
   background: rgba(5,8,15,.82);
   clip-path: polygon(1.4rem 0, calc(100% - 1.4rem) 0, 100% 100%, 0 100%);
 }
@@ -135,7 +138,7 @@ body {
 .ucount.is-on { opacity: 1; }
 
 /* ══════════ SCOPE (radar) ══════════ corner, scanline sweep */
-.scope { position: absolute; bottom: 8rem; left: 2.4rem; width: 34rem; }
+.scope { position: absolute; top: 0; left: 0; width: 48rem; }
 .scope-frame {
   position: relative; aspect-ratio: 1; overflow: hidden;
   clip-path: polygon(2.4rem 0, 100% 0, 100% calc(100% - 2.4rem), calc(100% - 2.4rem) 100%, 0 100%);
@@ -176,19 +179,24 @@ body {
 
 /* ══════════ DOSSIER ══════════ vertical operator panel, right side */
 .dossier {
-  position: absolute; right: 2.4rem; bottom: 8rem; width: 30rem;
-  display: grid; gap: .6rem;
-  padding: 1.2rem;
+  /* original focused-player anchor: 960x90 centred at (960,1020) */
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 1.5rem; width: 96rem; height: 9rem;
+  display: grid;
+  grid-template-columns: auto 24rem 1fr 22rem auto;
+  align-items: center; gap: 1.6rem;
+  padding: 0 1.8rem;
   background: var(--glass);
-  clip-path: polygon(0 2.4rem, 2.4rem 0, 100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(2.4rem 0, calc(100% - 2.4rem) 0, 100% 100%, 0 100%);
 }
 .dossier.is-ct { box-shadow: inset 0 0 0 1px var(--edge), 0 0 2.4rem rgba(0,229,255,.2); }
 .dossier.is-t  { box-shadow: inset 0 0 0 1px rgba(255,45,120,.25), 0 0 2.4rem rgba(255,45,120,.2); }
 
 .dossier-cam { display: none; }
 .dossier.is-cam .dossier-cam { display: block; }
+.dossier-cam { position: absolute; left: 0; bottom: 100%; margin-bottom: .8rem; }
 .dossier-cam-inner {
-  width: 27.6rem; height: 15.52rem;         /* strict 16:9 inside the panel */
+  width: 28.8rem; height: 16.2rem;          /* strict 16:9, docked above */
   border: 2px solid rgba(255,255,255,.28);
   position: relative;
 }
@@ -204,7 +212,7 @@ body {
 }
 .dossier.is-t .dossier-cam-inner::before { background: var(--t); color: #1a0010; }
 
-.dossier-id { display: flex; align-items: baseline; gap: .8rem; }
+.dossier-id { display: flex; align-items: baseline; gap: .8rem; min-width: 22rem; }
 .dossier-slot {
   font-size: 1.4rem; font-weight: 700; color: rgba(234,246,255,.45);
   min-width: 2.2rem;
@@ -215,6 +223,7 @@ body {
 }
 
 /* vitals meters */
+.dossier-vitals { display: grid; gap: .35rem; }
 .meter { display: grid; grid-template-columns: 2.6rem 1fr 4.4rem; align-items: center; gap: .6rem; }
 .meter-key { font-size: 1.2rem; color: rgba(234,246,255,.45); letter-spacing: .1em; }
 .meter-track { height: 1rem; background: rgba(0,0,0,.45); overflow: hidden; }
@@ -232,11 +241,11 @@ body {
 .ladder-num { font-size: 2.2rem; font-weight: 700; text-align: right; }
 .ladder-num i { font-size: 1.5rem; font-style: normal; opacity: .6; }
 
-.dossier-gun { min-height: 2.6rem; display: grid; justify-items: end; }
+.dossier-gun { display: grid; justify-items: center; }
 .dossier-gun img { height: 2.6rem; max-width: 100%; object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
 
-.chips { display: flex; gap: .4rem; }
+.chips { display: flex; gap: .4rem; align-items: center; }
 .chip {
   flex: 1; display: grid; justify-items: center; gap: .1rem;
   padding: .4rem 0; background: rgba(0,0,0,.38);
@@ -244,7 +253,7 @@ body {
 .chip i { font-style: normal; font-size: 1.1rem; color: rgba(234,246,255,.45); }
 .chip b { font-size: 1.8rem; }
 .chip--wide { flex: 1.4; }
-.dossier-kit { display: flex; gap: .4rem; min-height: 2rem; }
+.dossier-kit { display: flex; gap: .4rem; min-height: 2rem; align-items: center; }
 
 /* ══════════ UTILITY ICON SPRITES ══════════
    Colour-coded because mono silhouettes are identical at this size. */

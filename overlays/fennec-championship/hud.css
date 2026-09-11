@@ -70,17 +70,35 @@ body {
 }
 .crest-beads i.is-set { background: var(--gold); }
 
+/* ══════════ SURVIVOR TALLY ══════════ original players-alive anchor */
+.tally {
+  position: absolute; top: 1.5rem; right: 2rem;
+  display: grid; justify-items: center; gap: .2rem;
+  padding: .5rem 1.4rem; min-width: 12.1rem; height: 5.8rem;
+  align-content: center;
+  background: linear-gradient(180deg, rgba(36,30,22,.92), rgba(14,12,9,.94));
+  box-shadow: inset 0 0 0 1px var(--gold-dim), inset 0 -2px 0 var(--gold);
+  clip-path: polygon(1.4rem 0, 100% 0, calc(100% - 1.4rem) 100%, 0 100%);
+}
+.tally-head { font-size: 1.1rem; letter-spacing: .3em; color: rgba(243,236,224,.55); }
+.tally-body { display: flex; align-items: baseline; gap: .7rem; }
+.tally-body b { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+.tally-body s { text-decoration: none; color: var(--gold); font-size: 1.6rem; }
+.tally-ct { color: var(--ct); }
+.tally-t  { color: var(--t); }
+
 /* ══════════ PODIUM DECK ══════════ five plinths per side, radial dials */
 .podium {
-  position: absolute; bottom: 2.4rem;
-  display: flex; gap: 1rem; align-items: flex-end;
+  /* original roster anchor: bottom corners, 435 wide per side */
+  position: absolute; bottom: 1.5rem;
+  display: flex; gap: .6rem; align-items: flex-end;
 }
-.podium--ct { left: 2.4rem; }
-.podium--t  { right: 2.4rem; }
+.podium--ct { left: 2rem; }
+.podium--t  { right: 2rem; }
 
 .plinth {
   position: relative;
-  width: 15rem; padding: 1rem .8rem .9rem;
+  width: 8.3rem; padding: .7rem .4rem .6rem;
   display: grid; justify-items: center; gap: .25rem;
   background: linear-gradient(180deg, rgba(36,30,22,.86), rgba(14,12,9,.92));
   box-shadow: inset 0 0 0 1px var(--gold-dim);
@@ -90,26 +108,28 @@ body {
 .plinth--on { box-shadow: inset 0 0 0 2px var(--gold), 0 0 2rem rgba(232,195,122,.35); }
 
 /* radial dial replaces the health bar entirely */
-.pdial { width: 5.6rem; height: 5.6rem; transform: rotate(-90deg); }
+.pdial { width: 4.6rem; height: 4.6rem; transform: rotate(-90deg); }
 .pdial-bg { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 4; }
 .pdial-fg { fill: none; stroke-width: 4; stroke-linecap: butt; transition: stroke-dashoffset .25s ease; }
 .pdial-fg--ct { stroke: var(--ct); }
 .pdial-fg--t  { stroke: var(--t); }
 .pdial-num {
-  position: absolute; top: 2.55rem; left: 0; right: 0; text-align: center;
-  font-size: 1.6rem; font-weight: 700;
+  position: absolute; top: 2.35rem; left: 0; right: 0; text-align: center;
+  font-size: 1.4rem; font-weight: 700;
 }
 .plinth-name {
-  font-size: 1.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  font-size: 1.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: .01em;
   max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.plinth-kd { font-size: 1.4rem; color: rgba(243,236,224,.85); }
+.plinth-kd { font-size: 1.15rem; color: rgba(243,236,224,.85); }
 .plinth-kd s { text-decoration: none; color: rgba(243,236,224,.4); }
-.plinth-cash { font-size: 1.3rem; font-weight: 700; color: #a9d6a0; }
-.plinth-kit { display: flex; gap: .3rem; min-height: 1.7rem; }
+.plinth-cash { font-size: 1.1rem; font-weight: 700; color: #a9d6a0; }
+.plinth-kit { display: flex; gap: .2rem; min-height: 1.7rem; flex-wrap: wrap;
+  justify-content: center; }
 
 /* ══════════ MAP PLATE ══════════ framed, centre-left */
-.plate { position: absolute; top: 50%; left: 3rem; transform: translateY(-50%); width: 36rem; }
+/* original radar anchor: top-left corner */
+.plate { position: absolute; top: 0; left: 0; width: 48rem; }
 .plate-frame {
   position: relative; aspect-ratio: 1;
   padding: 1rem;
@@ -143,10 +163,12 @@ body {
 
 /* ══════════ SPOTLIGHT PLAQUE ══════════ centre, above the deck */
 .spotlight {
-  /* deck top sits ~21rem above the frame bottom; clear it */
-  position: absolute; bottom: 23rem; left: 50%; transform: translateX(-50%);
-  display: grid; justify-items: center; gap: .6rem;
+  /* original focused-player anchor: 960 wide, centred at (960,1020) */
+  position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  width: 96rem;
+  display: grid; justify-items: center; gap: .4rem;
 }
+.spot-cam { position: absolute; left: 0; bottom: 100%; margin-bottom: .8rem; }
 .spot-cam { display: none; }
 .spotlight.is-cam .spot-cam { display: block; }
 .spot-cam-inner {
@@ -172,7 +194,7 @@ body {
 
 .spot-plaque {
   display: flex; align-items: center; gap: 1.6rem;
-  padding: .8rem 2rem; min-width: 52rem;
+  padding: .6rem 2rem; width: 100%;
   background: linear-gradient(180deg, rgba(36,30,22,.94), rgba(14,12,9,.96));
   box-shadow: inset 0 0 0 1px var(--gold-dim), inset 0 -2px 0 var(--gold);
   clip-path: polygon(1.6rem 0, calc(100% - 1.6rem) 0, 100% 100%, 0 100%);
@@ -196,7 +218,7 @@ body {
 
 .spot-line {
   display: flex; align-items: center; gap: 1.8rem;
-  padding: .5rem 2rem; min-width: 52rem;
+  padding: .4rem 2rem; width: 100%;
   background: rgba(0, 0, 0, .55);
   box-shadow: inset 0 0 0 1px rgba(232,195,122,.16);
   clip-path: polygon(0 0, 100% 0, calc(100% - 1.6rem) 100%, 1.6rem 100%);

@@ -57,9 +57,10 @@ body {
 
 /* ══════════ ECONOMY STRIP ══════════ round flow + team money */
 .econ {
-  position: absolute; top: 9.4rem; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 1.4rem;
-  padding: .4rem 1.4rem; height: 3rem;
+  /* original players-alive anchor: top-right corner */
+  position: absolute; top: 1.5rem; right: 2rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: .4rem 1.4rem; height: 5.8rem;
   background: var(--panel-soft);
   border-radius: 2px;
 }
@@ -72,18 +73,19 @@ body {
 
 /* ══════════ ROSTER SHEETS ══════════ real tables, header + rows */
 .sheet {
-  position: absolute; top: 14rem; width: 47rem;
+  /* original roster anchor: bottom corners */
+  position: absolute; bottom: 1.5rem; width: 48.5rem;
   background: var(--panel);
   border-radius: 3px;
   overflow: hidden;
   box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45);
 }
-.sheet--ct { left: 2.4rem; }
-.sheet--t  { right: 2.4rem; }
+.sheet--ct { left: 2rem; }
+.sheet--t  { right: 2rem; }
 
 .sheet-head, .row {
   display: grid;
-  grid-template-columns: 1rem 2.6rem 1fr 8rem 8.4rem 4.6rem 9rem;
+  grid-template-columns: .8rem 2.2rem 1fr 6.6rem 7.4rem 4.2rem 7.6rem;
   align-items: center;
   gap: .6rem;
   padding: 0 1rem;
@@ -110,7 +112,7 @@ body {
 .tick--t  { background: var(--t); }
 .rc--num { font-size: 1.3rem; color: var(--dim); text-align: center; }
 .rc--name {
-  font-size: 1.9rem; font-weight: 700;
+  font-size: 1.8rem; font-weight: 700; letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rc--hp { display: flex; align-items: center; gap: .5rem; }
@@ -126,8 +128,9 @@ body {
 
 /* ══════════ INSET RADAR ══════════ boxed, with a caption bar */
 .inset {
-  position: absolute; top: 14rem; left: 50%; transform: translateX(-50%);
-  width: 30rem;
+  /* original radar anchor: top-left corner */
+  position: absolute; top: 0; left: 0;
+  width: 48rem;
   background: var(--panel);
   border-radius: 3px; overflow: hidden;
   box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45);
@@ -161,9 +164,14 @@ body {
 
 /* ══════════ LOWER THIRD STRAP ══════════ */
 .strap {
-  position: absolute; left: 2.4rem; bottom: 2.4rem;
-  display: flex; align-items: flex-end; gap: 1.2rem;
+  /* original focused-player anchor: 960 wide, centred at (960,1020) */
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 1.5rem; width: 92rem;   /* clear gap between the corner sheets */
+  display: flex; align-items: flex-end; justify-content: center; gap: 1.2rem;
 }
+/* webcam docks ABOVE the strap body, centred, so it clears the corner sheets */
+.strap-cam { position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 100%; margin-bottom: .8rem; }
 .strap-cam { display: none; }
 .strap.is-cam .strap-cam { display: block; }
 .strap-cam-inner {
@@ -183,7 +191,7 @@ body {
 }
 
 .strap-body {
-  min-width: 62rem;
+  width: 100%; flex: none;
   background: var(--panel);
   border-radius: 3px;
   overflow: hidden;
