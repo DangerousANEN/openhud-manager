@@ -168,7 +168,8 @@
     var d = $('dossier');
     d.classList.toggle('is-ct', ct);
     d.classList.toggle('is-t', !ct);
-    d.classList.toggle('is-cam', !!ctx.liveCam);
+    d.classList.toggle('is-cam', !!ctx.liveCam || ctx.options.avatars !== false);
+    camInner.style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(assets/agents-' + (ct ? 'ct' : 't') + '.png)' : 'none';
 
     $('op-slot').textContent = f.observer_slot || '';
     $('op-name').textContent = f.name || '';

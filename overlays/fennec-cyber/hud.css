@@ -2,6 +2,10 @@
 /* Camera states distinguish iframe load from actual decoded video. */
 #cam-inner { background-size: cover; background-position: center; }
 #cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
+/* Agent art is an explicit fallback, never a pretend live feed. */
+#cam-inner[data-camera-state="unconfigured"] { background-size: contain; background-position: center bottom; background-repeat: no-repeat; }
+#cam-inner[data-camera-state="unconfigured"]::before { content: "AGENT"; }
+#cam-inner[data-camera-state="unconfigured"]::after { content: ""; }
 #cam-inner[data-camera-state="external"] { background: transparent; }
 #cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
 #cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
@@ -181,7 +185,8 @@ body {
 .scope-frame {
   position: relative; aspect-ratio: 1; overflow: hidden;
   clip-path: polygon(2.4rem 0, 100% 0, 100% calc(100% - 2.4rem), calc(100% - 2.4rem) 100%, 0 100%);
-  box-shadow: inset 0 0 0 1px var(--edge);
+  box-shadow: none;
+  background: transparent;
 }
 .scope-map {
   width: 100%; height: 100%; object-fit: contain;
@@ -190,7 +195,8 @@ body {
 .scope-sweep {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, transparent 45%, rgba(0,229,255,.16) 50%, transparent 55%);
-  animation: sweep 3.4s linear infinite;
+  display: none;
+  animation: none;
   pointer-events: none;
 }
 @keyframes sweep { from { transform: translateY(-100%); } to { transform: translateY(100%); } }

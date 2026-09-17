@@ -114,7 +114,7 @@
     var s = $('strap');
     s.classList.toggle('is-ct', ct);
     s.classList.toggle('is-t', !ct);
-    s.classList.toggle('is-cam', ctx.liveCam);
+    s.classList.toggle('is-cam', !!ctx.liveCam || ctx.options.avatars !== false);
     $('cam-inner').style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(assets/agents-' + (ct ? 'ct' : 't') + '.png)' : 'none';
 
     $('op-team').textContent = ct

@@ -134,7 +134,6 @@ window.ProtokolCore = (function () {
     imgEl.dataset.map = mapKey;
     var chain = [
       'assets/radars/simpleradar/' + mapKey + '.webp',
-      'assets/radars/ingame/' + mapKey + '.webp',
       'assets/radar-maps-clean/' + mapKey + '.png'
     ];
     var i = 0;

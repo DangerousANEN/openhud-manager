@@ -1,6 +1,10 @@
 /* Camera states distinguish iframe load from actual decoded video. */
 #cam-inner { background-size: cover; background-position: center; }
 #cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
+/* Agent art is an explicit fallback, never a pretend live feed. */
+#cam-inner[data-camera-state="unconfigured"] { background-size: contain; background-position: center bottom; background-repeat: no-repeat; }
+#cam-inner[data-camera-state="unconfigured"]::before { content: "AGENT"; }
+#cam-inner[data-camera-state="unconfigured"]::after { content: ""; }
 #cam-inner[data-camera-state="external"] { background: transparent; }
 #cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
 #cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
@@ -162,14 +166,14 @@ body {
   /* original radar anchor: top-left corner */
   position: absolute; top: 0; left: 0;
   width: 48rem;
-  background: var(--panel);
-  border-radius: 3px; overflow: hidden;
-  box-shadow: 0 .5rem 2rem rgba(0, 0, 0, .45);
+  background: transparent;
+  border-radius: 0; overflow: hidden;
+  box-shadow: none;
 }
 .inset-bar {
   display: flex; align-items: center; justify-content: space-between;
   padding: .4rem .9rem; height: 2.6rem;
-  background: rgba(0, 0, 0, .5);
+  background: transparent;
   font-size: 1.15rem; letter-spacing: .16em; color: var(--dim);
 }
 .inset-live { color: #ff4d4d; letter-spacing: .1em; }
