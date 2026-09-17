@@ -451,7 +451,7 @@
 
         <p style="font-size: 24px; color: var(--text-secondary); max-width: 1200px; line-height: 1.45;">
           Автономный нативный комбайн управления трансляциями Counter-Strike 2:
-          сверхбыстрый скомпилированный движок, три независимых стиля оверлеев и автоматический фокус веб-камер игроков по SteamID64.
+          скомпилированный движок, три независимых стиля оверлеев и автоматический фокус веб-камер игроков по SteamID64.
         </p>
 
         <div class="hero-badge-row">
@@ -460,23 +460,23 @@
             <div class="hero-badge-val">Rust + Tauri v2</div>
           </div>
           <div class="hero-badge green">
-            <div class="hero-badge-label">Потребление RAM</div>
-            <div class="hero-badge-val">30–60 MB RAM</div>
+            <div class="hero-badge-label">База данных</div>
+            <div class="hero-badge-val">SQLite WAL</div>
           </div>
           <div class="hero-badge blue">
-            <div class="hero-badge-label">Частота синхронизации</div>
-            <div class="hero-badge-val">60 Hz Realtime WS</div>
+            <div class="hero-badge-label">Телеметрия CS2</div>
+            <div class="hero-badge-val">Realtime WebSocket</div>
           </div>
           <div class="hero-badge">
             <div class="hero-badge-label">Форм-фактор</div>
-            <div class="hero-badge-val">Автономный .exe</div>
+            <div class="hero-badge-val">Tauri Desktop App</div>
           </div>
         </div>
       </div>
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Турнирный комплекс CS2</span>
         </div>
@@ -487,7 +487,7 @@
     <!-- ====================================================================
          SLIDE 2: POSITIONING & COMPARISON
          ==================================================================== -->
-    <div class="slide" data-slide="2" data-notes="Инженерное и финансовое обоснование. LHM и EideticHM создают риски сбоев во время стрима из-за утечек памяти. PROTOKOL снижает нагрузку на систему вещания на 80-85% и запускается из одного автономного файла.">
+    <div class="slide" data-slide="2" data-notes="Инженерное и функциональное обоснование. В отличие от legacy-решений, PROTOKOL объединяет прием GSI, SQLite-хранилище и управление вещанием в едином нативном приложении с автоматической настройкой конфигов CS2.">
       <div class="slide-header">
         <div class="kicker">Позиционирование и ценность</div>
         <h2 class="slide-title">Преодоление ограничений устаревших HUD-решений</h2>
@@ -513,16 +513,10 @@
                 <td class="highlight"><span class="tag-val tag-cyan">Tauri v2 + Rust</span></td>
               </tr>
               <tr>
-                <td><strong>Потребление RAM</strong></td>
-                <td><span class="tag-val tag-red">300–500 MB (утечки)</span></td>
-                <td>150–250 MB</td>
-                <td class="highlight"><span class="tag-val tag-green">30–60 MB RAM</span></td>
-              </tr>
-              <tr>
-                <td><strong>Размер сборки</strong></td>
-                <td>~220 MB</td>
-                <td>Зависит от npm</td>
-                <td class="highlight"><span class="tag-val tag-green">~18.8 MB (один .exe)</span></td>
+                <td><strong>Конфигурация GSI</strong></td>
+                <td>Ручная правка cfg</td>
+                <td>Ручное копирование</td>
+                <td class="highlight"><span class="tag-val tag-green">Автогенерация из GUI</span></td>
               </tr>
               <tr>
                 <td><strong>Сетевой движок</strong></td>
@@ -548,15 +542,15 @@
 
         <div style="display: flex; flex-direction: column; gap: 20px;">
           <div class="card card-accent-gold">
-            <h3 style="font-size: 18px; font-weight: 700; color: var(--gold-primary); margin-bottom: 8px;">Безотказность на длинных матчах</h3>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--gold-primary); margin-bottom: 8px;">Скомпилированное нативное ядро</h3>
             <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.45;">
-              Нативное Rust-ядро исключает утечки памяти Chromium и гарантирует стабильную частоту кадров в OBS даже при многочасовых турнирных марафонах (BO3/BO5).
+              Бэкенд на Rust с Axum и асинхронным рантаймом Tokio обеспечивает надежную обработку телеметрии без внешнего интерпретатора Node.js.
             </p>
           </div>
           <div class="card card-accent-blue">
-            <h3 style="font-size: 18px; font-weight: 700; color: var(--blue-broadcast); margin-bottom: 8px;">Полная автономность (Zero Dependency)</h3>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--blue-broadcast); margin-bottom: 8px;">Единый настольный комплекс</h3>
             <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.45;">
-              Никаких установок Node.js, Python или пакетных менеджеров на вещательных ПК. Один скомпилированный бинарник разворачивает всю инфраструктуру за 1 секунду.
+              Tauri v2 объединяет интерфейс оператора, прием GSI, хранилище SQLite и отдачу оверлеев в единое настольное приложение.
             </p>
           </div>
           <div class="card card-accent-cyan">
@@ -570,7 +564,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Сравнительная матрица решений</span>
         </div>
@@ -581,7 +575,7 @@
     <!-- ====================================================================
          SLIDE 3: HUD 1 - CYBER
          ==================================================================== -->
-    <div class="slide" data-slide="3" data-notes="Стиль Fennec Cyber. Особенность: агрессивная, молодежная геометрия. Скриншот показывает тестовый видеопоток (SMPTE-таймкод) в окне камеры. В реальном матче при наведении спектатора на игрока здесь мгновенно активируется его веб-камера.">
+    <div class="slide" data-slide="3" data-notes="Стиль Fennec Cyber. Особенность: энергичная киберспортивная геометрия. Скриншот показывает тестовый видеопоток (SMPTE-таймкод) в окне камеры. При переключении спектатора на игрока в оверлее активируется привязанная веб-камера.">
       <div class="slide-header">
         <div class="kicker" style="color: var(--cyan-cyber);">Стиль HUD 01  •  Киберспорт и стриминг</div>
         <h2 class="slide-title">Fennec Cyber: Футуристичный Sci-Fi и неон</h2>
@@ -621,7 +615,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Каталог оверлеев</span>
         </div>
@@ -663,7 +657,7 @@
               <div class="feature-desc">Глубокий кобальтовый синий <code>#1a56db</code> (CT) и теплый янтарный оранжевый <code>#f59e0b</code> (T).</div>
             </li>
             <li class="feature-item">
-              <div class="feature-label blue">Мгновенная считываемость</div>
+              <div class="feature-label blue">Высокая считываемость</div>
               <div class="feature-desc">Крупные цифры здоровья, индикация патронов, статусы разминирования (DEFUSE) и утилит команд.</div>
             </li>
           </ul>
@@ -672,7 +666,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Каталог оверлеев</span>
         </div>
@@ -723,7 +717,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Каталог оверлеев</span>
         </div>
@@ -774,7 +768,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Видео-инженерия</span>
         </div>
@@ -808,7 +802,7 @@
               <div class="feature-desc">Менеджер самостоятельно находит директорию игры в реестре Windows и генерирует <code>gamestate_integration_protokol.cfg</code>.</div>
             </li>
             <li class="feature-item">
-              <div class="feature-label blue">2. Мгновенная смена активного HUD</div>
+              <div class="feature-label blue">2. Быстрая смена активного HUD</div>
               <div class="feature-desc">Переключение стилей оформления в один клик без перезагрузки браузерного источника в OBS Studio.</div>
             </li>
             <li class="feature-item">
@@ -825,7 +819,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Режиссёрский пульт</span>
         </div>
@@ -836,11 +830,11 @@
     <!-- ====================================================================
          SLIDE 8: DATA FLOW & ARCHITECTURE
          ==================================================================== -->
-    <div class="slide" data-slide="8" data-notes="Архитектурная надежность. Разделение ответственности: быстрый сетевой GSI-парсинг на Rust, трансляция по WebSocket на 60 FPS, изолированная запись в SQLite WAL.">
+    <div class="slide" data-slide="8" data-notes="Архитектурная надежность. Разделение ответственности: сетевой GSI-приемник на Rust Axum, раздача событий по WebSocket в оверлеи и асинхронное сохранение сессий в SQLite WAL.">
       <div class="slide-header">
-        <div class="kicker" style="color: var(--cyan-cyber);">Инженерия и надежность  •  High Performance</div>
+        <div class="kicker" style="color: var(--cyan-cyber);">Инженерия и архитектура</div>
         <h2 class="slide-title">Архитектура сквозного конвейера данных (Data Flow)</h2>
-        <p class="slide-subtitle">Субмиллисекундная обработка пакетов Valve CS2 GSI и векторный радар на 18 соревновательных карт</p>
+        <p class="slide-subtitle">Обработка пакетов Valve CS2 GSI и векторный радар на 18 соревновательных карт</p>
       </div>
 
       <div class="slide-body grid-3col">
@@ -851,7 +845,7 @@
           <ul class="feature-list" style="gap: 14px;">
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">Слушатель Axum 0.7</div>
-              <div class="feature-desc">HTTP-приемник пакетов Valve Source Engine с частотой 10–60 раз в секунду на порту :1349.</div>
+              <div class="feature-desc">HTTP-приемник пакетов Valve Source Engine по спецификации GSI на порту :1349.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">Совместимый порт-мост</div>
@@ -871,15 +865,15 @@
           <ul class="feature-list" style="gap: 14px;">
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">In-Memory State (Tokio)</div>
-              <div class="feature-desc">Атомарный MatchSnap обновляется в оперативной памяти без взаимных блокировок.</div>
+              <div class="feature-desc">Атомарное обновление структуры MatchSnap в асинхронном рантайме.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">SQLite в режиме WAL</div>
-              <div class="feature-desc">Write-Ahead Logging гарантирует сохранность истории раундов и статистики без задержек ввода-вывода.</div>
+              <div class="feature-desc">Асинхронные задачи Tokio для записи истории раундов без блокировки сетевого цикла.</div>
             </li>
             <li class="feature-item">
-              <div class="feature-label" style="font-size: 15px;">Память 30–60 МБ</div>
-              <div class="feature-desc">Отсутствие утечек памяти на длительных дистанциях турнирных серий.</div>
+              <div class="feature-label" style="font-size: 15px;">Компактный бинарник</div>
+              <div class="feature-desc">Легковесный нативный стек без накладных расходов виртуальной машины JS.</div>
             </li>
           </ul>
         </div>
@@ -890,12 +884,12 @@
           </div>
           <ul class="feature-list" style="gap: 14px;">
             <li class="feature-item">
-              <div class="feature-label" style="font-size: 15px;">Tokio WebSocket 60 Hz</div>
-              <div class="feature-desc">Мгновенный broadcast обновлений в оверлеи OBS Studio с минимальной латентностью.</div>
+              <div class="feature-label" style="font-size: 15px;">WebSocket Broadcast (Realtime)</div>
+              <div class="feature-desc">Событийная рассылка данных матча в оверлеи OBS Studio по локальному сокету.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">Векторный радар (18 карт)</div>
-              <div class="feature-desc">Удален черный фон: прозрачный альфа-канал с неоновым контурным свечением.</div>
+              <div class="feature-desc">Удален черный фон: прозрачный альфа-канал с контурным неоновым свечением.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label" style="font-size: 15px;">Точные мировые координаты</div>
@@ -907,7 +901,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Архитектура потоков данных</span>
         </div>
@@ -918,7 +912,7 @@
     <!-- ====================================================================
          SLIDE 9: VERIFICATION & HONEST DISCLOSURE
          ==================================================================== -->
-    <div class="slide" data-slide="9" data-notes="Прозрачный статус контроля качества. Инженерная честность повышает доверие руководства: мы четко фиксируем, что доказано автотестами, а что требует финальной приемочной проверки на Windows-машине режиссера.">
+    <div class="slide" data-slide="9" data-notes="Прозрачный статус контроля качества. Инженерная честность: четко фиксируем, что доказано автотестами (36 тестов библиотеки, 5 тестов хранилища, 33 backend E2E), а что требует приемки на физической Windows-машине и в боевой CS2 турнирной сессии.">
       <div class="slide-header">
         <div class="kicker" style="color: var(--green-verified);">Контроль качества  •  Verification Evidence</div>
         <h2 class="slide-title">Честный статус готовности релизных компонентов</h2>
@@ -945,7 +939,7 @@
             </li>
             <li class="feature-item">
               <div class="feature-label green">Бэкенд-инженерия</div>
-              <div class="feature-desc">33 E2E теста бэкенда пройдены успешно; 31 модульный тест Rust и 5 интеграционных тестов SQLite выполнены без ошибок.</div>
+              <div class="feature-desc">33 E2E теста бэкенда пройдены успешно; 36 модульных тестов библиотеки и 5 интеграционных тестов camera_storage выполнены без ошибок.</div>
             </li>
           </ul>
         </div>
@@ -956,16 +950,16 @@
           </div>
           <ul class="feature-list" style="gap: 16px;">
             <li class="feature-item">
-              <div class="feature-label" style="color: var(--amber-warn);">Windows Runtime верификация</div>
-              <div class="feature-desc">Бинарник <code>protokol-hud-manager.exe</code> (18.8 МБ) и установщик NSIS (114 МБ) собраны; PE-заголовки и SHA-256 проверены. Финальный запуск с системным WebView2 запланирован на физической Windows-машине.</div>
+              <div class="feature-label" style="color: var(--amber-warn);">Windows Native GUI Signoff</div>
+              <div class="feature-desc">Бинарник <code>protokol-hud-manager.exe</code> (18.8 МБ) и установщик NSIS (114 МБ) собраны и проверены по SHA-256; запуск нативного GUI Windows находится в статусе ожидания финального signoff.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label" style="color: var(--amber-warn);">Синтетические видеопотоки</div>
-              <div class="feature-desc">Текущие скриншоты оверлеев зафиксированы на сгенерированных тест-паттернах (SMPTE таймкод), а не живых турнирных вебкамерах.</div>
+              <div class="feature-desc">Текущие скриншоты оверлеев зафиксированы на сгенерированных тест-паттернах (SMPTE таймкод); сквозная турнирная сессия CS2 в боевых условиях пока не подтверждена.</div>
             </li>
             <li class="feature-item">
-              <div class="feature-label" style="color: var(--amber-warn);">Отсутствие вымышленных заявлений</div>
-              <div class="feature-desc">В релизных материалах исключены нереалистичные бенчмарки и маркетинговые формулировки вроде «Major certified».</div>
+              <div class="feature-label" style="color: var(--amber-warn);">Отсутствие невалидированных бенчмарков</div>
+              <div class="feature-desc">В релизных материалах исключены неподтвержденные бенчмарки RAM и задержек, а также громкие маркетинговые статусы. Версия приложения — 0.1.0.</div>
             </li>
           </ul>
         </div>
@@ -973,7 +967,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>Протокол верификации</span>
         </div>
@@ -984,7 +978,7 @@
     <!-- ====================================================================
          SLIDE 10: STRATEGIC SUMMARY & ROADMAP
          ==================================================================== -->
-    <div class="slide" data-slide="10" data-notes="Финальное резюме для принятия решения. Продукт готов к пилотному турнирному запуску. Сформулированы понятные шаги дальнейшего технологического лидерства.">
+    <div class="slide" data-slide="10" data-notes="Финальное резюме. Зафиксированы подтвержденные возможности версии 0.1.0, границы текущей верификации и практический план дальнейшего развития продукта.">
       <div class="slide-header">
         <div class="kicker">Итоги и дорожная карта  •  Strategic Vision</div>
         <h2 class="slide-title">Готовность к внедрению и вектор технологического развития</h2>
@@ -998,8 +992,8 @@
           </div>
           <ul class="feature-list" style="gap: 16px;">
             <li class="feature-item">
-              <div class="feature-label gold">Снижение риска срыва эфира</div>
-              <div class="feature-desc">Минимальный след по оперативной памяти (30–60 МБ) и отсутствие тяжелого фонового рантайма гарантируют стабильность.</div>
+              <div class="feature-label gold">Снижение риска сбоев эфира</div>
+              <div class="feature-desc">Отказ от внешнего рантайма Node.js и тяжелых промежуточных сервисов в пользу скомпилированного нативного бэкенда.</div>
             </li>
             <li class="feature-item">
               <div class="feature-label gold">Премиальная картинка вещания</div>
@@ -1018,7 +1012,7 @@
 
         <div class="card card-accent-cyan">
           <div style="font-size: 14px; font-weight: 700; color: var(--cyan-cyber); text-transform: uppercase; margin-bottom: 16px;">
-            ➔ Дорожная карта развития (Roadmap v2.1+)
+            ➔ Дорожная карта развития (Roadmap v0.2+)
           </div>
           <ul class="feature-list" style="gap: 16px;">
             <li class="feature-item">
@@ -1043,7 +1037,7 @@
 
       <div class="slide-footer">
         <div class="footer-left">
-          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>PROTOKOL HUD Manager v0.1.0</span>
           <span>•</span>
           <span>План внедрения и развития</span>
         </div>
