@@ -153,6 +153,8 @@ impl GsiState {
             "ct_name": snap.ct_name,
             "t_name": snap.t_name,
             "bomb": snap.bomb,
+            "bomb_state": snap.bomb_state,
+            "bomb_countdown": snap.bomb_countdown,
             "round_time": snap.round_time,
             "ct_loss_streak": snap.ct_loss_streak,
             "t_loss_streak": snap.t_loss_streak,

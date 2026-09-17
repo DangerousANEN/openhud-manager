@@ -64,6 +64,22 @@ body {
   min-width: 12rem; text-align: center;
 }
 .bug-clock { font-size: 2.6rem; font-weight: 700; line-height: 1; }
+.bug-clock.hidden { display: none !important; }
+/* C4 countdown replaces the clock during the bomb phase (TV standard). */
+.bomb-timer {
+  position: relative; font-size: 2.6rem; font-weight: 700; line-height: 1;
+  min-width: 5.6rem; text-align: center; padding: .2rem .6rem .5rem;
+  border-radius: 2px; overflow: hidden;
+}
+.bomb-timer b { position: relative; z-index: 1; }
+.bomb-timer i { position: absolute; left: 0; bottom: 0; height: .6rem; transition: width .25s linear; }
+.bomb-timer.c4-safe b, .bomb-timer.c4-safe i { color: #2fe36b; }
+.bomb-timer.c4-safe i { background: #2fe36b; }
+.bomb-timer.c4-warn b { color: #f5c518; }
+.bomb-timer.c4-warn i { background: #f5c518; }
+.bomb-timer.c4-crit b { color: #ff3b30; }
+.bomb-timer.c4-crit i { background: #ff3b30; animation: c4-pulse .5s steps(2, jump-none) infinite; }
+@keyframes c4-pulse { 0% { opacity: 1; } 100% { opacity: .35; } }
 .bug-round { font-size: 1.2rem; letter-spacing: .2em; color: var(--dim); }
 
 /* ══════════ ECONOMY STRIP ══════════ round flow + team money */

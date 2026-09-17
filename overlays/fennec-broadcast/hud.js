@@ -189,6 +189,18 @@
     flow.textContent = ctAlive + ' CT  ·  ALIVE  ·  ' + tAlive + ' T';
     flow.className = 'alive-line';
 
+    var planted = (s.bomb_state || '') === 'planted' || phase === 'bomb';
+    var bombEl = $('bomb-timer');
+    if (bombEl) {
+      show(bombEl, planted);
+      if (planted) {
+        var left = Math.max(0, Math.floor(Number(s.bomb_countdown) || 0));
+        bombEl.innerHTML = '<b>' + left + '</b><i style="width:' + (left / 40 * 100) + '%"></i>';
+        bombEl.className = 'bomb-timer' + (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe');
+      }
+    }
+    show($('clock'), !planted);
+
     $('ct-rows').innerHTML = ctx.ct.map(function (p) {
       return rowHtml(p, 'ct', s.focused_steamid, showMoney);
     }).join('');
