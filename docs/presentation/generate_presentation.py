@@ -1081,6 +1081,48 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         "Чек-лист и типовые сценарии устранения неполадок обеспечивают готовность технической бригады к любым инцидентам."
     )
 
+    # ------------------------------------------------------------------
+    # Final fit pass: estimate every text frame's required height and apply
+    # normAutofit fontScale/shrink so no text spills past its card bounds.
+    # Deterministic: scale = sqrt(avail/need), floored at 55%.
+    # -------------------------------------------------------------------------
+    from pptx.oxml.ns import qn
+    import math as _math
+    EMU_IN = 914400.0
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if not shape.has_text_frame or not shape.width or not shape.height:
+                continue
+            tf = shape.text_frame
+            w_in, h_in = shape.width / EMU_IN, shape.height / EMU_IN
+            if w_in <= 0.4 or h_in <= 0.4 or not tf.text.strip():
+                continue
+            lines = 0.0
+            max_fs = 0.0
+            for para in tf.paragraphs:
+                fs = next((r.font.size.pt for r in para.runs if r.font.size), None) or 14
+                max_fs = max(max_fs, fs)
+                text = ''.join(r.text for r in para.runs)
+                if not text.strip():
+                    lines += 1
+                    continue
+                cpl = max(8, int(144.0 * w_in / fs * 0.88))
+                lines += _math.ceil(len(text) / cpl)
+            if max_fs == 0:
+                continue
+            need_in = lines * max_fs * 1.3 / 72.0
+            if need_in <= h_in * 1.02:
+                continue
+            scale = max(55, min(100, int(h_in / need_in * 100)))
+            bodyPr = tf._txBody.find(qn('a:bodyPr'))
+            for old in bodyPr.findall(qn('a:normAutofit')):
+                bodyPr.remove(old)
+            fit = bodyPr.makeelement(qn('a:normAutofit'), {})
+            fit.set('fontScale', str(int(scale * 1000)))
+            fit.set('lnSpcReduction', '10000')
+            # keep spatial padding after autofit element
+            children = list(bodyPr)
+            bodyPr.insert(0, fit) if not children else bodyPr.append(fit)
     prs.save(out_path)
     print(f"Presentation saved successfully: {out_path}")
 
