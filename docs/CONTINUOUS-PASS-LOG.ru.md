@@ -30,6 +30,16 @@
   - E2E `broadcast_bomb_e2e.py`: 4/4 через реальный GSI→WS→HUD
     (40/12/3.5s + скрыт на live), ширина заливки asserted (±2%), 0 ошибок браузера.
   - Регрессии зелены: broadcast_clock 10/10, alive 3/3, agent_radar 3/3, camera_e2e 3/3.
+- **Цикл 0c — Score rollover (коммит `8b387e5`):** E2E смены счёта 8→9 через фазу
+  `over` (R12→R13): сервер /api/state, WS-payload и DOM сходятся, 0 ошибок.
+- **Цикл 0d — Gap-аудит (коммит `ce6cf5e`):** docs/PRODUCTION-GAPS.ru.md —
+  7 честных гэпов (P0/P1/P2) без выдачи существующего за отсутствующее.
+- **Цикл 0e — SIGNAL LOST watchdog (коммит `9c22561`, гэп #1 закрыт):**
+  - core.js: watchdog по УНИКАЛЬНОМУ updated_at — локальные перерисовки
+    последнего снапшота (loadConfig тик каждые 5с) НЕ маскируют тишину GSI.
+  - Бейдж «SIGNAL LOST» (мигающий, центр) в Broadcast; E2E: тишина 14с → бейдж
+    виден, новый кадр → скрыт, 0 ошибок страницы. Регрессии зелены
+    (bomb 4/4, alive 3/3, score 3/3, clock 10/10).
 - Урок: smoke-сервер поднимать только через `terminal(background=true)`;
   внутри составных команд процесс умирает с shell (SIGTERM, exit 143).
 
