@@ -1,17 +1,17 @@
 {
   "presentation_title": "PROTOKOL HUD Manager Executive Presentation",
   "version": "0.1.0",
-  "date": "2026-09-17",
+  "date": "2026-09-18",
   "language": "ru",
-  "slides_count": 10,
+  "slides_count": 13,
   "aspect_ratio": "16:9",
   "resolution": "1920x1080",
   "assets": {
     "mark": "assets/protokol-mark.png",
-    "cyber_hud": "assets/fennec-cyber-video.png",
-    "broadcast_hud": "assets/fennec-broadcast-video.png",
-    "championship_hud": "assets/championship-names-fixed.png",
-    "championship_hud_alt": "assets/fennec-championship-video.png",
+    "cyber_hud": "assets/fennec-cyber-agent-transparent.png",
+    "broadcast_hud": "assets/fennec-broadcast-agent-transparent.png",
+    "championship_hud": "assets/fennec-championship-agent-transparent.png",
+    "championship_hud_alt": "assets/championship-names-fixed.png",
     "manager_desktop": "assets/manager-desktop.png",
     "manager_camera_preview": "assets/manager-camera-preview.png"
   },

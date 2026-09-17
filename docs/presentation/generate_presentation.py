@@ -22,10 +22,10 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 IMAGE_PATHS = {
     "mark": os.path.join(ASSETS_DIR, "protokol-mark.png"),
-    "cyber": os.path.join(ASSETS_DIR, "fennec-cyber-video.png"),
-    "broadcast": os.path.join(ASSETS_DIR, "fennec-broadcast-video.png"),
-    "championship": os.path.join(ASSETS_DIR, "championship-names-fixed.png"),
-    "championship_orig": os.path.join(ASSETS_DIR, "fennec-championship-video.png"),
+    "cyber": os.path.join(ASSETS_DIR, "fennec-cyber-agent-transparent.png"),
+    "broadcast": os.path.join(ASSETS_DIR, "fennec-broadcast-agent-transparent.png"),
+    "championship": os.path.join(ASSETS_DIR, "fennec-championship-agent-transparent.png"),
+    "championship_orig": os.path.join(ASSETS_DIR, "championship-names-fixed.png"),
     "manager_desktop": os.path.join(ASSETS_DIR, "manager-desktop.png"),
     "manager_preview": os.path.join(ASSETS_DIR, "manager-camera-preview.png"),
 }
@@ -90,7 +90,7 @@ def add_header(slide, kicker_text, title_text, subtitle_text="", kicker_color=CO
         p_sub.font.size = Pt(11)
         p_sub.font.color.rgb = COLOR_TEXT_MUTED
 
-def add_footer(slide, current_slide, total_slides=10):
+def add_footer(slide, current_slide, total_slides=13):
     line = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(7.0), Inches(11.733), Inches(0.012))
     line.fill.solid()
     line.fill.fore_color.rgb = COLOR_BORDER
@@ -224,7 +224,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         p2.font.color.rgb = COLOR_TEXT_PRIMARY
         bx += 2.75
 
-    add_footer(s1, 1, 10)
+    add_footer(s1, 1, 13)
     s1.notes_slide.notes_text_frame.text = (
         "Слайд 1: Представление продукта PROTOKOL HUD Manager для руководства турнира и технического директора. "
         "Ключевая цель — независимость от тяжелых legacy решений, полная стабильность и премиальный ТВ-визуал."
@@ -319,7 +319,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         p2.font.color.rgb = COLOR_TEXT_MUTED
         py += 1.75
 
-    add_footer(s2, 2, 10)
+    add_footer(s2, 2, 13)
     s2.notes_slide.notes_text_frame.text = (
         "Слайд 2: Инженерное и функциональное обоснование. В отличие от legacy-решений, PROTOKOL объединяет прием GSI, "
         "SQLite-хранилище и управление вещанием в едином нативном приложении с автоматической настройкой конфигов CS2."
@@ -337,7 +337,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
 
     # Left: Screenshot
     add_image_with_frame(s3, IMAGE_PATHS["cyber"], Inches(0.8), Inches(1.75), Inches(7.5), Inches(4.22),
-                         "Демонстрация с тестовым паттерном видеопотока (1920×1080). В продакшне окно занимает живая камера игрока.",
+                         "Оверлей 1080p: прозрачный радар, статический 2D-фолбэк агента CT/T (не вебкамера).",
                          COLOR_CYAN)
 
     # Right: Specifications card
@@ -349,8 +349,8 @@ def build_presentation(out_path="protokol-presentation.pptx"):
     items_cyber = [
         ("Геометрия", "Скошенные полигональные углы (clip-path: 45°), кибер-сетка и эффект динамического свечения элементов."),
         ("Цветовая схема", "Неоновый циан (#00f0ff) для спецназа (CT) и неоновый пурпур/розовый (#ff007f) для террористов (T)."),
-        ("Окно веб-камеры", "Встроенная скошенная 16:9 окантовка с бейджем «LIVE CAM» над плашкой активного игрока."),
-        ("Векторный радар", "Чистые неоновые контуры карты CS2 без громоздкого черного фонового квадрата."),
+        ("Окно веб-камеры", "Встроенная скошенная 16:9 окантовка с бейджем «LIVE CAM». При отсутствии камеры отображается статический агент."),
+        ("Векторный радар", "Чистые неоновые контуры карты CS2 без громоздкого черного фонового квадрата (альфа-прозрачность)."),
         ("Назначение", "Молодежные лиги, шоу-матчи, стримерские турниры, вечерние киберспортивные трансляции.")
     ]
 
@@ -370,11 +370,11 @@ def build_presentation(out_path="protokol-presentation.pptx"):
             p_space.text = ""
             p_space.font.size = Pt(3)
 
-    add_footer(s3, 3, 10)
+    add_footer(s3, 3, 13)
     s3.notes_slide.notes_text_frame.text = (
         "Слайд 3: Стиль Fennec Cyber. Особенность: энергичная киберспортивная геометрия. "
-        "Скриншот показывает тестовый видеопоток (SMPTE-таймкод) в окне камеры. "
-        "При переключении спектатора на игрока в оверлее активируется привязанная веб-камера."
+        "Скриншот демонстрирует прозрачный радар и статический 2D-фолбэк агента спецназа (SAS/CT) при отсутствии активной веб-камеры "
+        "(не является видеопотоком камеры, без имитации игрового фона). При подключении камеры окно бесшовно занимает живой видеопоток."
     )
 
     # =========================================================================
@@ -389,7 +389,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
 
     # Left: Screenshot
     add_image_with_frame(s4, IMAGE_PATHS["broadcast"], Inches(0.8), Inches(1.75), Inches(7.5), Inches(4.22),
-                         "Эталонный лейаут пака: центрированная камера, разряженная верстка, нулевой клиппинг.",
+                         "Студийный оверлей: прозрачная миникарта, статический агент CT/T в фокусе (не вебкамера).",
                          COLOR_BLUE)
 
     # Right: Specifications card
@@ -422,10 +422,11 @@ def build_presentation(out_path="protokol-presentation.pptx"):
             p_space.text = ""
             p_space.font.size = Pt(3)
 
-    add_footer(s4, 4, 10)
+    add_footer(s4, 4, 13)
     s4.notes_slide.notes_text_frame.text = (
         "Слайд 4: Fennec Broadcast — эталонный пак по чистоте верстки. "
-        "В визуальных тестах подтверждено отсутствие коллизий и аккуратное центрирование камеры над карточкой фокуса."
+        "На скриншоте показан прозрачный радар и статический 2D-фолбэк агента террористов при отсутствии видеопотока "
+        "(не вебкамера, без наложения фейкового геймплея). Аккуратное центрирование камеры над карточкой фокуса."
     )
 
     # =========================================================================
@@ -440,7 +441,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
 
     # Left: Screenshot
     add_image_with_frame(s5, IMAGE_PATHS["championship"], Inches(0.8), Inches(1.75), Inches(7.5), Inches(4.22),
-                         "Актуальный рендер: подтвержденная однострочная посадка длинных никнеймов (10 игроков).",
+                         "Золотой HUD: прозрачный радар, однострочные ростеры, статический агент CT/T (не вебкамера).",
                          COLOR_GOLD)
 
     # Right: Specifications card
@@ -473,11 +474,10 @@ def build_presentation(out_path="protokol-presentation.pptx"):
             p_space.text = ""
             p_space.font.size = Pt(3)
 
-    add_footer(s5, 5, 10)
+    add_footer(s5, 5, 13)
     s5.notes_slide.notes_text_frame.text = (
-        "Слайд 5: Стиль Championship. Подчеркнуть честный статус: в ходе тестирования была проверена "
-        "геометрия ростеров при длинных никнеймах (ELECTRONIC, PLAYERT HREE и др.). "
-        "Инструментальные замеры Range.getClientRects подтвердили стабильную однострочную верстку."
+        "Слайд 5: Стиль Championship. Скриншот фиксирует прозрачный радар и статический 2D-фолбэк агента спецназа (SAS) "
+        "вместо видеопотока веб-камеры (без фейкового фона геймплея). Подтверждена стабильная однострочная верстка ростеров при длинных никнеймах игроков."
     )
 
     # =========================================================================
@@ -527,10 +527,10 @@ def build_presentation(out_path="protokol-presentation.pptx"):
             p_space.text = ""
             p_space.font.size = Pt(3)
 
-    add_footer(s6, 6, 10)
+    add_footer(s6, 6, 13)
     s6.notes_slide.notes_text_frame.text = (
         "Слайд 6: Архитектура вебкамер. Главное преимущество — оверлей никогда не выглядит сломанным или пустым. "
-        "Если физической камеры нет, зритель видит агента. Если камера подключена — она идеально встает в вырез."
+        "Если физической камеры нет, зритель видит статический аватар агента CS2 (надежный фолбэк). Если камера подключена — она идеально встает в вырез."
     )
 
     # =========================================================================
@@ -580,7 +580,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
             p_space.text = ""
             p_space.font.size = Pt(3)
 
-    add_footer(s7, 7, 10)
+    add_footer(s7, 7, 13)
     s7.notes_slide.notes_text_frame.text = (
         "Слайд 7: Рабочий процесс оператора трансляции. "
         "Продукт избавляет оператора от работы с консолями, конфигами вручную или перезапусками игры."
@@ -668,7 +668,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         p_b.font.size = Pt(9.5)
         p_b.font.color.rgb = COLOR_TEXT_SECONDARY
 
-    add_footer(s8, 8, 10)
+    add_footer(s8, 8, 13)
     s8.notes_slide.notes_text_frame.text = (
         "Слайд 8: Архитектурная надежность. Разделение ответственности: сетевой GSI-приемник на Rust Axum, "
         "раздача событий по WebSocket в оверлеи и асинхронное сохранение сессий в SQLite WAL."
@@ -748,7 +748,7 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         p_d.font.size = Pt(9)
         p_d.font.color.rgb = COLOR_TEXT_SECONDARY
 
-    add_footer(s9, 9, 10)
+    add_footer(s9, 9, 13)
     s9.notes_slide.notes_text_frame.text = (
         "Слайд 9: Прозрачный статус контроля качества. "
         "Инженерная честность: четко фиксируем, что доказано автотестами (36 тестов библиотеки, 5 тестов хранилища, 33 backend E2E), "
@@ -824,10 +824,261 @@ def build_presentation(out_path="protokol-presentation.pptx"):
         p_d.font.size = Pt(9)
         p_d.font.color.rgb = COLOR_TEXT_SECONDARY
 
-    add_footer(s10, 10, 10)
+    add_footer(s10, 10, 13)
     s10.notes_slide.notes_text_frame.text = (
         "Слайд 10: Финальное резюме. Зафиксированы подтвержденные возможности версии 0.1.0, "
         "границы текущей верификации и практический план дальнейшего развития продукта."
+    )
+
+    # =========================================================================
+    # SLIDE 11: INSTALLATION, RUN & CS2 GSI INTEGRATION
+    # =========================================================================
+    s11 = prs.slides.add_slide(blank_layout)
+    set_slide_background(s11, COLOR_BG)
+    add_header(s11, "Развёртывание и телеметрия  •  Practical Onboarding",
+               "Установка, запуск и интеграция CS2 GSI",
+               "Развёртывание бинарника v0.1.0, авто-конфигурация CS2 cfg и ключевое разделение потоков наблюдателя",
+               COLOR_CYAN)
+
+    # Box 1: Ingestion & Launch
+    c11_1 = add_card(s11, Inches(0.8), Inches(1.75), Inches(3.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_11_1 = s11.shapes.add_textbox(Inches(1.0), Inches(1.95), Inches(3.3), Inches(4.5))
+    tf_11_1 = tb_11_1.text_frame
+    tf_11_1.word_wrap = True
+    p = tf_11_1.paragraphs[0]
+    p.text = "1. ЗАПУСК И ПУТИ ДАННЫХ"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_CYAN
+
+    items_11_1 = [
+        ("Бинарник", "Запуск protokol-hud-manager.exe (18.8 МБ). SmartScreen: «Подробнее» → «Выполнить в любом случае»."),
+        ("База данных SQLite WAL", "Автосоздание рабочей БД %APPDATA%\\PROTOKOL HUD\\protokol.db со всеми таблицами при старте."),
+        ("Сетевой порт ядра :1349", "HTTP/WebSocket сервер слушает http://127.0.0.1:1349 с автоперебором fallback-портов до :1359."),
+        ("Каталог оверлеев", "Паки раздаются строго из %APPDATA%\\PROTOKOL HUD\\overlays\\ по URL /overlay/<pack>/."),
+    ]
+    for label, desc in items_11_1:
+        p_l = tf_11_1.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_CYAN
+        p_d = tf_11_1.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    # Box 2: CS2 GSI Config
+    c11_2 = add_card(s11, Inches(4.8), Inches(1.75), Inches(3.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_11_2 = s11.shapes.add_textbox(Inches(5.0), Inches(1.95), Inches(3.3), Inches(4.5))
+    tf_11_2 = tb_11_2.text_frame
+    tf_11_2.word_wrap = True
+    p = tf_11_2.paragraphs[0]
+    p.text = "2. КОНФИГУРАЦИЯ CS2 GSI"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_GOLD
+
+    items_11_2 = [
+        ("Автопоиск каталога CS2", "Кнопка «Установить GSI cfg в CS2» в Настройках автоматически находит путь к игре на дисках C:..Z:."),
+        ("Точный путь к cfg", "Создается в <Steam>\\...\\game\\csgo\\cfg\\gamestate_integration_protokol.cfg с URI /api/gsi."),
+        ("Авторизация auth.token", "UUID v4 токен генерируется в таблице настроек и отсекает посторонний трафик (401 Unauthorized)."),
+        ("Холодный старт CS2", "CS2 считывает GSI-конфиги только при старте: если игра была открыта, требуется полный перезапуск."),
+    ]
+    for label, desc in items_11_2:
+        p_l = tf_11_2.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_GOLD
+        p_d = tf_11_2.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    # Box 3: Observer vs POV
+    c11_3 = add_card(s11, Inches(8.8), Inches(1.75), Inches(3.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_11_3 = s11.shapes.add_textbox(Inches(9.0), Inches(1.95), Inches(3.3), Inches(4.5))
+    tf_11_3 = tb_11_3.text_frame
+    tf_11_3.word_wrap = True
+    p = tf_11_3.paragraphs[0]
+    p.text = "3. НАБЛЮДАТЕЛЬ VS POV / DEDICATED"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_BLUE
+
+    items_11_3 = [
+        ("Клиент наблюдателя (GOTV)", "ОБЯЗАТЕЛЬНО: только спектатор получает от CS2 полный дамп allplayers_* по 10 игрокам."),
+        ("Ограничение POV-клиента", "Клиент обычного игрока из античит-соображений не шлет чужие данные: оверлей и радар останутся пустыми."),
+        ("Выделенный сервер", "Прямой GSI с Dedicated Server возможен, но для локального вещания стандартом является клиент обсервера."),
+        ("Сетевой обсервер", "При отдельном ПК обсервера в cfg указывается IP эфирного ПК и открывается порт 1349 TCP в Firewall."),
+    ]
+    for label, desc in items_11_3:
+        p_l = tf_11_3.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_BLUE
+        p_d = tf_11_3.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    add_footer(s11, 11, 13)
+    s11.notes_slide.notes_text_frame.text = (
+        "Слайд 11: Практическое развёртывание и настройка CS2 GSI. "
+        "Акцент на критическом требовании Valve: полные данные по всем 10 игрокам и радару передаются исключительно на клиент наблюдателя (GOTV / Spectator), "
+        "а не на обычный клиент игрока (POV). Настройка конфига выполняется в один клик из интерфейса Настроек менеджера."
+    )
+
+    # =========================================================================
+    # SLIDE 12: OBS STUDIO & HUD PACK MANAGEMENT
+    # =========================================================================
+    s12 = prs.slides.add_slide(blank_layout)
+    set_slide_background(s12, COLOR_BG)
+    add_header(s12, "Эфирный сетап  •  Production & Pack Management",
+               "Настройка OBS Studio и управление HUD-паками",
+               "Параметры Browser Source, прозрачный альфа-канал, защита WebSocket и безопасный импорт оверлеев из ZIP",
+               COLOR_BLUE)
+
+    # Left: OBS Browser Source
+    add_card(s12, Inches(0.8), Inches(1.75), Inches(5.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_12_1 = s12.shapes.add_textbox(Inches(1.0), Inches(1.95), Inches(5.3), Inches(4.5))
+    tf_12_1 = tb_12_1.text_frame
+    tf_12_1.word_wrap = True
+    p = tf_12_1.paragraphs[0]
+    p.text = "ИНТЕГРАЦИЯ В OBS STUDIO (BROWSER SOURCE)"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_BLUE
+
+    items_12_obs = [
+        ("Параметры Browser Source", "URL: http://127.0.0.1:1349/overlay/<pack>/index.html. Разрешение строго 1920×1080 @ 60 FPS, поле Custom CSS оставить пустым."),
+        ("Критический флаг: Источник видим", "СНИМИТЕ флаг: «Завершать захват, когда источник невидим». Иначе при смене сцен рвется сокет /ws и HUD заново инициализируется с задержкой."),
+        ("Критический флаг: Без перезагрузки", "СНИМИТЕ флаг: «Перезагружать браузер, когда сцена становится активной». Включите аппаратное ускорение браузера в OBS."),
+        ("Прозрачный фон и сброс кэша", "Оверлеи имеют background: transparent поверх захвата игры. При обновлении CSS/JS: Правый клик в OBS → «Обновить кэш текущей страницы»."),
+        ("OBS WebSocket v5 (порт :4455)", "Переключение сцен (Match, Casters, Replay) и запуск трансляции/записи напрямую из вкладки «Трансляция» PROTOKOL менеджера."),
+    ]
+    for label, desc in items_12_obs:
+        p_l = tf_12_1.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_BLUE
+        p_d = tf_12_1.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    # Right: Pack Management & Import
+    add_card(s12, Inches(6.8), Inches(1.75), Inches(5.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_12_2 = s12.shapes.add_textbox(Inches(7.0), Inches(1.95), Inches(5.3), Inches(4.5))
+    tf_12_2 = tb_12_2.text_frame
+    tf_12_2.word_wrap = True
+    p = tf_12_2.paragraphs[0]
+    p.text = "УПРАВЛЕНИЕ И ИМПОРТ HUD-ПАКОВ"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_CYAN
+
+    items_12_packs = [
+        ("Каталог раздачи в AppData", "Сервер раздает паки из %APPDATA%\\PROTOKOL HUD\\overlays\\<pack>\\. Старые паки OpenHUD мигрируют автоматически при старте."),
+        ("Импорт паков из ZIP через GUI", "Вкладка «HUD-паки» → поле «Импорт пака из ZIP» → указать путь и нажать «Установить». Встроена защита от Zip-Slip / Path Traversal."),
+        ("Структура автономного пака", "Минимум: index.html, hud.js, hud.css, assets/ и radars.json. Подключение общего транспорта: <script src=\"../_core/core.js\">."),
+        ("Мгновенная смена активного HUD", "Выбор стиля в приложении не требует перезапуска OBS: событие hud_activated мгновенно передается открытым оверлеям по WebSocket."),
+        ("3 готовых турнирных стиля", "fennec-cyber (неон/скайлайн), fennec-broadcast (ТВ-таблицы/стекло) и fennec-championship (золото/оникс) полностью готовы к эфиру."),
+    ]
+    for label, desc in items_12_packs:
+        p_l = tf_12_2.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_CYAN
+        p_d = tf_12_2.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    add_footer(s12, 12, 13)
+    s12.notes_slide.notes_text_frame.text = (
+        "Слайд 12: Настройка эфирного софта и оверлеев. "
+        "Разбор критических настроек OBS Browser Source — предотвращение разрыва WebSocket-канала при переключении сцен. "
+        "Демонстрация безопасного импорта паков через ZIP-архивы и раздачи оверлеев из AppData."
+    )
+
+    # =========================================================================
+    # SLIDE 13: CAMERAS, OPERATOR CHECKLIST & TROUBLESHOOTING
+    # =========================================================================
+    s13 = prs.slides.add_slide(blank_layout)
+    set_slide_background(s13, COLOR_BG)
+    add_header(s13, "Надёжность эфира  •  Operations & Diagnostics",
+               "Веб-камеры игроков, регламент эфира и диагностика",
+               "Привязка SteamID64 к VDO.Ninja, фолбэк на 2D-аватары агентов, чек-лист оператора и устранение сбоев",
+               COLOR_GOLD)
+
+    # Left: Webcams & Dynamic Focus
+    add_card(s13, Inches(0.8), Inches(1.75), Inches(5.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_13_1 = s13.shapes.add_textbox(Inches(1.0), Inches(1.95), Inches(5.3), Inches(4.5))
+    tf_13_1 = tb_13_1.text_frame
+    tf_13_1.word_wrap = True
+    p = tf_13_1.paragraphs[0]
+    p.text = "СИСТЕМА ДИНАМИЧЕСКОГО ФОКУСА ВЕБ-КАМЕР"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_GOLD
+
+    items_13_cams = [
+        ("Привязка по 17-значному SteamID64", "Страница «Веб-камеры»: каждый SteamID связывается с видеопотоком. При спектаторстве в CS2 видео монтируется в карточку автоматически."),
+        ("Кэширование DOM без мерцания", "Пока спектатор наблюдает за одним игроком, тики GSI не пересоздают DOM-элемент <video>/<iframe> (cameraSlots) и не сбрасывают видеопоток."),
+        ("Поддержка VDO.Ninja и Direct Video", "Формат iframe: https://vdo.ninja/?view=...&cleanoutput&transparent. Параметр &muted выставляется ядром принудительно для защиты от эха."),
+        ("Штатный Dual-Mode фолбэк на агента", "При отсутствии камеры отображается статический 2D-бодишот агента CS2 (CT/T). Параметр ?cam=live делает вырез прозрачным под камеру OBS."),
+        ("Встроенный предпросмотр перед матчем", "Оператор трансляции может проверить видео каждого игрока в модальном плеере менеджера до выхода в эфир."),
+    ]
+    for label, desc in items_13_cams:
+        p_l = tf_13_1.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_GOLD
+        p_d = tf_13_1.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    # Right: Operator Checklist & Troubleshooting
+    add_card(s13, Inches(6.8), Inches(1.75), Inches(5.7), Inches(4.9), COLOR_SURFACE, COLOR_BORDER)
+    tb_13_2 = s13.shapes.add_textbox(Inches(7.0), Inches(1.95), Inches(5.3), Inches(4.5))
+    tf_13_2 = tb_13_2.text_frame
+    tf_13_2.word_wrap = True
+    p = tf_13_2.paragraphs[0]
+    p.text = "ЧЕК-ЛИСТ ОПЕРАТОРА И УСТРАНЕНИЕ НЕПОЛАДОК"
+    p.font.size = Pt(11)
+    p.font.bold = True
+    p.font.color.rgb = COLOR_AMBER
+
+    items_13_trouble = [
+        ("Порядок запуска (Launch Ordering)", "1. Запуск PROTOKOL Manager (:1349) → 2. Запуск OBS Studio → 3. Холодный запуск CS2 (обсервер) → 4. Вход на сервер / GOTV."),
+        ("Видно только 1 игрока, радар пустой", "CS2 запущена на обычном клиентском POV-аккаунте. Перейдите в режим наблюдателя (spectator) или GOTV."),
+        ("Индикатор Live неактивен, нет данных", "CS2 не перезапускалась после создания cfg; cfg в старой csgo\\cfg\\; не совпадает auth.token; порт 1349 занят (netstat -ano)."),
+        ("Чёрный экран оверлея в OBS Studio", "Проверьте URL: /overlay/<name>/index.html (overlay в ед. числе), проверьте файлы в %APPDATA%, обновите кэш Browser Source."),
+        ("Веб-камера игрока не отображается", "Проверьте SteamID (ровно 17 цифр), проверьте отсутствие логина/пароля в URL, выберите тип «iframe / VDO.Ninja» для ссылок VDO."),
+    ]
+    for label, desc in items_13_trouble:
+        p_l = tf_13_2.add_paragraph()
+        p_l.text = f"• {label}: "
+        p_l.font.size = Pt(9.5)
+        p_l.font.bold = True
+        p_l.font.color.rgb = COLOR_AMBER
+        p_d = tf_13_2.add_paragraph()
+        p_d.text = desc
+        p_d.font.size = Pt(8.5)
+        p_d.font.color.rgb = COLOR_TEXT_SECONDARY
+
+    add_footer(s13, 13, 13)
+    s13.notes_slide.notes_text_frame.text = (
+        "Слайд 13: Работа с веб-камерами и регламент оператора. "
+        "Гарантия стабильности: система кэширования DOM предотвращает мерцание видеопотоков, а при отсутствии веб-камеры включается статический аватар агента. "
+        "Чек-лист и типовые сценарии устранения неполадок обеспечивают готовность технической бригады к любым инцидентам."
     )
 
     prs.save(out_path)
