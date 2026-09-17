@@ -25,6 +25,34 @@ window.ProtokolCore = (function () {
   var socketOpen = false;
   var cameraSlots = new Map();
 
+  /* ── Signal-loss watchdog ──
+   * GSI going silent must NEVER look like a normal broadcast frame: overlay
+   * keeps the last state, so operators need an on-air warning. The watchdog
+   * refreshes ONLY on a frame with a NEW updated_at — local redraws of the
+   * last snapshot (loadConfig tick, WS connect rebroadcast) must NOT reset it.
+   * If no fresh snapshot arrives within SIGNAL_LOSS_MS, #signal-lost is shown. */
+  var SIGNAL_LOSS_MS = 12000;
+  var lastFrameAt = 0;
+  var lastUpdatedAt = '';
+  function noteFreshFrame(snap) {
+    var ts = snap && snap.updated_at || '';
+    if (ts === lastUpdatedAt) return;
+    lastUpdatedAt = ts;
+    lastFrameAt = Date.now();
+    setSignalLost(false);
+  }
+  function setSignalLost(lost) {
+    var el = document.getElementById('signal-lost');
+    if (!el) return;
+    el.classList.toggle('hidden', !lost);
+  }
+  function startSignalWatch() {
+    lastFrameAt = Date.now();
+    setInterval(function () {
+      setSignalLost(Date.now() - lastFrameAt > SIGNAL_LOSS_MS);
+    }, 1000);
+  }
+
   function sourceFor(player) {
     var row = player && cameras[player.steamid];
     if (!row || !row.enabled || !/^(video|iframe)$/.test(row.kind)) return null;
@@ -166,6 +194,7 @@ window.ProtokolCore = (function () {
 
   function draw(snap) {
     lastSnap = snap;
+    noteFreshFrame(snap);
     if (!renderFn) return;
     var sides = split(snap);
     renderFn({
@@ -214,6 +243,7 @@ window.ProtokolCore = (function () {
     mountCamera: mountCamera,
     start: function (fn) {
       renderFn = fn;
+      startSignalWatch();
       loadRadars(15);
       loadConfig();
       connect();

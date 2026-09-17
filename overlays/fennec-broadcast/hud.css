@@ -29,6 +29,15 @@
 img { display: block; }
 [hidden], .hidden { display: none !important; }
 
+/* SIGNAL LOST — on-air warning when GSI frames stop (shared, core-driven) */
+.signal-lost {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  padding: 1.2rem 3rem; background: rgba(140, 20, 30, .92); color: #fff;
+  font-size: 2.6rem; font-weight: 700; letter-spacing: .3em;
+  border-radius: 3px; z-index: 99; animation: sig-blink 1s steps(2, jump-none) infinite;
+}
+@keyframes sig-blink { 0% { opacity: 1; } 100% { opacity: .55; } }
+
 body {
   width: 100vw; height: 100vh; overflow: hidden;
   background: transparent;
