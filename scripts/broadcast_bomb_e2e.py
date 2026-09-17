@@ -39,6 +39,7 @@ with sync_playwright() as pw:
         ('planted', '40.0', True, '40', 'c4-safe'),
         ('planted', '12.0', True, '12', 'c4-warn'),
         ('planted', '3.5', True, '3', 'c4-crit'),
+        ('planted', '', True, '--', ''),   # missing countdown: honest "--", never fake 0
         ('live', None, False, '', ''),
     ]
     for state, countdown, visible, text, cls in cases:
@@ -53,7 +54,7 @@ with sync_playwright() as pw:
             fill = bomb.locator('i')
             fill_w = fill.bounding_box()['width']; box_w = bomb.bounding_box()['width']
             ratio = fill_w / box_w
-            expected_ratio = float(countdown) / 40.0
+            expected_ratio = float(countdown) / 40.0 if countdown else 0.0
             assert abs(ratio - expected_ratio) < 0.02, (countdown, ratio, expected_ratio)
         else:
             assert bomb.count() == 0 or not bomb.is_visible(), 'timer visible without bomb'

@@ -194,9 +194,18 @@
     if (bombEl) {
       show(bombEl, planted);
       if (planted) {
-        var left = Math.max(0, Math.floor(Number(s.bomb_countdown) || 0));
-        bombEl.innerHTML = '<b>' + left + '</b><i style="width:' + (left / 40 * 100) + '%"></i>';
-        bombEl.className = 'bomb-timer' + (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe');
+        var rawLeft = Number(s.bomb_countdown);
+        // Number('') === 0 in JS: a missing countdown must NOT render as "0"
+        // (a fake detonation-imminent state on air). Show an honest "--".
+        var known = s.bomb_countdown != null && s.bomb_countdown !== '' && Number.isFinite(rawLeft);
+        if (known) {
+          var left = Math.max(0, Math.floor(rawLeft));
+          bombEl.innerHTML = '<b>' + left + '</b><i style="width:' + (left / 40 * 100) + '%"></i>';
+          bombEl.className = 'bomb-timer' + (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe');
+        } else {
+          bombEl.innerHTML = '<b>--</b><i style="width:0%"></i>';
+          bombEl.className = 'bomb-timer';
+        }
       }
     }
     show($('clock'), !planted);
