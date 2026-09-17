@@ -15,6 +15,7 @@ static TEST_LOCK: Mutex<()> = Mutex::new(());
 /// Helper to configure an isolated directory for database operations.
 struct SandboxGuard {
     dir: PathBuf,
+    previous_root: Option<std::ffi::OsString>,
 }
 
 impl SandboxGuard {
@@ -23,19 +24,22 @@ impl SandboxGuard {
         let dir = std::env::temp_dir().join(unique);
         fs::create_dir_all(&dir).expect("failed to create sandbox dir");
 
-        // Set both Linux (XDG_DATA_HOME) and Windows (APPDATA) environment variables
-        std::env::set_var("XDG_DATA_HOME", &dir);
-        std::env::set_var("APPDATA", &dir);
-
-        // Ensure clean DB initialization
+        // Use an explicit root on every OS; Windows known folders ignore APPDATA.
+        let previous_root = std::env::var_os("PROTOKOL_DATA_DIR");
+        let guard = Self { dir, previous_root };
+        std::env::set_var("PROTOKOL_DATA_DIR", &guard.dir);
+        assert_eq!(db::db_path(), guard.dir.join("PROTOKOL HUD/protokol.db"));
         let _ = open().expect("open() failed to initialize schema");
-
-        Self { dir }
+        guard
     }
 }
 
 impl Drop for SandboxGuard {
     fn drop(&mut self) {
+        match &self.previous_root {
+            Some(value) => std::env::set_var("PROTOKOL_DATA_DIR", value),
+            None => std::env::remove_var("PROTOKOL_DATA_DIR"),
+        }
         let _ = fs::remove_dir_all(&self.dir);
     }
 }

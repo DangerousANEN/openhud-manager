@@ -5,6 +5,16 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub fn db_path() -> PathBuf {
+    // Test seam: when PROTOKOL_DATA_DIR is set, redirect the whole data root so
+    // tests never touch the real store. dirs::data_dir() on Windows resolves
+    // via SHGetKnownFolderPath and ignores APPDATA overrides entirely.
+    if let Ok(root) = std::env::var("PROTOKOL_DATA_DIR") {
+        let mut p = PathBuf::from(root);
+        p.push("PROTOKOL HUD");
+        std::fs::create_dir_all(&p).ok();
+        p.push("protokol.db");
+        return p;
+    }
     let mut p = dirs::data_dir().unwrap_or_else(|| PathBuf::from("."));
     p.push("PROTOKOL HUD");
     std::fs::create_dir_all(&p).ok();
