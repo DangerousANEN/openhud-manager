@@ -1115,14 +1115,16 @@ def build_presentation(out_path="protokol-presentation.pptx"):
                 continue
             scale = max(55, min(100, int(h_in / need_in * 100)))
             bodyPr = tf._txBody.find(qn('a:bodyPr'))
-            for old in bodyPr.findall(qn('a:normAutofit')):
-                bodyPr.remove(old)
+            # PowerPoint allows only ONE autofit element per bodyPr, and only
+            # in schema order (prstTxWarp?, autofit?, scene3d?, sp3d?, flatTx?).
+            # Remove every existing autofit before appending ours.
+            for tag in ('a:noAutofit', 'a:normAutofit', 'a:spAutoFit'):
+                for old in bodyPr.findall(qn(tag)):
+                    bodyPr.remove(old)
             fit = bodyPr.makeelement(qn('a:normAutofit'), {})
             fit.set('fontScale', str(int(scale * 1000)))
             fit.set('lnSpcReduction', '10000')
-            # keep spatial padding after autofit element
-            children = list(bodyPr)
-            bodyPr.insert(0, fit) if not children else bodyPr.append(fit)
+            bodyPr.append(fit)
     prs.save(out_path)
     print(f"Presentation saved successfully: {out_path}")
 
