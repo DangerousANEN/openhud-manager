@@ -10,6 +10,7 @@ Game State Integration, хостинг оверлеев для OBS, катало
 
 | Документ | О чём |
 |---|---|
+| [OPERATOR-GUIDE.ru.md](OPERATOR-GUIDE.ru.md) | **Полное практическое руководство оператора трансляции (RU)** |
 | [installation.md](installation.md) | Установка, первый запуск, где лежат данные |
 | [gsi-setup.md](gsi-setup.md) | Подключение CS2 к приложению |
 | [user-guide.md](user-guide.md) | Все страницы интерфейса по порядку |
