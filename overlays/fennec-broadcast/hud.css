@@ -78,9 +78,14 @@ body {
 .econ-side { font-size: 1.5rem; font-weight: 700; min-width: 7rem; text-align: center; }
 .econ-side--ct { color: var(--ct); }
 .econ-side--t  { color: var(--t); }
-.econ-flow { display: flex; gap: .2rem; }
-.econ-flow i { width: .9rem; height: .9rem; background: rgba(255, 255, 255, .16); border-radius: 1px; }
-.econ-flow i.is-played { background: rgba(255, 255, 255, .6); }
+.alive-line {
+  position: absolute; top: 1.5rem; right: 2rem;
+  padding: .7rem 1.4rem; background: var(--panel);
+  font-size: 1.6rem; font-weight: 700; letter-spacing: .08em;
+  border-bottom: 2px solid var(--line);
+}
+.econ { top: 6rem; height: 3.2rem; }
+.econ-label { font-size: 1rem; color: var(--dim); letter-spacing: .08em; }
 
 /* ══════════ ROSTER SHEETS ══════════ real tables, header + rows */
 .sheet {

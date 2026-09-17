@@ -139,13 +139,28 @@
     $('cam-inner').setAttribute('data-sid', f.steamid || '');
   }
 
+  // GSI countdowns may be numeric strings; never show raw decimals on air.
+  function clockText(value) {
+    if (typeof value === 'string' && /^\d+:\d{2}$/.test(value)) return value;
+    if (value == null || value === '' || !Number.isFinite(Number(value))) return '--:--';
+    var seconds = Math.max(0, Math.floor(Number(value)));
+    return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+  }
+
   function money(players) {
     return players.reduce(function (a, p) { return a + (p.money || 0); }, 0);
   }
 
   function render(ctx) {
     var s = ctx.snap;
-    var showMoney = !!(ctx.options && ctx.options.economy);
+    var phase = s.phase_countdown_phase || s.phase || '';
+    var phaseLabels = { freezetime: 'BUY TIME', live: 'LIVE', over: 'ROUND OVER',
+      warmup: 'WARMUP', intermission: 'HALF TIME', gameover: 'MATCH OVER',
+      paused: 'PAUSED', timeout_ct: 'CT TIMEOUT', timeout_t: 'T TIMEOUT', bomb: 'BOMB PLANTED' };
+    var phaseLabel = phaseLabels[phase] || 'WAITING';
+    var showMoney = !!(ctx.options && ctx.options.economy) && phase === 'freezetime';
+    var ctAlive = ctx.ct.filter(function (p) { return p.health > 0; }).length;
+    var tAlive = ctx.t.filter(function (p) { return p.health > 0; }).length;
 
     show($('bug'), true);
     show($('econ'), showMoney);
@@ -153,8 +168,8 @@
     $('t-name').textContent = s.t_name || 'T';
     $('ct-score').textContent = s.ct_score || 0;
     $('t-score').textContent = s.t_score || 0;
-    $('clock').textContent = s.round_time || '0:00';
-    $('round-state').textContent = 'RD ' + (s.round || 1);
+    $('clock').textContent = clockText(s.round_time);
+    $('round-state').textContent = 'R' + (s.round || 1) + ' · ' + phaseLabel;
     $('ct-head').textContent = s.ct_name || 'CT';
     $('t-head').textContent = s.t_name || 'T';
     $('ct-econ').textContent = '$' + money(ctx.ct);
@@ -171,14 +186,8 @@
     if (tSheet) tSheet.classList.toggle('has-econ', showMoney);
 
     var flow = $('round-flow');
-    if (flow.childElementCount !== 24) {
-      var h = '';
-      for (var i = 0; i < 24; i++) h += '<i></i>';
-      flow.innerHTML = h;
-    }
-    [].forEach.call(flow.children, function (el, i) {
-      el.className = i < (s.round || 0) ? 'is-played' : '';
-    });
+    flow.textContent = ctAlive + ' CT  ·  ALIVE  ·  ' + tAlive + ' T';
+    flow.className = 'alive-line';
 
     $('ct-rows').innerHTML = ctx.ct.map(function (p) {
       return rowHtml(p, 'ct', s.focused_steamid, showMoney);

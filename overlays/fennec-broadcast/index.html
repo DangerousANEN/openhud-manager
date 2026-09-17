@@ -29,10 +29,11 @@
   </div>
 </header>
 
-<!-- Economy strip under the bug: series of round outcome markers -->
+<!-- Alive stays visible independently of buy-time economy. -->
+<div class="alive-line hidden" id="round-flow" aria-label="Players alive"></div>
 <div class="econ hidden" id="econ">
   <span class="econ-side econ-side--ct" id="ct-econ">$0</span>
-  <div class="econ-flow" id="round-flow"></div>
+  <span class="econ-label">TEAM CASH</span>
   <span class="econ-side econ-side--t" id="t-econ">$0</span>
 </div>
 
