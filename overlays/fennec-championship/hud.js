@@ -1,5 +1,5 @@
 /* PROTOKOL CHAMPIONSHIP — arena ceremony HUD.
-   Own renderer: emits SVG radial dials and podium plinths (no bars, no cards).
+   Own renderer: emits SVG radial dials and stacked podium plinths (no bars, no generic cards).
    Shares only the WS feed + radar math via ProtokolCore. */
 (function () {
   'use strict';
@@ -20,37 +20,50 @@
     el.style.strokeDashoffset = (CIRC * (1 - v / 100)).toFixed(2);
   }
 
-  /* ── One podium plinth per player, topped by a radial HP dial ── */
-  function plinthHtml(p, side, focusedId) {
+  /* ── One stacked podium plinth row per player, with radial HP dial ── */
+  function plinthHtml(p, side, focusedId, showMoney) {
     var hp = Math.max(0, Math.min(100, p.health));
     var dead = hp <= 0;
     var off = (CIRC * (1 - hp / 100)).toFixed(2);
 
+    var kitHtml =
+      (p.armor > 0 ? '<i class="ux ux--' + (p.helmet ? 'helm' : 'vest') + '"></i>' : '') +
+      (p.defusekit && side === 'ct' ? '<i class="ux ux--kit"></i>' : '') +
+      (p.has_bomb ? '<i class="ux ux--bomb"></i>' : '') +
+      (p.grenades || []).slice(0, 4).map(function (g) {
+        return '<i class="ux nade-' + esc(g) + '"></i>';
+      }).join('');
+
+    var gunHtml = (p.weapon && !dead)
+      ? '<img src="assets/weapons/' + esc(p.weapon) + '.svg" alt="">'
+      : '';
+
     return '' +
       '<div class="plinth' + (dead ? ' plinth--out' : '') +
         (p.steamid === focusedId ? ' plinth--on' : '') + '">' +
-        '<svg class="pdial" viewBox="0 0 44 44">' +
-          '<circle class="pdial-bg" cx="22" cy="22" r="' + R + '"></circle>' +
-          '<circle class="pdial-fg pdial-fg--' + side + '" cx="22" cy="22" r="' + R + '"' +
-            ' style="stroke-dasharray:' + CIRC.toFixed(2) + ';stroke-dashoffset:' + off + '"></circle>' +
-        '</svg>' +
-        '<span class="pdial-num">' + (dead ? '✕' : hp) + '</span>' +
-        '<div class="plinth-name">' + esc(p.name) + '</div>' +
-        '<div class="plinth-kd">' + (p.kills || 0) + ' <s>/</s> ' + (p.deaths || 0) + '</div>' +
-        '<div class="plinth-cash">$' + (p.money || 0) + '</div>' +
-        '<div class="plinth-kit">' +
-          (p.armor > 0 ? '<i class="ux ux--' + (p.helmet ? 'helm' : 'vest') + '"></i>' : '') +
-          (p.defusekit && side === 'ct' ? '<i class="ux ux--kit"></i>' : '') +
-          (p.has_bomb ? '<i class="ux ux--bomb"></i>' : '') +
-          (p.grenades || []).slice(0, 3).map(function (g) {
-            return '<i class="ux nade-' + esc(g) + '"></i>';
-          }).join('') +
+        '<span class="plinth-slot">' + (p.observer_slot || '') + '</span>' +
+        '<div class="plinth-dial-wrap">' +
+          '<svg class="pdial" viewBox="0 0 44 44" aria-hidden="true">' +
+            '<circle class="pdial-bg" cx="22" cy="22" r="' + R + '"></circle>' +
+            '<circle class="pdial-fg pdial-fg--' + side + '" cx="22" cy="22" r="' + R + '"' +
+              ' style="stroke-dasharray:' + CIRC.toFixed(2) + ';stroke-dashoffset:' + (dead ? CIRC.toFixed(2) : off) + '"></circle>' +
+          '</svg>' +
+          '<span class="pdial-num">' + (dead ? '✕' : hp) + '</span>' +
         '</div>' +
+        '<span class="plinth-name">' + esc(p.name) + '</span>' +
+        '<span class="plinth-gun">' + gunHtml + '</span>' +
+        '<div class="plinth-kd">' +
+          '<b class="pk-k">' + (p.kills || 0) + '</b>' +
+          '<s>/</s>' +
+          '<b class="pk-d">' + (p.deaths || 0) + '</b>' +
+        '</div>' +
+        '<span class="plinth-cash' + (showMoney ? '' : ' hidden') + '">$' + (p.money || 0) + '</span>' +
+        '<span class="plinth-kit">' + kitHtml + '</span>' +
       '</div>';
   }
 
   function renderRadar(ctx) {
-    var cfg = ctx.radarCfg;
+    var cfg = ctx.options.radar === false ? null : ctx.radarCfg;
     if (!cfg || !ctx.snap.players.length) { show($('plate'), false); return; }
     show($('plate'), true);
     C.radarArt($('radar-img'), ctx.mapKey);
@@ -86,12 +99,14 @@
   function renderSpotlight(ctx) {
     var f = ctx.focused;
     show($('spotlight'), !!f);
+    C.mountCamera($('cam-inner'), f, ctx.liveCam);
     if (!f) return;
     var ct = String(f.team || '').toUpperCase() === 'CT';
     var s = $('spotlight');
     s.classList.toggle('is-ct', ct);
     s.classList.toggle('is-t', !ct);
     s.classList.toggle('is-cam', ctx.liveCam);
+    $('cam-inner').style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(assets/agents-' + (ct ? 'ct' : 't') + '.png)' : 'none';
 
     $('op-slot').textContent = f.observer_slot || '';
     $('op-name').textContent = f.name || '';
@@ -120,6 +135,7 @@
 
   function render(ctx) {
     var s = ctx.snap;
+    var showMoney = !!(ctx.options && ctx.options.economy);
 
     show($('crest'), true);
     $('ct-name').textContent = s.ct_name || 'CT';
@@ -144,12 +160,19 @@
     });
 
     $('ct-podium').innerHTML = ctx.ct.map(function (p) {
-      return plinthHtml(p, 'ct', s.focused_steamid);
+      return plinthHtml(p, 'ct', s.focused_steamid, showMoney);
     }).join('');
     $('t-podium').innerHTML = ctx.t.map(function (p) {
-      return plinthHtml(p, 't', s.focused_steamid);
+      return plinthHtml(p, 't', s.focused_steamid, showMoney);
     }).join('');
 
+    document.querySelectorAll('.plinth-name').forEach(function (el) {
+      var size = 1.7; el.style.fontSize = size + 'rem';
+      while (el.scrollWidth > el.clientWidth && size > 1.6) {
+        size -= 0.05;
+        el.style.fontSize = size.toFixed(2) + 'rem';
+      }
+    });
     renderRadar(ctx);
     renderSpotlight(ctx);
   }

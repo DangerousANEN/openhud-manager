@@ -16,6 +16,7 @@ import Sponsors from './pages/Sponsors.vue'
 import Config from './pages/Config.vue'
 import HudEditor from './pages/HudEditor.vue'
 import Servers from './pages/Servers.vue'
+import Cameras from './pages/Cameras.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -26,6 +27,7 @@ const router = createRouter({
     { path: '/teams', component: Teams },
     { path: '/players', component: Players },
     { path: '/tournaments', component: Tournaments },
+    { path: '/cameras', component: Cameras },
     { path: '/huds', component: HUDs },
     { path: '/hud-editor', component: HudEditor },
     { path: '/stream', component: StreamControl },

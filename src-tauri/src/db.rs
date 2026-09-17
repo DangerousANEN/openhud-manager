@@ -90,6 +90,16 @@ pub fn open() -> Result<Connection> {
             created_at  TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS cameras (
+            steamid     TEXT PRIMARY KEY,
+            url         TEXT NOT NULL,
+            kind        TEXT NOT NULL DEFAULT 'video',
+            enabled     INTEGER NOT NULL DEFAULT 1,
+            muted       INTEGER NOT NULL DEFAULT 1,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        );
         "#,
     )?;
     Ok(conn)
@@ -599,4 +609,321 @@ pub fn save_hud_layout(mut layout: HudLayout) -> Result<HudLayout> {
 pub fn delete_hud_layout(id: &str) -> Result<()> {
     open()?.execute("DELETE FROM hud_layouts WHERE id=?1", params![id])?;
     Ok(())
+}
+
+// ---------- Cameras (Webcam Sources) ----------
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_camera_kind() -> String {
+    "video".to_string()
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct Camera {
+    pub steamid: String,
+    pub url: String,
+    #[serde(default = "default_camera_kind")]
+    pub kind: String, // "video" | "iframe"
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    #[serde(default = "default_true")]
+    pub muted: bool,
+}
+
+/// Robust validation for camera sources:
+/// - SteamID must be non-empty and have no whitespace/control characters
+/// - Kind must be either "video" or "iframe"
+/// - URL must parse strictly with http or https protocol and valid host
+pub fn validate_camera(camera: &Camera) -> Result<()> {
+    let steamid = camera.steamid.trim();
+    if steamid.is_empty() {
+        return Err(anyhow::anyhow!("SteamID не может быть пустым"));
+    }
+    if steamid.len() > 64 {
+        return Err(anyhow::anyhow!("SteamID превышает максимальную длину"));
+    }
+    if steamid.chars().any(|c| c.is_whitespace() || c.is_control()) {
+        return Err(anyhow::anyhow!("SteamID содержит недопустимые символы (пробелы или спецсимволы)"));
+    }
+
+    if steamid.len() != 17 || !steamid.bytes().all(|b| b.is_ascii_digit()) {
+        return Err(anyhow::anyhow!("SteamID64 должен содержать ровно 17 цифр"));
+    }
+
+    let kind = camera.kind.trim().to_lowercase();
+    if kind != "video" && kind != "iframe" {
+        return Err(anyhow::anyhow!("Тип источника (kind) должен быть 'video' или 'iframe'"));
+    }
+
+    let url_str = camera.url.trim();
+    if url_str.is_empty() {
+        return Err(anyhow::anyhow!("URL камеры не может быть пустым"));
+    }
+
+    let authority = url_str.split_once("://").map(|(_, rest)| rest.split('/').next().unwrap_or("")).unwrap_or("");
+    if authority.is_empty() || url_str.contains('\\') {
+        return Err(anyhow::anyhow!("URL камеры должен содержать валидный сетевой хост"));
+    }
+    let parsed = url::Url::parse(url_str)
+        .map_err(|e| anyhow::anyhow!("Некорректный формат URL: {e}"))?;
+
+    let scheme = parsed.scheme().to_lowercase();
+    if scheme != "http" && scheme != "https" {
+        return Err(anyhow::anyhow!("Разрешены только протоколы http:// и https:// (получен '{scheme}')"));
+    }
+
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err(anyhow::anyhow!("URL камеры не должен содержать логин или пароль"));
+    }
+
+    if parsed.host_str().unwrap_or("").trim().is_empty() {
+        return Err(anyhow::anyhow!("URL камеры должен содержать валидный сетевой хост"));
+    }
+
+    Ok(())
+}
+
+pub fn list_cameras() -> Result<Vec<Camera>> {
+    let conn = open()?;
+    let mut stmt = conn.prepare("SELECT steamid, url, kind, enabled, muted FROM cameras ORDER BY steamid ASC")?;
+    let rows = stmt
+        .query_map([], |r| {
+            let enabled_int: i64 = r.get(3)?;
+            let muted_int: i64 = r.get(4)?;
+            Ok(Camera {
+                steamid: r.get(0)?,
+                url: r.get(1)?,
+                kind: r.get(2)?,
+                enabled: enabled_int != 0,
+                muted: muted_int != 0,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(rows)
+}
+
+pub fn get_camera(steamid: &str) -> Result<Option<Camera>> {
+    let conn = open()?;
+    let mut stmt = conn.prepare("SELECT steamid, url, kind, enabled, muted FROM cameras WHERE steamid = ?1")?;
+    let mut rows = stmt.query(params![steamid.trim()])?;
+    if let Some(r) = rows.next()? {
+        let enabled_int: i64 = r.get(3)?;
+        let muted_int: i64 = r.get(4)?;
+        Ok(Some(Camera {
+            steamid: r.get(0)?,
+            url: r.get(1)?,
+            kind: r.get(2)?,
+            enabled: enabled_int != 0,
+            muted: muted_int != 0,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn save_camera(mut cam: Camera) -> Result<Camera> {
+    cam.steamid = cam.steamid.trim().to_string();
+    cam.url = cam.url.trim().to_string();
+    cam.kind = cam.kind.trim().to_lowercase();
+    if cam.kind.is_empty() {
+        cam.kind = "video".to_string();
+    }
+
+    validate_camera(&cam)?;
+
+    let conn = open()?;
+    conn.execute(
+        "INSERT INTO cameras (steamid, url, kind, enabled, muted, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'))
+         ON CONFLICT(steamid) DO UPDATE SET url=?2, kind=?3, enabled=?4, muted=?5, updated_at=datetime('now')",
+        params![
+            cam.steamid,
+            cam.url,
+            cam.kind,
+            if cam.enabled { 1 } else { 0 },
+            if cam.muted { 1 } else { 0 }
+        ],
+    )?;
+
+    Ok(cam)
+}
+
+pub fn delete_camera(steamid: &str) -> Result<()> {
+    open()?.execute("DELETE FROM cameras WHERE steamid=?1", params![steamid.trim()])?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_camera_valid_http() {
+        let cam = Camera {
+            steamid: "76561198000000001".to_string(),
+            url: "http://192.168.1.100:8080/stream.mjpg".to_string(),
+            kind: "video".to_string(),
+            enabled: true,
+            muted: true,
+        };
+        assert!(validate_camera(&cam).is_ok());
+    }
+
+    #[test]
+    fn test_validate_camera_valid_https_iframe() {
+        let cam = Camera {
+            steamid: "76561198000000002".to_string(),
+            url: "https://vdo.ninja/?view=playerTwoWebcam".to_string(),
+            kind: "iframe".to_string(),
+            enabled: true,
+            muted: true,
+        };
+        assert!(validate_camera(&cam).is_ok());
+    }
+
+    #[test]
+    fn test_validate_camera_rejects_empty_steamid() {
+        let cam = Camera {
+            steamid: "   ".to_string(),
+            url: "https://example.com/stream.mp4".to_string(),
+            kind: "video".to_string(),
+            enabled: true,
+            muted: true,
+        };
+        let err = validate_camera(&cam).unwrap_err();
+        assert!(err.to_string().contains("SteamID"));
+    }
+
+    #[test]
+    fn test_validate_camera_rejects_steamid_spaces() {
+        let cam = Camera {
+            steamid: "765611 98000".to_string(),
+            url: "https://example.com/stream.mp4".to_string(),
+            kind: "video".to_string(),
+            enabled: true,
+            muted: true,
+        };
+        assert!(validate_camera(&cam).is_err());
+    }
+
+    #[test]
+    fn test_validate_camera_rejects_invalid_scheme() {
+        let dangerous_schemes = [
+            "javascript:alert(1)",
+            "file:///C:/Windows/System32",
+            "data:text/html,<html></html>",
+            "ws://127.0.0.1:8080",
+            "ftp://files.example.com/cam.mp4",
+        ];
+
+        for u in dangerous_schemes {
+            let cam = Camera {
+                steamid: "76561198000000003".to_string(),
+                url: u.to_string(),
+                kind: "video".to_string(),
+                enabled: true,
+                muted: true,
+            };
+            let res = validate_camera(&cam);
+            assert!(res.is_err(), "Scheme in '{}' must be rejected", u);
+        }
+    }
+
+    #[test]
+    fn test_validate_camera_rejects_missing_host() {
+        let cam = Camera {
+            steamid: "76561198000000004".to_string(),
+            url: "http:///path/without/host".to_string(),
+            kind: "video".to_string(),
+            enabled: true,
+            muted: true,
+        };
+        assert!(validate_camera(&cam).is_err());
+    }
+
+    #[test]
+    fn test_validate_camera_rejects_invalid_kind() {
+        let cam = Camera {
+            steamid: "76561198000000005".to_string(),
+            url: "https://example.com/video.mp4".to_string(),
+            kind: "rtsp".to_string(), // only video or iframe allowed
+            enabled: true,
+            muted: true,
+        };
+        let err = validate_camera(&cam).unwrap_err();
+        assert!(err.to_string().contains("kind"));
+    }
+
+    #[test]
+    fn test_camera_sqlite_persistence_in_memory() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            r#"
+            CREATE TABLE cameras (
+                steamid     TEXT PRIMARY KEY,
+                url         TEXT NOT NULL,
+                kind        TEXT NOT NULL DEFAULT 'video',
+                enabled     INTEGER NOT NULL DEFAULT 1,
+                muted       INTEGER NOT NULL DEFAULT 1,
+                created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            "#,
+        ).unwrap();
+
+        // 1. Insert camera
+        conn.execute(
+            "INSERT INTO cameras (steamid, url, kind, enabled, muted) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params!["76561198000000001", "https://example.com/cam1.mp4", "video", 1, 1],
+        ).unwrap();
+
+        // 2. Query
+        let mut stmt = conn.prepare("SELECT steamid, url, kind, enabled, muted FROM cameras WHERE steamid=?1").unwrap();
+        let cam = stmt.query_row(params!["76561198000000001"], |r| {
+            let enabled_int: i64 = r.get(3)?;
+            let muted_int: i64 = r.get(4)?;
+            Ok(Camera {
+                steamid: r.get(0)?,
+                url: r.get(1)?,
+                kind: r.get(2)?,
+                enabled: enabled_int != 0,
+                muted: muted_int != 0,
+            })
+        }).unwrap();
+        assert_eq!(cam.steamid, "76561198000000001");
+        assert_eq!(cam.url, "https://example.com/cam1.mp4");
+        assert_eq!(cam.kind, "video");
+        assert!(cam.enabled);
+        assert!(cam.muted);
+
+        // 3. Upsert update on conflict
+        conn.execute(
+            "INSERT INTO cameras (steamid, url, kind, enabled, muted) VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(steamid) DO UPDATE SET url=?2, kind=?3, enabled=?4, muted=?5",
+            params!["76561198000000001", "https://vdo.ninja/?view=cam1", "iframe", 0, 1],
+        ).unwrap();
+
+        let updated = stmt.query_row(params!["76561198000000001"], |r| {
+            let enabled_int: i64 = r.get(3)?;
+            let muted_int: i64 = r.get(4)?;
+            Ok(Camera {
+                steamid: r.get(0)?,
+                url: r.get(1)?,
+                kind: r.get(2)?,
+                enabled: enabled_int != 0,
+                muted: muted_int != 0,
+            })
+        }).unwrap();
+        assert_eq!(updated.url, "https://vdo.ninja/?view=cam1");
+        assert_eq!(updated.kind, "iframe");
+        assert!(!updated.enabled);
+
+        // 4. Delete
+        conn.execute("DELETE FROM cameras WHERE steamid=?1", params!["76561198000000001"]).unwrap();
+        let remaining: i64 = conn.query_row("SELECT count(*) FROM cameras", [], |r| r.get(0)).unwrap();
+        assert_eq!(remaining, 0);
+    }
 }

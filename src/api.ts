@@ -121,6 +121,20 @@ export const tournaments = {
   remove: (id: string) => invoke<void>('tournaments_delete', { id }),
 }
 
+export interface Camera {
+  steamid: string
+  url: string
+  kind: 'video' | 'iframe'
+  enabled: boolean
+}
+
+export const cameras = {
+  list: () => invoke<Camera[]>('cameras_list'),
+  get: (steamid: string) => invoke<Camera | null>('cameras_get', { steamid }),
+  save: (camera: Camera) => invoke<Camera>('cameras_save', { camera }),
+  remove: (steamid: string) => invoke<void>('cameras_delete', { steamid }),
+}
+
 export const settings = {
   get: (key: string) => invoke<string | null>('setting_get', { key }),
   set: (key: string, value: string) => invoke<void>('setting_set', { key, value }),
@@ -133,7 +147,10 @@ export const gsi = {
   cfgText: () => invoke<string>('gsi_cfg_text'),
   /** Write the cfg into the discovered (or provided) CS2 cfg folder. */
   cfgInstall: (cs2CfgPath?: string | null) =>
-    invoke<string>('gsi_cfg_install', { cs2_cfg_path: cs2CfgPath ?? null }),
+    invoke<string>('gsi_cfg_install', {
+      cs2CfgPath: cs2CfgPath ?? null,
+      cs2_cfg_path: cs2CfgPath ?? null,
+    }),
   /** Probe whether the CS2 cfg folder is discoverable. */
   cfgProbe: () => invoke<{ found: boolean; path: string }>('gsi_cfg_probe'),
 }
@@ -165,7 +182,11 @@ export const huds = {
   list: () => invoke<HudPack[]>('huds_list'),
   /** Распаковать ZIP-пак в папку оверлеев. Только десктоп. */
   import: (zipPath: string, name?: string) =>
-    invoke<HudImportResult>('huds_import', { zip_path: zipPath, name: name ?? null }),
+    invoke<HudImportResult>('huds_import', {
+      zipPath,
+      zip_path: zipPath,
+      name: name ?? null,
+    }),
   /** Удалить пак вместе с папкой. Только десктоп. */
   remove: (id: string) => invoke<string>('huds_delete', { id }),
 }
@@ -215,13 +236,16 @@ export const obs = {
       return []
     }
   },
-  setScene: (sceneName: string) => invoke<string>('obs_set_scene', { scene_name: sceneName }),
+  setScene: (sceneName: string) =>
+    invoke<string>('obs_set_scene', { sceneName, scene_name: sceneName }),
   toggleStream: () => invoke<boolean>('obs_toggle_stream'),
   toggleRecord: () => invoke<boolean>('obs_toggle_record'),
   saveReplay: () => invoke<string>('obs_save_replay'),
   setSourceVisible: (sceneName: string, sourceName: string, visible: boolean) =>
     invoke<string>('obs_set_source_visible', {
+      sceneName,
       scene_name: sceneName,
+      sourceName,
       source_name: sourceName,
       visible,
     }),
@@ -401,15 +425,13 @@ export function useGsiFeed(port = 1349): {
     gsi.status()
       .then((st) => {
         if (disposed) return
-        if (st?.port && st.port !== port) {
-          port = st.port
-          if (timer) clearTimeout(timer)
-          connect()
-        }
+        if (st?.port) port = st.port
+        connect()
       })
-      .catch(() => {/* keep default */})
+      .catch(() => { connect() })
+  } else {
+    connect()
   }
-  connect()
 
   return {
     snapshot,

@@ -1,3 +1,10 @@
+/* Camera states distinguish iframe load from actual decoded video. */
+#cam-inner { background-size: cover; background-position: center; }
+#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
+#cam-inner[data-camera-state="external"] { background: transparent; }
+#cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
+#cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
+#cam-inner[data-camera-state="embedded"]::before { content: "CAM"; }
 /* PROTOKOL BROADCAST — television scoreboard HUD stylesheet.
    Components unique to this HUD: a centre score bug, an economy flow strip,
    TABLE-style roster sheets with header rows, an inset radar box and a
@@ -9,8 +16,8 @@
   --t: #f59e0b;
   --panel: rgba(12, 16, 22, .90);
   --panel-soft: rgba(20, 26, 34, .82);
-  --line: rgba(255, 255, 255, .10);
-  --dim: rgba(232, 240, 248, .55);
+  --line: rgba(255, 255, 255, .14);
+  --dim: rgba(232, 240, 248, .75);
   font-size: var(--u);
 }
 
@@ -19,7 +26,7 @@ img { display: block; }
 [hidden], .hidden { display: none !important; }
 
 body {
-  width: 1920px; height: 1080px; overflow: hidden;
+  width: 100vw; height: 100vh; overflow: hidden;
   background: transparent;
   font-family: 'Quantico', 'Noto Sans', sans-serif;
   color: #e8f0f8;
@@ -85,19 +92,24 @@ body {
 
 .sheet-head, .row {
   display: grid;
-  grid-template-columns: .8rem 2.2rem 1fr 6.6rem 7.4rem 4.2rem 7.6rem;
+  grid-template-columns: .6rem 1.8rem 1fr 5.4rem 5.6rem 6.6rem 3.8rem 7.4rem;
   align-items: center;
-  gap: .6rem;
+  gap: .5rem;
   padding: 0 1rem;
+}
+.sheet.has-econ .sheet-head,
+.sheet.has-econ .row {
+  grid-template-columns: .6rem 1.8rem 1fr 5.0rem 5.2rem 6.2rem 3.4rem 4.6rem 7.2rem;
 }
 .sheet-head {
   height: 3rem;
   background: rgba(0, 0, 0, .42);
   border-bottom: 1px solid var(--line);
 }
-.sh { font-size: 1.15rem; letter-spacing: .14em; color: var(--dim); }
+.sh { font-size: 1.15rem; letter-spacing: .14em; color: var(--dim); font-weight: 700; }
 .sh--name { letter-spacing: .16em; }
-.sh--hp, .sh--kda, .sh--adr { text-align: center; }
+.sh--hp, .sh--kda, .sh--adr, .sh--gun, .sh--money { text-align: center; }
+.sh--money.hidden { display: none !important; }
 .sh--tag { font-size: 0; }
 .sheet--ct .sheet-head { border-bottom-color: rgba(47, 129, 247, .5); }
 .sheet--t  .sheet-head { border-bottom-color: rgba(245, 158, 11, .5); }
@@ -110,10 +122,22 @@ body {
 .tick { display: block; width: 4px; height: 2.4rem; border-radius: 1px; }
 .tick--ct { background: var(--ct); }
 .tick--t  { background: var(--t); }
-.rc--num { font-size: 1.3rem; color: var(--dim); text-align: center; }
+.rc--num { font-size: 1.3rem; color: var(--dim); text-align: center; font-weight: 700; }
 .rc--name {
   font-size: 1.8rem; font-weight: 700; letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 7rem;
+}
+.rc--gun {
+  height: 2.2rem; display: flex; align-items: center; justify-content: center;
+}
+.rc--gun .gun-icon {
+  max-height: 100%; max-width: 100%; object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
+}
+.rc--gun .gun-fallback {
+  font-size: 1.15rem; font-weight: 700; color: rgba(232, 240, 248, .9);
+  letter-spacing: .03em; white-space: nowrap; text-transform: uppercase;
 }
 .rc--hp { display: flex; align-items: center; gap: .5rem; }
 .hpbar { flex: 1; height: .8rem; background: rgba(255, 255, 255, .12); border-radius: 1px; overflow: hidden; }
@@ -124,7 +148,14 @@ body {
 .rc--kda { font-size: 1.5rem; text-align: center; letter-spacing: .02em; }
 .rc--kda s { text-decoration: none; color: var(--dim); margin: 0 .15rem; }
 .rc--adr { font-size: 1.5rem; text-align: center; color: #9fe8a8; font-weight: 700; }
-.rc--eq { display: flex; gap: .3rem; justify-content: flex-end; }
+.rc--money {
+  font-size: 1.35rem; font-weight: 700; color: #2fe36b; text-align: right;
+  letter-spacing: .02em;
+}
+.rc--money.hidden { display: none !important; }
+.rc--eq { display: flex; gap: .2rem; justify-content: flex-end; align-items: center; }
+.rc--eq .ux { width: 1.5rem; height: 2.0rem; flex-shrink: 0; }
+.rc--eq .ux--bomb { width: 2.2rem; }
 
 /* ══════════ INSET RADAR ══════════ boxed, with a caption bar */
 .inset {
@@ -166,7 +197,7 @@ body {
 .strap {
   /* original focused-player anchor: 960 wide, centred at (960,1020) */
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: 1.5rem; width: 92rem;   /* clear gap between the corner sheets */
+  bottom: 1.5rem; width: 89rem;   /* clear gap between the corner sheets */
   display: flex; align-items: flex-end; justify-content: center; gap: 1.2rem;
 }
 /* webcam docks ABOVE the strap body, centred, so it clears the corner sheets */

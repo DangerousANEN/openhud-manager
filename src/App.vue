@@ -63,6 +63,12 @@
           </button>
         </router-link>
 
+        <router-link to="/cameras" custom v-slot="{ isActive, navigate }">
+          <button @click="navigate" :class="['nav-link w-full text-left flex items-center gap-2.5', isActive ? 'active' : '']">
+            <Camera :size="15" /> Веб-камеры
+          </button>
+        </router-link>
+
         <router-link to="/hud-editor" custom v-slot="{ isActive, navigate }">
           <button @click="navigate" :class="['nav-link w-full text-left flex items-center gap-2.5', isActive ? 'active' : '']">
             <LayoutGrid :size="15" /> Редактор HUD
@@ -107,7 +113,7 @@
 import { ref } from 'vue'
 import {
   Radio, Swords, Trophy, Server, Shield, Users,
-  Layers, LayoutGrid, MonitorPlay, Banknote, Settings
+  Layers, LayoutGrid, MonitorPlay, Banknote, Settings, Camera
 } from 'lucide-vue-next'
 
 const gsiConnected = ref(false)

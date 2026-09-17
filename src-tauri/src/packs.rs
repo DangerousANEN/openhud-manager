@@ -43,7 +43,7 @@ fn slugify(input: &str) -> String {
 
 /// Reject absolute paths, drive prefixes and any `..` component (zip-slip).
 /// Returns the sanitised relative path, or None if the entry must be skipped.
-fn safe_relative(raw: &str) -> Option<PathBuf> {
+pub fn safe_relative(raw: &str) -> Option<PathBuf> {
     let normalized = raw.replace('\\', "/");
     let candidate = Path::new(&normalized);
 

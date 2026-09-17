@@ -1,3 +1,11 @@
+.scope-name { background: rgba(8,12,18,.88); text-shadow: 0 1px 2px #000; }
+/* Camera states distinguish iframe load from actual decoded video. */
+#cam-inner { background-size: cover; background-position: center; }
+#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
+#cam-inner[data-camera-state="external"] { background: transparent; }
+#cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
+#cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
+#cam-inner[data-camera-state="embedded"]::before { content: "CAM"; }
 /* PROTOKOL CYBER — vertical tactical HUD stylesheet.
    Components unique to this HUD: hexagonal score pods, vertical draining
    HP columns, a segmented ammo ladder, a utility rail and a scanline scope. */
@@ -16,8 +24,12 @@
 img { display: block; }
 [hidden], .hidden { display: none !important; }
 
+html, body {
+  width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden;
+}
+
 body {
-  width: 1920px; height: 1080px; overflow: hidden;
+  width: 100vw; height: 100vh; overflow: hidden;
   background: transparent;
   font-family: 'Quantico', 'Noto Sans', sans-serif;
   color: #eaf6ff;
@@ -43,8 +55,8 @@ body {
 .pod--t  .pod-score { color: var(--t); text-shadow: 0 0 1.8rem rgba(255,45,120,.55); }
 .pod-meta { display: grid; gap: .2rem; }
 .pod--t .pod-meta { text-align: right; }
-.pod-name { font-size: 2.2rem; font-weight: 700; letter-spacing: .06em; }
-.pod-tag { font-size: 1.1rem; letter-spacing: .34em; color: rgba(234,246,255,.42); }
+.pod-name { font-size: 2.2rem; font-weight: 700; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 20rem; }
+.pod-tag { font-size: 1.1rem; letter-spacing: .34em; color: rgba(234,246,255,.75); }
 
 .rail {
   display: grid; justify-items: center; align-content: center; gap: .5rem;
@@ -56,12 +68,12 @@ body {
 .rail-track { display: flex; gap: .25rem; }
 .rail-track i { width: .5rem; height: .5rem; background: rgba(234,246,255,.2); }
 .rail-track i.is-done { background: var(--ct); box-shadow: 0 0 .5rem var(--ct); }
-.rail-state { font-size: 1.2rem; letter-spacing: .26em; color: rgba(234,246,255,.5); }
+.rail-state { font-size: 1.2rem; letter-spacing: .26em; color: rgba(234,246,255,.75); }
 
 /* ══════════ VERTICAL HP COLUMNS ══════════ health drains top→down */
 .columns {
   /* original roster anchor: cards start at y=745 and run to 1065 */
-  position: absolute; bottom: 1.5rem;
+  position: absolute; bottom: 1.5rem; width: 43.5rem;
   display: flex; flex-direction: column; gap: .6rem;
 }
 .columns--ct { left: 2rem; }
@@ -69,14 +81,14 @@ body {
 
 .col {
   display: grid;
-  grid-template-columns: 2.2rem 2.6rem 18.2rem;
+  grid-template-columns: 2.4rem 2.8rem 1fr;
   align-items: stretch;
-  height: 7.4rem;
+  height: 6.2rem;
   background: var(--glass);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 1.2rem), calc(100% - 1.2rem) 100%, 0 100%);
 }
 .columns--t .col {
-  grid-template-columns: 18.2rem 2.6rem 2.2rem;
+  grid-template-columns: 1fr 2.8rem 2.4rem;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 1.2rem 100%, 0 calc(100% - 1.2rem));
 }
 .columns--t .col .col-slot { order: 3; }
@@ -86,7 +98,7 @@ body {
 .col-slot {
   display: grid; place-items: center;
   font-size: 1.5rem; font-weight: 700;
-  color: rgba(234,246,255,.5);
+  color: rgba(234,246,255,.8);
   background: rgba(0,0,0,.3);
 }
 /* the vertical bar: fill anchored to the BOTTOM so it drains downward */
@@ -95,25 +107,52 @@ body {
 .col-fill--ct { background: linear-gradient(180deg, var(--ct), #006e80); }
 .col-fill--t  { background: linear-gradient(180deg, var(--t), #7a0034); }
 .col-hp {
-  /* pinned to the TOP of the bar: the bottom is where utility icons sit and
-     the two collided on every card */
+  /* pinned to the TOP of the bar */
   position: absolute; inset: .3rem 0 auto 0; text-align: center;
-  font-size: 1.1rem; font-weight: 700;
+  font-size: 1.2rem; font-weight: 700; color: #fff;
   text-shadow: 0 1px 3px #000, 0 0 5px rgba(0,0,0,.9);
 }
 
-.col-body { display: grid; align-content: center; gap: .25rem; padding: 0 .9rem; }
-.col-name {
-  font-size: 1.9rem; font-weight: 700; letter-spacing: .02em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.col-body {
+  display: flex; flex-direction: column; justify-content: center; gap: .3rem;
+  padding: 0 1.2rem; min-width: 0; overflow: hidden;
 }
-.col-sub { display: flex; gap: 1rem; font-size: 1.3rem; }
-.columns--t .col-sub { justify-content: flex-end; }
-.col-kd { color: rgba(234,246,255,.75); }
-.col-kd b { color: #fff; }
-.col-cash { color: #2fe36b; font-weight: 700; }
-.col-util { display: flex; gap: .35rem; min-height: 1.8rem; align-items: center; }
-.columns--t .col-util { justify-content: flex-end; }
+.col-row {
+  display: flex; align-items: center; gap: 1rem; min-width: 0;
+}
+.col-row--top { justify-content: space-between; }
+.columns--t .col-row--top { flex-direction: row-reverse; }
+.col-row--bottom { justify-content: space-between; }
+.columns--t .col-row--bottom { flex-direction: row-reverse; }
+
+.col-name {
+  font-size: 1.8rem; font-weight: 700; letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1 1 auto; min-width: 10rem;
+}
+.col-gun {
+  height: 2.2rem; width: 7.2rem; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: flex-end;
+}
+.columns--t .col-gun { justify-content: flex-start; }
+.gun-icon {
+  max-height: 100%; max-width: 100%; object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.8));
+}
+.gun-fallback {
+  font-size: 1.2rem; font-weight: 700; color: rgba(234,246,255,.9);
+  letter-spacing: .04em; white-space: nowrap; text-transform: uppercase;
+}
+
+.col-sub { display: flex; align-items: center; gap: 1.2rem; font-size: 1.35rem; }
+.columns--t .col-sub { flex-direction: row-reverse; }
+.col-kd { color: rgba(234,246,255,.88); font-weight: 500; }
+.col-kd b { color: #fff; font-weight: 700; }
+.col-cash { color: #2fe36b; font-weight: 700; letter-spacing: .02em; }
+.col-cash.hidden { display: none !important; }
+
+.col-util { display: flex; gap: .4rem; min-height: 1.8rem; align-items: center; }
+.columns--t .col-util { flex-direction: row-reverse; }
 
 .col--dead { opacity: .4; filter: grayscale(.8); }
 .col--live { box-shadow: inset 0 0 0 2px rgba(255,255,255,.75), 0 0 1.6rem rgba(0,229,255,.3); }
@@ -128,7 +167,7 @@ body {
   clip-path: polygon(1.4rem 0, calc(100% - 1.4rem) 0, 100% 100%, 0 100%);
 }
 .urail-side { display: flex; align-items: center; gap: 1.1rem; }
-.urail-div { font-size: 1.1rem; letter-spacing: .3em; color: rgba(234,246,255,.35); }
+.urail-div { font-size: 1.1rem; letter-spacing: .3em; color: rgba(234,246,255,.7); }
 .urail-alive {
   font-size: 2rem; font-weight: 700; min-width: 3rem; text-align: center;
 }
@@ -181,7 +220,12 @@ body {
 .dossier {
   /* original focused-player anchor: 960x90 centred at (960,1020) */
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: 1.5rem; width: 96rem; height: 9rem;
+  bottom: 1.5rem; width: 96rem;
+  display: block;
+}
+
+.dossier-bar {
+  width: 100%; height: 9rem;
   display: grid;
   grid-template-columns: auto 24rem 1fr 22rem auto;
   align-items: center; gap: 1.6rem;
@@ -189,8 +233,8 @@ body {
   background: var(--glass);
   clip-path: polygon(2.4rem 0, calc(100% - 2.4rem) 0, 100% 100%, 0 100%);
 }
-.dossier.is-ct { box-shadow: inset 0 0 0 1px var(--edge), 0 0 2.4rem rgba(0,229,255,.2); }
-.dossier.is-t  { box-shadow: inset 0 0 0 1px rgba(255,45,120,.25), 0 0 2.4rem rgba(255,45,120,.2); }
+.dossier.is-ct .dossier-bar { box-shadow: inset 0 0 0 1px var(--edge), 0 0 2.4rem rgba(0,229,255,.2); }
+.dossier.is-t  .dossier-bar { box-shadow: inset 0 0 0 1px rgba(255,45,120,.25), 0 0 2.4rem rgba(255,45,120,.2); }
 
 .dossier-cam { display: none; }
 .dossier.is-cam .dossier-cam { display: block; }
@@ -199,6 +243,8 @@ body {
   width: 28.8rem; height: 16.2rem;          /* strict 16:9, docked above */
   border: 2px solid rgba(255,255,255,.28);
   position: relative;
+  overflow: hidden;
+  background: #080d14;
 }
 .dossier.is-ct .dossier-cam-inner { border-color: rgba(0,229,255,.7); }
 .dossier.is-t  .dossier-cam-inner { border-color: rgba(255,45,120,.7); }
@@ -209,6 +255,8 @@ body {
   padding: .25rem .7rem;
   background: var(--ct); color: #00151a;
   clip-path: polygon(0 0, 100% 0, calc(100% - .5rem) 100%, 0 100%);
+  z-index: 2;
+  pointer-events: none;
 }
 .dossier.is-t .dossier-cam-inner::before { background: var(--t); color: #1a0010; }
 

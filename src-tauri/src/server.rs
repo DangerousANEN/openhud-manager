@@ -109,9 +109,20 @@ pub fn dependencies_dir() -> PathBuf {
     p1
 }
 
-/// Active HUD directory (prefers fennec-official if present, else overlays root).
+/// Active HUD directory (prefers active_hud setting if valid, then fennec-official, fennec-pro, else overlays root).
 pub fn active_hud_dir() -> PathBuf {
     let root = overlays_dir();
+
+    if let Ok(Some(active_id)) = crate::db::get_setting("active_hud") {
+        let trimmed = active_id.trim();
+        if !trimmed.is_empty() && trimmed != "__root" && !trimmed.contains("..") && !trimmed.contains('/') && !trimmed.contains('\\') {
+            let candidate = root.join(trimmed);
+            if candidate.is_dir() && (candidate.join("index.html").is_file() || candidate.join("theme.json").is_file()) {
+                return candidate;
+            }
+        }
+    }
+
     let fennec = root.join("fennec-official");
     if fennec.exists() {
         return fennec;
@@ -131,6 +142,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/gsi", post(gsi_ingest))
         .route("/api/status", get(status))
         .route("/api/state", get(current_state))
+        .route("/api/cameras", get(cameras_endpoint))
+        .route("/api/hud-options", get(hud_options_endpoint))
         // Universal WebSocket endpoints
         .route("/ws", get(ws_upgrade))
         .route("/", get(root_handler))
@@ -146,6 +159,38 @@ pub fn router(state: AppState) -> Router {
         .nest_service("/overlay", ServeDir::new(overlays))
         .layer(CorsLayer::permissive())
         .with_state(state)
+}
+
+async fn cameras_endpoint() -> impl IntoResponse {
+    match crate::db::list_cameras() {
+        Ok(cams) => (StatusCode::OK, Json(json!(cams))).into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+async fn hud_options_endpoint() -> Json<Value> {
+    let defaults = json!({
+        "avatars": true,
+        "radar": true,
+        "economy": false,
+        "logos": true
+    });
+
+    match crate::db::get_setting("hud_options") {
+        Ok(Some(raw)) => {
+            if let Ok(parsed) = serde_json::from_str::<Value>(&raw) {
+                if parsed.is_object() {
+                    return Json(parsed);
+                }
+            }
+            Json(defaults)
+        }
+        _ => Json(defaults),
+    }
 }
 
 /// CS2 POSTs the full game state here on every tick.
@@ -426,8 +471,15 @@ async fn hud_file_handler(
         return ws.on_upgrade(move |socket| ws_loop(socket, st)).into_response();
     }
 
+    // Reject traversal and platform-specific separators before joining a user path.
+    if path.contains('\\') || path.contains(':') || std::path::Path::new(&path).components().any(|c| !matches!(c, std::path::Component::Normal(_))) {
+        return StatusCode::BAD_REQUEST.into_response();
+    }
     let active_dir = active_hud_dir();
     let target = active_dir.join(&path);
+    if let (Ok(root), Ok(file)) = (active_dir.canonicalize(), target.canonicalize()) {
+        if !file.starts_with(root) { return StatusCode::FORBIDDEN.into_response(); }
+    }
 
     if target.is_file() {
         match tokio::fs::read(&target).await {

@@ -20,6 +20,87 @@ window.ProtokolCore = (function () {
   var RADARS = {};
   var lastSnap = null;
   var renderFn = null;
+  var cameras = {};
+  var hudOptions = { radar: true, avatars: true, economy: false, logos: true };
+  var socketOpen = false;
+  var cameraSlots = new Map();
+
+  function sourceFor(player) {
+    var row = player && cameras[player.steamid];
+    if (!row || !row.enabled || !/^(video|iframe)$/.test(row.kind)) return null;
+    try {
+      var u = new URL(row.url);
+      if (!/^https?:$/.test(u.protocol) || u.username || u.password) return null;
+      if (row.kind === 'iframe' && /(^|\.)vdo\.ninja$/i.test(u.hostname)) u.searchParams.set('muted', '');
+      return { url: u.href, kind: row.kind };
+    } catch (_) { return null; }
+  }
+
+  function loadConfig() {
+    return Promise.all([
+      fetch('/api/cameras', { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('cameras'); return r.json();
+      }).then(function (rows) {
+        var next = {};
+        (Array.isArray(rows) ? rows : []).forEach(function (r) { next[r.steamid] = r; });
+        cameras = next;
+      }).catch(function () {}),
+      fetch('/api/hud-options', { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('options'); return r.json();
+      }).then(function (opts) { Object.assign(hudOptions, opts); }).catch(function () {})
+    ]).then(function () { if (lastSnap) draw(lastSnap); });
+  }
+
+  function disposeCamera(container) {
+    var slot = cameraSlots.get(container);
+    if (!slot) return;
+    clearTimeout(slot.timer);
+    if (slot.media.tagName === 'VIDEO') { slot.media.pause(); slot.media.removeAttribute('src'); slot.media.load(); }
+    else slot.media.src = 'about:blank';
+    slot.media.remove();
+    cameraSlots.delete(container);
+  }
+
+  // Media plumbing only; every HUD owns the framing and placement.
+  function mountCamera(container, player, liveMode) {
+    if (!container) return;
+    var source = sourceFor(player);
+    var sid = player && player.steamid || '';
+    container.dataset.sid = sid;
+    var key = source ? sid + '|' + source.kind + '|' + source.url : '';
+    var previous = cameraSlots.get(container);
+    if (previous && previous.key === key) return; // Never restart video on every GSI tick.
+    disposeCamera(container);
+    container.dataset.cameraState = !player ? 'idle' : liveMode ? 'external' : 'unconfigured';
+    if (!source) return;
+    container.dataset.cameraState = 'loading';
+    var media = document.createElement(source.kind === 'video' ? 'video' : 'iframe');
+    media.dataset.protokolCamera = sid;
+    Object.assign(media.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', border: '0', objectFit: 'cover', background: '#080d14', zIndex: '1' });
+    var slot = { key: key, media: media, timer: null };
+    cameraSlots.set(container, slot);
+    function state(value) { if (cameraSlots.get(container) === slot) container.dataset.cameraState = value; }
+    if (source.kind === 'video') {
+      media.autoplay = true; media.muted = true; media.defaultMuted = true;
+      media.playsInline = true; media.loop = true;
+      media.setAttribute('muted', ''); media.setAttribute('playsinline', '');
+      media.addEventListener('playing', function () { clearTimeout(slot.timer); state('playing'); });
+      media.addEventListener('waiting', function () { state('buffering'); });
+      media.addEventListener('error', function () { clearTimeout(slot.timer); state('error'); });
+      media.addEventListener('loadeddata', function () { media.play().catch(function () { state('blocked'); }); });
+    } else {
+      media.title = 'Camera ' + (player.name || sid);
+      media.allow = 'autoplay; fullscreen';
+      media.referrerPolicy = 'no-referrer';
+      media.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      // Cross-origin iframe load is not evidence of incoming WebRTC frames.
+      media.addEventListener('load', function () { clearTimeout(slot.timer); state('embedded'); });
+      media.addEventListener('error', function () { clearTimeout(slot.timer); state('error'); });
+    }
+    slot.timer = setTimeout(function () { state('timeout'); }, 15000);
+    media.src = source.url;
+    container.appendChild(media);
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -30,8 +111,9 @@ window.ProtokolCore = (function () {
   function sanitizeMap(m) { return (m || '').toLowerCase().replace(/[^a-z0-9_]/g, ''); }
 
   function isLiveCam() {
-    return loc.search.indexOf('cam=live') !== -1 ||
-      localStorage.getItem('cam_mode') === 'live';
+    var mode = new URLSearchParams(loc.search).get('cam');
+    if (mode) return mode === 'live';
+    try { return localStorage.getItem('cam_mode') === 'live'; } catch (_) { return false; }
   }
 
   /* Eidetic formula — verified against real match coordinates. Do not "simplify". */
@@ -96,21 +178,25 @@ window.ProtokolCore = (function () {
       })[0] || null,
       radarCfg: RADARS[sanitizeMap(snap.map)] || null,
       mapKey: sanitizeMap(snap.map),
-      liveCam: isLiveCam()
+      liveCam: isLiveCam() || !!sourceFor((snap.players || []).find(function (p) { return p.steamid === snap.focused_steamid; })),
+      options: hudOptions
     });
   }
 
   function connect() {
     var ws;
     try { ws = new WebSocket(WS_URL); } catch (e) { setTimeout(connect, 2000); return; }
+    ws.onopen = function () { socketOpen = true; loadConfig(); };
     ws.onmessage = function (ev) {
       try {
         var msg = JSON.parse(ev.data);
+        var event = msg && (msg.type || msg.event);
+        if (event === 'cameras_changed' || event === 'hud_options') { loadConfig(); return; }
         if (msg && msg.players) draw(msg);
         else if (msg && msg.data && msg.data.players) draw(msg.data);
       } catch (e) { /* ignore malformed frames */ }
     };
-    ws.onclose = function () { setTimeout(connect, 1500); };
+    ws.onclose = function () { socketOpen = false; setTimeout(connect, 1500); };
     ws.onerror = function () { try { ws.close(); } catch (e) {} };
   }
 
@@ -126,12 +212,16 @@ window.ProtokolCore = (function () {
     radarPos: radarPos,
     radarArt: radarArt,
     isLiveCam: isLiveCam,
+    mountCamera: mountCamera,
     start: function (fn) {
       renderFn = fn;
       loadRadars(15);
+      loadConfig();
       connect();
       pollOnce();
-      setInterval(function () { if (lastSnap) draw(lastSnap); }, 5000);
+      setInterval(function () { if (!socketOpen) pollOnce(); }, 2000);
+      setInterval(loadConfig, 5000);
+      window.addEventListener('pagehide', function () { cameraSlots.forEach(function (_, el) { disposeCamera(el); }); });
     }
   };
 })();

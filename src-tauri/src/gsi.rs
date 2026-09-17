@@ -17,6 +17,8 @@ pub struct PlayerSnap {
     pub deaths: i64,
     pub assists: i64,
     pub adr: i64,
+    #[serde(default)]
+    pub round_damage: i64,
     pub observer_slot: i64,
     /// World position X (GSI "position": "x, y, z") — drives the radar.
     pub pos_x: f64,
@@ -58,6 +60,23 @@ pub struct GsiSnapshot {
     pub t_name: String,
     pub bomb: String,
     pub round_time: String,
+    /// Bomb state from top-level `bomb.state` or fallback `round.bomb`.
+    #[serde(default)]
+    pub bomb_state: String,
+    /// Bomb world coordinates from top-level `bomb.position`.
+    #[serde(default)]
+    pub bomb_x: f64,
+    #[serde(default)]
+    pub bomb_y: f64,
+    /// Bomb countdown remaining (seconds) when planted.
+    #[serde(default)]
+    pub bomb_countdown: String,
+    /// Phase countdown phase name (e.g. "live", "freezetime", "bomb").
+    #[serde(default)]
+    pub phase_countdown_phase: String,
+    /// Team that won the round (if present under round or map).
+    #[serde(default)]
+    pub win_team: String,
     /// Consecutive round losses per side — drives the Loss Bonus pips.
     #[serde(default)]
     pub ct_loss_streak: i64,
@@ -330,6 +349,22 @@ fn weapon_id(p: &Value) -> String {
     }
 }
 
+/// Top-level `bomb.state` wins; legacy `round.bomb` is the fallback.
+fn bomb_state_raw(v: &Value) -> String {
+    let top = s(v, &["bomb", "state"]);
+    if top.is_empty() { s(v, &["round", "bomb"]) } else { top }
+}
+
+/// `bomb.position` is an "x, y, z" string — same format as player positions.
+/// Returns (x, y); (0, 0) when absent (callers treat 0,0 as "no data").
+fn bomb_position(v: &Value) -> (f64, f64) {
+    let raw = s(v, &["bomb", "position"]);
+    let mut it = raw.split(',');
+    let x = it.next().and_then(|n| n.trim().parse::<f64>().ok()).unwrap_or(0.0);
+    let y = it.next().and_then(|n| n.trim().parse::<f64>().ok()).unwrap_or(0.0);
+    (x, y)
+}
+
 /// Flatten the CS2 GSI payload into a stable shape the overlays consume.
 fn normalize(v: &Value) -> GsiSnapshot {
     let mut players: Vec<PlayerSnap> = Vec::new();
@@ -351,6 +386,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
                    accumulation across rounds; until that exists, report the
                    round damage this snapshot actually carries. */
                 adr: i(p, &["state", "round_totaldmg"]),
+                round_damage: i(p, &["state", "round_totaldmg"]),
                 observer_slot: i(p, &["observer_slot"]),
                 pos_x: f(p, &["position", "x"]),
                 pos_y: f(p, &["position", "y"]),
@@ -408,7 +444,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
     GsiSnapshot {
         map: s(v, &["map", "name"]),
         phase: s(v, &["round", "phase"]),
-        round: i(v, &["map", "round"]),
+        round: i(v, &["map", "round"]) + 1 - (s(v, &["phase_countdowns", "phase"]) == "over") as i64,
         ct_score: i(v, &["map", "team_ct", "score"]),
         t_score: i(v, &["map", "team_t", "score"]),
         ct_name: s(v, &["map", "team_ct", "name"]),
@@ -417,11 +453,131 @@ fn normalize(v: &Value) -> GsiSnapshot {
         t_name: s(v, &["map", "team_t", "name"]),
         bomb: s(v, &["round", "bomb"]),
         round_time: s(v, &["phase_countdowns", "phase_ends_in"]),
+        bomb_state: bomb_state_raw(v),
+        bomb_x: bomb_position(v).0,
+        bomb_y: bomb_position(v).1,
+        bomb_countdown: s(v, &["bomb", "countdown"]),
+        phase_countdown_phase: s(v, &["phase_countdowns", "phase"]),
+        win_team: s(v, &["round", "win_team"]),
         focused_steamid: {
             let sid = s(v, &["player", "steamid"]);
             if sid.is_empty() { s(v, &["player", "getSteamID"]) } else { sid }
         },
         players,
         updated_at: chrono::Utc::now().to_rfc3339(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn base_payload() -> Value {
+        json!({
+            "map": {"name": "de_mirage", "round": 7,
+                "team_ct": {"score": 5, "name": "ALPHA"}, "team_t": {"score": 3, "name": "BRAVO"}},
+            "round": {"phase": "live"},
+            "phase_countdowns": {"phase": "live", "phase_ends_in": "65.2"},
+            "player": {"steamid": "111"},
+            "allplayers": {
+                "111": {"name": "p1", "team": "CT", "state": {"health": 100, "armor": 100},
+                    "match_stats": {"kills": 3, "deaths": 1, "assists": 0},
+                    "weapons": {"weapon_0": {"name": "weapon_ak47", "type": "Rifle",
+                        "state": "active", "ammo_clip": 27, "ammo_reserve": 60}}},
+                "222": {"name": "p2", "team": "T", "state": {"health": 0},
+                    "match_stats": {"kills": 0, "deaths": 2, "assists": 0},
+                    "weapons": {"weapon_0": {"name": "weapon_glock", "type": "Pistol",
+                        "state": "active", "ammo_clip": 9, "ammo_reserve": 60}}}
+            },
+            "grenades": {}
+        })
+    }
+
+    #[test]
+    fn round_number_is_one_based_and_drops_back_after_round_end() {
+        // During live play map.round is zero-based: round 1 → map.round 0.
+        let mut v = base_payload();
+        v["map"]["round"] = json!(0);
+        v["phase_countdowns"]["phase"] = json!("live");
+        assert_eq!(normalize(&v).round, 1);
+
+        // During the phase-over delay CS2 has already bumped map.round
+        // (cs-hud semantics: map.round + 1 - Number(phase === 'over')).
+        v["map"]["round"] = json!(1);
+        v["phase_countdowns"]["phase"] = json!("over");
+        assert_eq!(normalize(&v).round, 1);
+
+        v["map"]["round"] = json!(11);
+        v["phase_countdowns"]["phase"] = json!("over");
+        assert_eq!(normalize(&v).round, 11);
+    }
+
+    fn weapon_packet(name: &str, ty: &str, state: Option<&str>) -> Value {
+        let mut w = json!({"name": name, "type": ty, "ammo_clip": 1, "ammo_reserve": 1});
+        if let Some(st) = state { w["state"] = json!(st); }
+        w
+    }
+
+    #[test]
+    fn active_weapon_prefers_state_active_over_first_slot() {
+        let p = json!({"weapons": {
+            "weapon_0": weapon_packet("weapon_knife", "Knife", None),
+            "weapon_1": weapon_packet("weapon_ak47", "Rifle", Some("active"))
+        }});
+        assert_eq!(weapon_id(&p), "ak47");
+        // No explicit active slot → first non-knife/grenade/C4 slot wins.
+        let p2 = json!({"weapons": {
+            "weapon_0": weapon_packet("weapon_knife", "Knife", None),
+            "weapon_1": weapon_packet("weapon_ak47", "Rifle", None)
+        }});
+        assert_eq!(weapon_id(&p2), "ak47");
+    }
+
+    #[test]
+    fn bomb_fields_prefer_top_level_object_with_fallback() {
+        // Modern payload: top-level bomb object with real position string.
+        let mut v = base_payload();
+        v["bomb"] = json!({"state": "planted", "position": "-1432.23, 321.94, 96",
+            "countdown": "12.4"});
+        let snap = normalize(&v);
+        assert_eq!(snap.bomb_state, "planted");
+        assert!((snap.bomb_x + 1432.23).abs() < 0.01);
+        assert!((snap.bomb_y - 321.94).abs() < 0.01);
+        assert_eq!(snap.bomb_countdown, "12.4");
+
+        // Legacy payload: only round.bomb exists.
+        let mut v2 = base_payload();
+        v2.as_object_mut().unwrap().remove("bomb");
+        v2["round"]["bomb"] = json!("planted");
+        let snap2 = normalize(&v2);
+        assert_eq!(snap2.bomb_state, "planted");
+        assert_eq!(snap2.bomb_x, 0.0);
+    }
+
+    #[test]
+    fn round_damage_and_adr_track_round_totaldmg_without_invention() {
+        let mut v = base_payload();
+        v["allplayers"]["111"]["state"]["round_totaldmg"] = json!(87);
+        let snap = normalize(&v);
+        let p1 = snap.players.iter().find(|p| p.steamid == "111").unwrap();
+        assert_eq!(p1.adr, 87);
+        assert_eq!(p1.round_damage, 87);
+    }
+
+    #[test]
+    fn grenade_ids_expand_and_exclude_non_grenades() {
+        let p = json!({"weapons": {
+            "weapon_0": weapon_packet("weapon_flashbang", "Grenade", None),
+            "weapon_1": weapon_packet("weapon_ak47", "Rifle", Some("active"))
+        }});
+        let ids = grenade_ids(&p);
+        assert_eq!(ids, vec!["flashbang".to_string()]);
+        // ammo_reserve repeats carryable grenades (flash x2).
+        let mut p2 = weapon_packet("weapon_flashbang", "Grenade", None);
+        p2["weapons"] = json!({"weapon_0": {"name": "weapon_flashbang", "type": "Grenade",
+            "ammo_reserve": 2}});
+        let ids2 = grenade_ids(&p2);
+        assert_eq!(ids2.len(), 2);
     }
 }

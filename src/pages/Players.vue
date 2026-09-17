@@ -38,6 +38,7 @@
             <th class="text-left px-5 py-3 text-text-muted text-xs font-semibold uppercase tracking-wider">Команда</th>
             <th class="text-left px-5 py-3 text-text-muted text-xs font-semibold uppercase tracking-wider">Страна</th>
             <th class="text-left px-5 py-3 text-text-muted text-xs font-semibold uppercase tracking-wider">Steam ID</th>
+            <th class="text-left px-5 py-3 text-text-muted text-xs font-semibold uppercase tracking-wider">Камера</th>
             <th class="px-5 py-3"></th>
           </tr>
         </thead>
@@ -59,6 +60,18 @@
             <td class="px-5 py-3 text-sm text-text-secondary">{{ teamName(p.team_id) }}</td>
             <td class="px-5 py-3 text-sm text-text-secondary">{{ p.country || '—' }}</td>
             <td class="px-5 py-3 text-xs font-mono text-text-muted">{{ p.steamid || '—' }}</td>
+            <td class="px-5 py-3 text-xs">
+              <span v-if="p.steamid && camMap[p.steamid]" :class="[
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono border',
+                camMap[p.steamid].enabled
+                  ? 'bg-gold/10 text-gold border-gold/30'
+                  : 'bg-bg-elevated text-text-muted border-bg-border'
+              ]">
+                <Camera :size="11" />
+                {{ camMap[p.steamid].kind }}
+              </span>
+              <span v-else class="text-text-muted text-xs">—</span>
+            </td>
             <td class="px-5 py-3 opacity-0 group-hover:opacity-100 transition-opacity">
               <div class="flex gap-3 justify-end">
                 <button @click="openEdit(p)" class="text-text-secondary hover:text-white transition-colors">
@@ -122,6 +135,29 @@
             <label class="text-text-secondary text-xs mb-1.5 block">Аватар (URL)</label>
             <input v-model="draft.avatar" class="input-field" placeholder="https://...">
           </div>
+
+          <div class="border-t border-bg-border/60 pt-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-text-secondary text-xs font-semibold flex items-center gap-1.5">
+                <Camera :size="13" class="text-gold" />
+                Веб-камера игрока (по SteamID)
+              </label>
+              <span v-if="draft.steamid && camMap[draft.steamid.trim()]" class="text-[10px] text-status-success font-medium">
+                Настроена ({{ camMap[draft.steamid.trim()].kind }})
+              </span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <input v-model="playerCamUrl" class="input-field col-span-2 text-xs font-mono" placeholder="https://vdo.ninja/?view=... или video URL">
+              <select v-model="playerCamKind" class="input-field text-xs">
+                <option value="video">Direct Video</option>
+                <option value="iframe">Iframe Embed</option>
+              </select>
+            </div>
+            <div class="text-[11px] text-text-muted flex items-center justify-between">
+              <span>Для сохранения камеры укажите корректный SteamID64 и http/https URL.</span>
+              <router-link to="/cameras" class="text-gold hover:underline">Все камеры →</router-link>
+            </div>
+          </div>
         </div>
 
         <div class="flex gap-3 pt-1">
@@ -137,16 +173,27 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Search, Plus, UserCircle, Pencil, Trash2, X, AlertTriangle } from 'lucide-vue-next'
-import { players as playersApi, teams as teamsApi, isDesktop, type Player, type Team } from '../api'
+import { Search, Plus, UserCircle, Pencil, Trash2, X, AlertTriangle, Camera } from 'lucide-vue-next'
+import { players as playersApi, teams as teamsApi, cameras as camerasApi, isDesktop, type Player, type Team, type Camera as CameraSource } from '../api'
 
 const search = ref('')
 const list = ref<Player[]>([])
 const teamList = ref<Team[]>([])
+const camList = ref<CameraSource[]>([])
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const draft = ref<Player | null>(null)
+const playerCamUrl = ref('')
+const playerCamKind = ref<'video' | 'iframe'>('video')
+
+const camMap = computed(() => {
+  const map: Record<string, CameraSource> = {}
+  for (const c of camList.value) {
+    map[c.steamid.trim()] = c
+  }
+  return map
+})
 
 const blank = (): Player => ({
   id: '', steamid: '', nickname: '', first_name: '',
@@ -175,9 +222,14 @@ const load = async () => {
   loading.value = true
   error.value = ''
   try {
-    const [p, t] = await Promise.all([playersApi.list(), teamsApi.list()])
+    const [p, t, c] = await Promise.all([
+      playersApi.list(),
+      teamsApi.list(),
+      camerasApi.list().catch(() => []),
+    ])
     list.value = p
     teamList.value = t
+    camList.value = c
   } catch (e) {
     error.value = String(e)
   } finally {
@@ -185,8 +237,23 @@ const load = async () => {
   }
 }
 
-const openCreate = () => { draft.value = blank() }
-const openEdit = (p: Player) => { draft.value = { ...p } }
+const openCreate = () => {
+  draft.value = blank()
+  playerCamUrl.value = ''
+  playerCamKind.value = 'video'
+}
+
+const openEdit = (p: Player) => {
+  draft.value = { ...p }
+  const existingCam = p.steamid ? camMap.value[p.steamid.trim()] : null
+  if (existingCam) {
+    playerCamUrl.value = existingCam.url
+    playerCamKind.value = existingCam.kind
+  } else {
+    playerCamUrl.value = ''
+    playerCamKind.value = 'video'
+  }
+}
 
 const save = async () => {
   if (!draft.value || !draft.value.nickname.trim()) return
@@ -198,6 +265,25 @@ const save = async () => {
     if (idx >= 0) list.value[idx] = saved
     else list.value.push(saved)
     list.value.sort((a, b) => a.nickname.localeCompare(b.nickname))
+
+    // Save camera if SteamID and camera URL are provided
+    if (saved.steamid && saved.steamid.trim() && playerCamUrl.value.trim()) {
+      try {
+        const camSaved = await camerasApi.save({
+          steamid: saved.steamid.trim(),
+          url: playerCamUrl.value.trim(),
+          kind: playerCamKind.value,
+          enabled: true,
+        })
+        const camIdx = camList.value.findIndex(c => c.steamid === camSaved.steamid)
+        if (camIdx >= 0) camList.value[camIdx] = camSaved
+        else camList.value.push(camSaved)
+      } catch (camErr) {
+        error.value = `Игрок сохранён, но камера не сохранена: ${String(camErr)}`
+        return
+      }
+    }
+
     draft.value = null
   } catch (e) {
     error.value = String(e)

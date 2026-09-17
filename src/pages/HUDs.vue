@@ -147,8 +147,9 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   Layers, FolderOpen, RefreshCw, Link, MonitorPlay, CheckCircle,
-  ExternalLink, AlertTriangle, Info
+  ExternalLink, AlertTriangle, Info, X
 } from 'lucide-vue-next'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { huds, overlay, settings, isDesktop, type HudPack, type HudImportResult } from '../api'
 
 const packs = ref<HudPack[]>([])
@@ -217,7 +218,17 @@ const copy = async (text: string) => {
   } catch { /* clipboard blocked */ }
 }
 
-const preview = (pack: HudPack) => window.open(pack.url_path, '_blank')
+const preview = async (pack: HudPack) => {
+  if (isDesktop) {
+    try {
+      await openUrl(pack.url_path)
+      return
+    } catch {
+      /* fallback to window.open if system handler fails */
+    }
+  }
+  window.open(pack.url_path, '_blank')
+}
 
 const importPack = async () => {
   if (!importPath.value.trim()) return

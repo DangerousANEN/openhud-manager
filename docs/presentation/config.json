@@ -1,0 +1,21 @@
+{
+  "presentation_title": "PROTOKOL HUD Manager Executive Presentation",
+  "version": "v2.0.0",
+  "date": "2026-09-17",
+  "language": "ru",
+  "slides_count": 10,
+  "aspect_ratio": "16:9",
+  "resolution": "1920x1080",
+  "assets": {
+    "mark": "assets/protokol-mark.png",
+    "cyber_hud": "assets/fennec-cyber-video.png",
+    "broadcast_hud": "assets/fennec-broadcast-video.png",
+    "championship_hud": "assets/championship-names-fixed.png",
+    "championship_hud_alt": "assets/fennec-championship-video.png",
+    "manager_desktop": "assets/manager-desktop.png",
+    "manager_camera_preview": "assets/manager-camera-preview.png"
+  },
+  "source_evidence_dir": "F:/Projects/protokol-evidence",
+  "rerender_command": "python generate_presentation.py && python verify_render.py",
+  "description": "To update with new production screenshots, place the new PNG captures into the assets/ directory (or update the file paths above) and run the rerender command."
+}

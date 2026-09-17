@@ -64,42 +64,44 @@
 <aside class="dossier hidden" id="dossier">
   <div class="dossier-cam" id="cam-slot"><div class="dossier-cam-inner" id="cam-inner"></div></div>
 
-  <div class="dossier-id">
-    <span class="dossier-slot" id="op-slot">0</span>
-    <span class="dossier-name" id="op-name">—</span>
-  </div>
+  <div class="dossier-bar">
+    <div class="dossier-id">
+      <span class="dossier-slot" id="op-slot">0</span>
+      <span class="dossier-name" id="op-name">—</span>
+    </div>
 
-  <!-- vitals as two stacked meters -->
-  <div class="dossier-vitals">
-  <div class="meter">
-    <span class="meter-key">HP</span>
-    <div class="meter-track"><div class="meter-fill meter-fill--hp" id="op-hp-bar"></div></div>
-    <span class="meter-val" id="op-hp">0</span>
-  </div>
-  <div class="meter">
-    <span class="meter-key">AR</span>
-    <div class="meter-track"><div class="meter-fill meter-fill--ar" id="op-ar-bar"></div></div>
-    <span class="meter-val" id="op-ar">0</span>
-  </div>
-  </div>
+    <!-- vitals as two stacked meters -->
+    <div class="dossier-vitals">
+    <div class="meter">
+      <span class="meter-key">HP</span>
+      <div class="meter-track"><div class="meter-fill meter-fill--hp" id="op-hp-bar"></div></div>
+      <span class="meter-val" id="op-hp">0</span>
+    </div>
+    <div class="meter">
+      <span class="meter-key">AR</span>
+      <div class="meter-track"><div class="meter-fill meter-fill--ar" id="op-ar-bar"></div></div>
+      <span class="meter-val" id="op-ar">0</span>
+    </div>
+    </div>
 
-  <!-- segmented ammo ladder: one notch per bullet in the magazine -->
-  <div class="ladder">
-    <div class="ladder-notches" id="op-ladder"></div>
-    <div class="ladder-num"><b id="op-ammo">0</b><i id="op-reserve">/0</i></div>
+    <!-- segmented ammo ladder: one notch per bullet in the magazine -->
+    <div class="ladder">
+      <div class="ladder-notches" id="op-ladder"></div>
+      <div class="ladder-num"><b id="op-ammo">0</b><i id="op-reserve">/0</i></div>
+    </div>
+
+    <div class="dossier-gun" id="op-gun"></div>
+
+    <!-- stat chips -->
+    <div class="chips">
+      <div class="chip"><i>K</i><b id="op-k">0</b></div>
+      <div class="chip"><i>A</i><b id="op-a">0</b></div>
+      <div class="chip"><i>D</i><b id="op-d">0</b></div>
+      <div class="chip chip--wide"><i>DMG</i><b id="op-adr">0</b></div>
+    </div>
+
+    <div class="dossier-kit" id="op-kit"></div>
   </div>
-
-  <div class="dossier-gun" id="op-gun"></div>
-
-  <!-- stat chips -->
-  <div class="chips">
-    <div class="chip"><i>K</i><b id="op-k">0</b></div>
-    <div class="chip"><i>A</i><b id="op-a">0</b></div>
-    <div class="chip"><i>D</i><b id="op-d">0</b></div>
-    <div class="chip chip--wide"><i>DMG</i><b id="op-adr">0</b></div>
-  </div>
-
-  <div class="dossier-kit" id="op-kit"></div>
 </aside>
 
 <script src="../_core/core.js"></script>

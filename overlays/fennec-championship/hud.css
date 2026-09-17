@@ -27,7 +27,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ══════════ CREST BANNER ══════════ */
+#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
+
+/* ══════════ CREST BANNER (SCORE TOP-CENTER 960-WIDE) ══════════ */
 .crest {
   position: absolute; top: 2rem; left: 50%; transform: translateX(-50%);
   display: flex; align-items: flex-start; gap: 2rem;
@@ -45,6 +47,7 @@ body {
 .crest-name {
   font-size: 2.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 19rem;
+  color: #ffffff;
 }
 .crest-val {
   font-size: 3.8rem; font-weight: 700; line-height: 1; min-width: 5rem; text-align: center;
@@ -61,16 +64,16 @@ body {
   box-shadow: inset 0 0 0 1px var(--gold-dim);
   clip-path: polygon(1.8rem 0, calc(100% - 1.8rem) 0, 100% 100%, 0 100%);
 }
-.crest-clock { font-size: 3rem; font-weight: 700; color: var(--gold); line-height: 1; }
-.crest-round { font-size: 1.2rem; letter-spacing: .3em; color: rgba(243,236,224,.55); }
+.crest-clock { font-size: 3rem; font-weight: 700; color: var(--gold); line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.crest-round { font-size: 1.25rem; font-weight: 700; letter-spacing: .3em; color: rgba(243,236,224,.92); text-shadow: 0 1px 2px #000; }
 .crest-beads { display: flex; gap: .28rem; }
 .crest-beads i {
-  width: .55rem; height: .55rem; background: rgba(243,236,224,.2);
+  width: .55rem; height: .55rem; background: rgba(243,236,224,.25);
   transform: rotate(45deg);                 /* diamond beads */
 }
-.crest-beads i.is-set { background: var(--gold); }
+.crest-beads i.is-set { background: var(--gold); box-shadow: 0 0 .5rem var(--gold); }
 
-/* ══════════ SURVIVOR TALLY ══════════ original players-alive anchor */
+/* ══════════ SURVIVOR TALLY ══════════ */
 .tally {
   position: absolute; top: 1.5rem; right: 2rem;
   display: grid; justify-items: center; gap: .2rem;
@@ -80,55 +83,95 @@ body {
   box-shadow: inset 0 0 0 1px var(--gold-dim), inset 0 -2px 0 var(--gold);
   clip-path: polygon(1.4rem 0, 100% 0, calc(100% - 1.4rem) 100%, 0 100%);
 }
-.tally-head { font-size: 1.1rem; letter-spacing: .3em; color: rgba(243,236,224,.55); }
+.tally-head { font-size: 1.15rem; font-weight: 700; letter-spacing: .3em; color: rgba(243,236,224,.9); text-shadow: 0 1px 2px #000; }
 .tally-body { display: flex; align-items: baseline; gap: .7rem; }
 .tally-body b { font-size: 2.6rem; font-weight: 700; line-height: 1; }
 .tally-body s { text-decoration: none; color: var(--gold); font-size: 1.6rem; }
 .tally-ct { color: var(--ct); }
 .tally-t  { color: var(--t); }
 
-/* ══════════ PODIUM DECK ══════════ five plinths per side, radial dials */
+/* ══════════ PODIUM DECK (ROSTERS LOWER CORNERS, EACH 435-WIDE) ══════════ */
 .podium {
-  /* original roster anchor: bottom corners, 435 wide per side */
-  position: absolute; bottom: 1.5rem;
-  display: flex; gap: .6rem; align-items: flex-end;
+  position: absolute; bottom: 1.5rem; width: 43.5rem;
+  display: flex; flex-direction: column; gap: .4rem;
 }
-.podium--ct { left: 2rem; }
-.podium--t  { right: 2rem; }
+.podium--ct { left: 0; }
+.podium--t  { right: 0; }
 
 .plinth {
-  position: relative;
-  width: 8.3rem; padding: .7rem .4rem .6rem;
-  display: grid; justify-items: center; gap: .25rem;
-  background: linear-gradient(180deg, rgba(36,30,22,.86), rgba(14,12,9,.92));
+  width: 100%; height: 4.8rem; padding: 0 .8rem;
+  display: flex; align-items: center; gap: .6rem;
+  background: linear-gradient(90deg, rgba(32,26,18,.96), rgba(16,13,10,.98));
   box-shadow: inset 0 0 0 1px var(--gold-dim);
-  clip-path: polygon(1.2rem 0, calc(100% - 1.2rem) 0, 100% 100%, 0 100%);
+  position: relative;
 }
-.plinth--out { opacity: .4; filter: grayscale(.75); }
-.plinth--on { box-shadow: inset 0 0 0 2px var(--gold), 0 0 2rem rgba(232,195,122,.35); }
+.podium--ct .plinth {
+  clip-path: polygon(0 0, 100% 0, calc(100% - 1.2rem) 100%, 0 100%);
+  border-left: 4px solid var(--ct);
+}
+.podium--t .plinth {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 1.2rem 100%);
+  flex-direction: row-reverse;
+  border-right: 4px solid var(--t);
+  background: linear-gradient(270deg, rgba(32,26,18,.96), rgba(16,13,10,.98));
+}
+.plinth--out { opacity: .4; filter: grayscale(.8); }
+.plinth--on { box-shadow: inset 0 0 0 2px var(--gold), 0 0 1.8rem rgba(232,195,122,.38); }
+
+.plinth-slot {
+  width: 2.2rem; height: 2.2rem; display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-weight: 700; color: var(--gold);
+  background: rgba(232,195,122,.12); border: 1px solid var(--gold-dim);
+  flex-shrink: 0; line-height: 1;
+}
 
 /* radial dial replaces the health bar entirely */
-.pdial { width: 4.6rem; height: 4.6rem; transform: rotate(-90deg); }
-.pdial-bg { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 4; }
-.pdial-fg { fill: none; stroke-width: 4; stroke-linecap: butt; transition: stroke-dashoffset .25s ease; }
+.plinth-dial-wrap {
+  position: relative; width: 3.8rem; height: 3.8rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pdial { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pdial-bg { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 4; }
+.pdial-fg { fill: none; stroke-width: 4; stroke-linecap: butt; }
 .pdial-fg--ct { stroke: var(--ct); }
 .pdial-fg--t  { stroke: var(--t); }
 .pdial-num {
-  position: absolute; top: 2.35rem; left: 0; right: 0; text-align: center;
-  font-size: 1.4rem; font-weight: 700;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem; font-weight: 700; line-height: 1; color: #f3ece0;
 }
-.plinth-name {
-  font-size: 1.25rem; font-weight: 700; text-transform: uppercase; letter-spacing: .01em;
-  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.plinth-kd { font-size: 1.15rem; color: rgba(243,236,224,.85); }
-.plinth-kd s { text-decoration: none; color: rgba(243,236,224,.4); }
-.plinth-cash { font-size: 1.1rem; font-weight: 700; color: #a9d6a0; }
-.plinth-kit { display: flex; gap: .2rem; min-height: 1.7rem; flex-wrap: wrap;
-  justify-content: center; }
 
-/* ══════════ MAP PLATE ══════════ framed, centre-left */
-/* original radar anchor: top-left corner */
+.plinth-name {
+  font-size: 1.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  width: 12.5rem; flex-shrink: 0;
+  color: #ffffff;
+}
+.podium--t .plinth-name { text-align: right; }
+
+.plinth-gun {
+  height: 2.2rem; width: 5.8rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.plinth-gun img { max-height: 100%; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
+
+.plinth-kd {
+  font-size: 1.3rem; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  display: flex; align-items: baseline; gap: .2rem;
+}
+.plinth-kd b { color: #f3ece0; }
+.plinth-kd s { text-decoration: none; color: var(--gold); opacity: .7; font-size: 1.15rem; }
+
+.plinth-cash {
+  font-size: 1.25rem; font-weight: 700; color: #88d48b; flex-shrink: 0;
+}
+.plinth-cash.hidden { display: none !important; }
+
+.plinth-kit {
+  display: flex; align-items: center; gap: .3rem; flex-shrink: 0;
+}
+.podium--t .plinth-kit { flex-direction: row-reverse; }
+
+/* ══════════ MAP PLATE (RADAR TOP-LEFT 480x480) ══════════ */
 .plate { position: absolute; top: 0; left: 0; width: 48rem; }
 .plate-frame {
   position: relative; aspect-ratio: 1;
@@ -142,7 +185,8 @@ body {
 .plate-dots { position: absolute; inset: 1rem; }
 .plate-name {
   margin-top: .6rem; text-align: center;
-  font-size: 1.3rem; letter-spacing: .34em; color: var(--gold);
+  font-size: 1.3rem; font-weight: 700; letter-spacing: .34em; color: var(--gold);
+  text-shadow: 0 1px 2px #000;
 }
 .medal {
   position: absolute; width: 2.3rem; height: 2.3rem; margin: -1.15rem 0 0 -1.15rem;
@@ -161,9 +205,8 @@ body {
   filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg);
 }
 
-/* ══════════ SPOTLIGHT PLAQUE ══════════ centre, above the deck */
+/* ══════════ SPOTLIGHT PLAQUE (FOCUS LOWER-CENTER 960-WIDE) ══════════ */
 .spotlight {
-  /* original focused-player anchor: 960 wide, centred at (960,1020) */
   position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
   width: 96rem;
   display: grid; justify-items: center; gap: .4rem;
@@ -186,10 +229,13 @@ body {
   background: linear-gradient(180deg, #f4d79a, #d4a373); color: #1a1610;
 }
 .spot-cam-inner::after {
-  content: 'MAJOR';
+  content: 'PLAYER CAM';
   position: absolute; top: .7rem; right: .8rem;
   font-size: 1rem; font-weight: 700; letter-spacing: .22em;
   color: rgba(232,195,122,.9);
+  background: rgba(14, 12, 9, .75);
+  padding: .2rem .6rem;
+  border: 1px solid var(--gold-dim);
 }
 
 .spot-plaque {
@@ -205,16 +251,26 @@ body {
   border-right: 1px solid var(--gold-dim); padding-right: 1.4rem;
 }
 .spot-id { display: grid; gap: .1rem; flex: 1; }
-.spot-name { font-size: 3rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.spot-team { font-size: 1.2rem; letter-spacing: .26em; color: rgba(243,236,224,.55); }
+.spot-name {
+  font-size: 3rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  color: #ffffff; text-shadow: 0 2px 4px #000;
+}
+.spot-team {
+  font-size: 1.3rem; font-weight: 700; letter-spacing: .26em;
+  color: var(--gold); text-shadow: 0 1px 2px #000;
+}
+.is-ct .spot-team { color: var(--ct); }
+.is-t .spot-team  { color: var(--t); }
 
 .spot-dials { display: flex; align-items: center; gap: .6rem; }
 .dial { width: 4.4rem; height: 4.4rem; transform: rotate(-90deg); }
 .dial-bg { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 4; }
 .dial-fg { fill: none; stroke-width: 4; transition: stroke-dashoffset .25s ease; }
 .dial-fg--hp { stroke: var(--gold); }
+.is-ct .dial-fg--hp { stroke: var(--ct); }
+.is-t  .dial-fg--hp { stroke: var(--t); }
 .dial-fg--ar { stroke: var(--ct); }
-.dial-val { font-size: 1.8rem; font-weight: 700; min-width: 3.4rem; }
+.dial-val { font-size: 1.8rem; font-weight: 700; min-width: 3.4rem; color: #ffffff; }
 
 .spot-line {
   display: flex; align-items: center; gap: 1.8rem;
@@ -224,11 +280,11 @@ body {
   clip-path: polygon(0 0, 100% 0, calc(100% - 1.6rem) 100%, 1.6rem 100%);
 }
 .sl { display: flex; align-items: baseline; gap: .45rem; }
-.sl i { font-style: normal; font-size: 1.1rem; letter-spacing: .16em; color: rgba(243,236,224,.5); }
-.sl b { font-size: 1.9rem; font-weight: 700; }
+.sl i { font-style: normal; font-size: 1.15rem; font-weight: 700; letter-spacing: .16em; color: rgba(243,236,224,.88); text-shadow: 0 1px 2px #000; }
+.sl b { font-size: 1.9rem; font-weight: 700; color: #ffffff; }
 .sl--ammo { margin-left: auto; }
-.sl u { text-decoration: none; font-size: 1.3rem; color: rgba(243,236,224,.5); }
-.spot-gun img { height: 2.2rem; width: 7rem; object-fit: contain; }
+.sl u { text-decoration: none; font-size: 1.3rem; font-weight: 700; color: rgba(243,236,224,.8); }
+.spot-gun img { height: 2.2rem; width: 7rem; object-fit: contain; filter: brightness(0) invert(1); }
 .spot-kit { display: flex; gap: .35rem; }
 
 /* ══════════ UTILITY ICON SPRITES ══════════ */
@@ -244,8 +300,8 @@ body {
   filter: brightness(0) saturate(100%) invert(45%) sepia(85%) saturate(2000%) hue-rotate(2deg); }
 .nade-decoy { background-image: url(assets/weapons/decoy.svg);
   filter: brightness(0) saturate(100%) invert(75%); }
-.ux--vest { background-image: url(assets/icons/armor.svg); }
-.ux--helm { background-image: url(assets/icons/armor-helmet.svg); }
-.ux--kit  { background-image: url(assets/icons/defuser.svg); }
+.ux--vest { background-image: url(assets/icons/armor.svg); filter: brightness(0) invert(1); }
+.ux--helm { background-image: url(assets/icons/armor-helmet.svg); filter: brightness(0) invert(1); }
+.ux--kit  { background-image: url(assets/icons/defuser.svg); filter: brightness(0) saturate(100%) invert(75%) sepia(20%) saturate(800%) hue-rotate(160deg); }
 .ux--bomb { background-image: url(assets/icons/c4.svg); width: 2.6rem;
   filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg); }

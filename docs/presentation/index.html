@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROTOKOL HUD Manager — Презентация комплекса CS2</title>
+  <style>
+    :root {
+      --bg-base: #0B0E14;
+      --bg-surface: #131822;
+      --bg-surface-elevated: #1B2230;
+      --bg-card: rgba(19, 24, 34, 0.85);
+      --border-subtle: #263042;
+      --border-accent: #384660;
+      --gold-primary: #E5B869;
+      --gold-hover: #F59E0B;
+      --gold-glow: rgba(229, 184, 105, 0.25);
+      --cyan-cyber: #00E5FF;
+      --cyan-glow: rgba(0, 229, 255, 0.25);
+      --blue-broadcast: #3B82F6;
+      --blue-glow: rgba(59, 130, 246, 0.25);
+      --green-verified: #10B981;
+      --amber-warn: #F59E0B;
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #94A3B8;
+      --text-subtle: #64748B;
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #06080C;
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 16:9 Viewport Scaler */
+    #deck-viewport {
+      width: 1920px;
+      height: 1080px;
+      position: absolute;
+      transform-origin: center center;
+      background: var(--bg-base);
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Background Ambient Effects */
+    .ambient-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .ambient-gold { top: -150px; right: -150px; background: var(--gold-primary); }
+    .ambient-cyan { bottom: -150px; left: -150px; background: var(--cyan-cyber); }
+
+    /* Slide Container */
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      padding: 60px 100px 50px 100px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.985);
+      z-index: 2;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    /* Common Slide Header */
+    .slide-header {
+      margin-bottom: 36px;
+      position: relative;
+      z-index: 5;
+    }
+    .kicker {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kicker::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 2px;
+    }
+    .slide-title {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    .slide-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 1200px;
+      line-height: 1.4;
+    }
+
+    /* Common Slide Body */
+    .slide-body {
+      flex: 1;
+      display: grid;
+      position: relative;
+      z-index: 5;
+      gap: 36px;
+    }
+
+    .grid-2col {
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: center;
+    }
+    .grid-2col-even {
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+    }
+    .grid-3col {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: stretch;
+    }
+
+    /* Cards & Panels */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 30px;
+      position: relative;
+      backdrop-filter: blur(12px);
+    }
+    .card-elevated {
+      background: var(--bg-surface-elevated);
+      border-color: var(--border-accent);
+    }
+    .card-accent-gold { border-color: rgba(229, 184, 105, 0.4); box-shadow: 0 0 30px -10px var(--gold-glow); }
+    .card-accent-cyan { border-color: rgba(0, 229, 255, 0.4); box-shadow: 0 0 30px -10px var(--cyan-glow); }
+    .card-accent-blue { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 30px -10px var(--blue-glow); }
+
+    /* Framed Screenshot Showcase */
+    .screenshot-frame {
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-accent);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .screenshot-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .screenshot-caption {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+    .screenshot-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    /* List Items */
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .feature-label {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .feature-label.gold { color: var(--gold-primary); }
+    .feature-label.cyan { color: var(--cyan-cyber); }
+    .feature-label.blue { color: var(--blue-broadcast); }
+    .feature-label.green { color: var(--green-verified); }
+    .feature-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    /* Comparison Table */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14.5px;
+    }
+    .compare-table th {
+      text-align: left;
+      padding: 14px 18px;
+      background: var(--bg-surface-elevated);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border-accent);
+    }
+    .compare-table th.highlight {
+      color: var(--gold-primary);
+      background: rgba(229, 184, 105, 0.1);
+      border-bottom-color: var(--gold-primary);
+    }
+    .compare-table td {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    .compare-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .compare-table td.highlight {
+      font-weight: 700;
+      color: var(--text-primary);
+      background: rgba(229, 184, 105, 0.04);
+    }
+    .tag-val {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .tag-green { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-red { background: rgba(239, 68, 68, 0.12); color: #F87171; }
+    .tag-cyan { background: rgba(0, 229, 255, 0.12); color: var(--cyan-cyber); }
+
+    /* Footer */
+    .slide-footer {
+      height: 40px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-subtle);
+      z-index: 5;
+    }
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .footer-right {
+      font-weight: 700;
+      color: var(--gold-primary);
+      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+    }
+
+    /* Interactive Overlay Controls */
+    #ui-controls {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+      background: rgba(19, 24, 34, 0.9);
+      padding: 8px 14px;
+      border-radius: 30px;
+      border: 1px solid var(--border-accent);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .ctrl-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .ctrl-btn:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border-color: var(--border-accent);
+    }
+    .ctrl-btn.active-btn {
+      background: var(--gold-primary);
+      color: #000;
+      border-color: var(--gold-primary);
+    }
+
+    /* Speaker Notes Drawer */
+    #notes-drawer {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      width: 420px;
+      background: rgba(19, 24, 34, 0.95);
+      border: 1px solid var(--border-accent);
+      border-radius: 16px;
+      padding: 20px 24px;
+      z-index: 99;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      transform: translateX(460px);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #notes-drawer.open {
+      transform: translateX(0);
+    }
+    #notes-drawer h4 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold-primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #notes-drawer p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Title Slide Specifics */
+    .hero-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+    }
+    .hero-badge-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 50px;
+    }
+    .hero-badge {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      border-left: 4px solid var(--gold-primary);
+    }
+    .hero-badge.cyan { border-left-color: var(--cyan-cyber); }
+    .hero-badge.green { border-left-color: var(--green-verified); }
+    .hero-badge.blue { border-left-color: var(--blue-broadcast); }
+    .hero-badge-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .hero-badge-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="deck-viewport">
+    <div class="ambient-glow ambient-gold"></div>
+    <div class="ambient-glow ambient-cyan"></div>
+
+    <!-- ====================================================================
+         SLIDE 1: COVER
+         ==================================================================== -->
+    <div class="slide active" data-slide="1" data-notes="Представление продукта PROTOKOL HUD Manager для руководства турнира и технического директора. Ключевая цель — независимость от тяжелых legacy решений, полная стабильность и премиальный ТВ-визуал.">
+      <div class="hero-container">
+        <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 30px;">
+          <img src="assets/protokol-mark.png" alt="Protokol Logo" style="width: 76px; height: 76px; filter: drop-shadow(0 0 20px rgba(229,184,105,0.4));">
+          <div>
+            <div class="kicker">КИБЕРСПОРТИВНЫЙ ПРОДАКШН СЛЕДУЮЩЕГО ПОКОЛЕНИЯ</div>
+            <div style="font-size: 15px; color: var(--text-muted); font-family: var(--font-mono);">TAURI v2  •  RUST AXUM 0.7  •  TOKIO WEBSOCKET  •  SQLITE WAL</div>
+          </div>
+        </div>
+
+        <h1 style="font-size: 64px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 20px;">
+          PROTOKOL HUD Manager
+        </h1>
+
+        <p style="font-size: 24px; color: var(--text-secondary); max-width: 1200px; line-height: 1.45;">
+          Автономный нативный комбайн управления трансляциями Counter-Strike 2:
+          сверхбыстрый скомпилированный движок, три независимых стиля оверлеев и автоматический фокус веб-камер игроков по SteamID64.
+        </p>
+
+        <div class="hero-badge-row">
+          <div class="hero-badge cyan">
+            <div class="hero-badge-label">Архитектура ядра</div>
+            <div class="hero-badge-val">Rust + Tauri v2</div>
+          </div>
+          <div class="hero-badge green">
+            <div class="hero-badge-label">Потребление RAM</div>
+            <div class="hero-badge-val">30–60 MB RAM</div>
+          </div>
+          <div class="hero-badge blue">
+            <div class="hero-badge-label">Частота синхронизации</div>
+            <div class="hero-badge-val">60 Hz Realtime WS</div>
+          </div>
+          <div class="hero-badge">
+            <div class="hero-badge-label">Форм-фактор</div>
+            <div class="hero-badge-val">Автономный .exe</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Турнирный комплекс CS2</span>
+        </div>
+        <div class="footer-right">01 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 2: POSITIONING & COMPARISON
+         ==================================================================== -->
+    <div class="slide" data-slide="2" data-notes="Инженерное и финансовое обоснование. LHM и EideticHM создают риски сбоев во время стрима из-за утечек памяти. PROTOKOL снижает нагрузку на систему вещания на 80-85% и запускается из одного автономного файла.">
+      <div class="slide-header">
+        <div class="kicker">Позиционирование и ценность</div>
+        <h2 class="slide-title">Преодоление ограничений устаревших HUD-решений</h2>
+        <p class="slide-subtitle">Переход от ненадежных Node.js/Electron монолитов к скомпилированному нативному Rust-стеку</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Параметр</th>
+                <th>Lexogrine (LHM)</th>
+                <th>EideticHM</th>
+                <th class="highlight">PROTOKOL Manager</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Архитектура ядра</strong></td>
+                <td>Electron + Chromium</td>
+                <td>Node.js Server</td>
+                <td class="highlight"><span class="tag-val tag-cyan">Tauri v2 + Rust</span></td>
+              </tr>
+              <tr>
+                <td><strong>Потребление RAM</strong></td>
+                <td><span class="tag-val tag-red">300–500 MB (утечки)</span></td>
+                <td>150–250 MB</td>
+                <td class="highlight"><span class="tag-val tag-green">30–60 MB RAM</span></td>
+              </tr>
+              <tr>
+                <td><strong>Размер сборки</strong></td>
+                <td>~220 MB</td>
+                <td>Зависит от npm</td>
+                <td class="highlight"><span class="tag-val tag-green">~18.8 MB (один .exe)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Сетевой движок</strong></td>
+                <td>Express / WS</td>
+                <td>Express / Socket.io</td>
+                <td class="highlight">Axum 0.7 + Tokio WS</td>
+              </tr>
+              <tr>
+                <td><strong>База данных</strong></td>
+                <td>NeDB (JSON файлы)</td>
+                <td>Локальные файлы</td>
+                <td class="highlight">SQLite WAL (транзакции)</td>
+              </tr>
+              <tr>
+                <td><strong>Поддержка вебкамер</strong></td>
+                <td>Ручная подгонка</td>
+                <td>Хаки в CSS/OBS</td>
+                <td class="highlight"><span class="tag-val tag-cyan">Dual-Mode 16:9 (?cam=live)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div class="card card-accent-gold">
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--gold-primary); margin-bottom: 8px;">Безотказность на длинных матчах</h3>
+            <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.45;">
+              Нативное Rust-ядро исключает утечки памяти Chromium и гарантирует стабильную частоту кадров в OBS даже при многочасовых турнирных марафонах (BO3/BO5).
+            </p>
+          </div>
+          <div class="card card-accent-blue">
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--blue-broadcast); margin-bottom: 8px;">Полная автономность (Zero Dependency)</h3>
+            <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.45;">
+              Никаких установок Node.js, Python или пакетных менеджеров на вещательных ПК. Один скомпилированный бинарник разворачивает всю инфраструктуру за 1 секунду.
+            </p>
+          </div>
+          <div class="card card-accent-cyan">
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--cyan-cyber); margin-bottom: 8px;">Централизованный Control Plane</h3>
+            <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.45;">
+              Управление стилями, ростерами команд, спонсорами и вебкамерами в едином графическом окне без ручной правки JSON-файлов и перезапуска CS2.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Сравнительная матрица решений</span>
+        </div>
+        <div class="footer-right">02 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 3: HUD 1 - CYBER
+         ==================================================================== -->
+    <div class="slide" data-slide="3" data-notes="Стиль Fennec Cyber. Особенность: агрессивная, молодежная геометрия. Скриншот показывает тестовый видеопоток (SMPTE-таймкод) в окне камеры. В реальном матче при наведении спектатора на игрока здесь мгновенно активируется его веб-камера.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--cyan-cyber);">Стиль HUD 01  •  Киберспорт и стриминг</div>
+        <h2 class="slide-title">Fennec Cyber: Футуристичный Sci-Fi и неон</h2>
+        <p class="slide-subtitle">overlays/fennec-cyber  •  Энергичный визуальный стиль со скошенной геометрией для вечерних лиг и шоу-матчей</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="screenshot-frame" style="border-color: rgba(0, 229, 255, 0.3);">
+          <img src="assets/fennec-cyber-video.png" alt="HUD Fennec Cyber">
+          <div class="screenshot-caption">
+            <span>Оверлей 1080p: скошенная рамка вебкамеры над карточкой фокуса</span>
+            <span class="screenshot-badge">Тестовый стенд: SMPTE видеопоток</span>
+          </div>
+        </div>
+
+        <div class="card card-accent-cyan">
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-label cyan">Полигональная геометрия</div>
+              <div class="feature-desc">Скошенные технологичные углы (<code>clip-path: polygon 45°</code>), фоновая кибер-сетка и эффект динамического свечения элементов.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Контрастная неон-палитра</div>
+              <div class="feature-desc">Неоновый циан <code>#00f0ff</code> для спецназа (CT) и неоновый пурпур/розовый <code>#ff007f</code> для террористов (T).</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Интеграция вебкамеры 16:9</div>
+              <div class="feature-desc">Встроенная скошенная окантовка с бейджем <code>LIVE CAM</code>. Поток из OBS или VDO.Ninja идеально садится в вырез.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Чистый векторный радар</div>
+              <div class="feature-desc">Прозрачные неоновые контуры соревновательной карты без затемняющего черного фонового квадрата.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Каталог оверлеев</span>
+        </div>
+        <div class="footer-right">03 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 4: HUD 2 - BROADCAST
+         ==================================================================== -->
+    <div class="slide" data-slide="4" data-notes="Fennec Broadcast — эталонный пак по чистоте верстки. В визуальных тестах подтверждено отсутствие коллизий и аккуратное центрирование камеры над карточкой фокуса.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--blue-broadcast);">Стиль HUD 02  •  Телевизионный стандарт</div>
+        <h2 class="slide-title">Fennec Broadcast: Чистая студийная эстетика</h2>
+        <p class="slide-subtitle">overlays/fennec-broadcast  •  Сдержанный премиальный интерфейс мирового уровня в традициях BLAST и PGL</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="screenshot-frame" style="border-color: rgba(59, 130, 246, 0.3);">
+          <img src="assets/fennec-broadcast-video.png" alt="HUD Fennec Broadcast">
+          <div class="screenshot-caption">
+            <span>Эталонный лейаут: центрированная камера, разряженная верстка, нулевой клиппинг</span>
+            <span class="screenshot-badge">ТВ-формат: 1080p60</span>
+          </div>
+        </div>
+
+        <div class="card card-accent-blue">
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-label blue">Телевизионная эргономика</div>
+              <div class="feature-desc">Аккуратные скругленные углы (10px), сбалансированное центрирование фокус-панели и окна веб-камеры.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">Матовое стекло (Glassmorphism)</div>
+              <div class="feature-desc">Использование <code>backdrop-filter: blur(16px)</code> для мягкой интеграции поверх любой карты и игровых спецэффектов.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">Благородная цветовая гамма</div>
+              <div class="feature-desc">Глубокий кобальтовый синий <code>#1a56db</code> (CT) и теплый янтарный оранжевый <code>#f59e0b</code> (T).</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">Мгновенная считываемость</div>
+              <div class="feature-desc">Крупные цифры здоровья, индикация патронов, статусы разминирования (DEFUSE) и утилит команд.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Каталог оверлеев</span>
+        </div>
+        <div class="footer-right">04 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 5: HUD 3 - CHAMPIONSHIP
+         ==================================================================== -->
+    <div class="slide" data-slide="5" data-notes="Стиль Championship. Подчеркнуть честный статус: в ходе тестирования была проверена геометрия ростеров при длинных никнеймах (ELECTRONIC, PLAYERT HREE и др.). Инструментальные замеры Range.getClientRects подтвердили стабильную однострочную верстку.">
+      <div class="slide-header">
+        <div class="kicker">Стиль HUD 03  •  Премиум и Гранд-Финал</div>
+        <h2 class="slide-title">Fennec Championship: Оникс и королевское золото</h2>
+        <p class="slide-subtitle">overlays/fennec-championship  •  Торжественный пакет для решающих стадий чемпионатов и финалов турнирных серий</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="screenshot-frame" style="border-color: rgba(229, 184, 105, 0.4);">
+          <img src="assets/championship-names-fixed.png" alt="HUD Fennec Championship">
+          <div class="screenshot-caption">
+            <span>Валидированная однострочная верстка: никнеймы 10 игроков отображаются без переносов</span>
+            <span class="screenshot-badge">Проверено: 720p / 1080p / 1440p</span>
+          </div>
+        </div>
+
+        <div class="card card-accent-gold">
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-label gold">Статус Гранд-Финала</div>
+              <div class="feature-desc">Глубокий оникс <code>#0d0f14</code>, металлический графит и градиентное королевское золото <code>#ffd700</code>.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Турнирная символика</div>
+              <div class="feature-desc">Золотой шеврон первенства, акцентные полосы активности раунда и победные фреймы.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Рамка вебкамеры с шильдиком</div>
+              <div class="feature-desc">Металлическая золотая окантовка 2px со скошенным шильдиком никнейма и KDA активного игрока.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Строгий контроль верстки</div>
+              <div class="feature-desc">Математически подтвержденная однострочная компоновка длинных ников без разрывов слов.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Каталог оверлеев</span>
+        </div>
+        <div class="footer-right">05 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 6: WEBCAM INTEGRATION
+         ==================================================================== -->
+    <div class="slide" data-slide="6" data-notes="Архитектура вебкамер. Главное преимущество — оверлей никогда не выглядит сломанным или пустым. Если физической камеры нет, зритель видит агента. Если камера подключена — она идеально встает в вырез.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--amber-warn);">Интеграция видео  •  Player Camera Engine</div>
+        <h2 class="slide-title">Двухрежимная система отображения веб-камер</h2>
+        <p class="slide-subtitle">Автоматическая привязка видеопотоков к SteamID64 и бесшовное переключение при смене спектатора</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="screenshot-frame">
+          <img src="assets/manager-camera-preview.png" alt="Camera Preview Modal">
+          <div class="screenshot-caption">
+            <span>Встроенный плеер тестирования видеопотока по SteamID64 в Tauri Manager</span>
+            <span class="screenshot-badge">API: /api/cameras</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Режим Offline (Без стримера)</div>
+              <div class="feature-desc">Если у игрока нет физической камеры, в 16:9 окне отображается 3D-рендер бодишота агента CS2. Оверлей всегда выглядит цельным.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Режим Live Cam (?cam=live)</div>
+              <div class="feature-desc">При передаче параметра центральное окно становится прозрачным, и камера игрока из OBS обрамляется фирменной рамкой стиля.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Поддержка Direct Video и iframe</div>
+              <div class="feature-desc">Работает с чистыми HLS/MP4 потоками и встраиваемыми ссылками VDO.Ninja с автоглушением звука (muted).</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Безопасный предпросмотр</div>
+              <div class="feature-desc">Режиссер может проверить работоспособность потока каждого игрока прямо из таблицы управления перед эфиром.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Видео-инженерия</span>
+        </div>
+        <div class="footer-right">06 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 7: OPERATOR WORKFLOW
+         ==================================================================== -->
+    <div class="slide" data-slide="7" data-notes="Рабочий процесс оператора трансляции. Продукт избавляет оператора от работы с консолями, конфигами вручную или перезапусками игры.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--blue-broadcast);">Рабочее место оператора  •  Control Plane</div>
+        <h2 class="slide-title">Централизованный нативный пульт управления</h2>
+        <p class="slide-subtitle">Интуитивный интерфейс на Vue 3 + Tailwind CSS с полным контролем сущностей матча</p>
+      </div>
+
+      <div class="slide-body grid-2col">
+        <div class="screenshot-frame">
+          <img src="assets/manager-desktop.png" alt="Manager Desktop Interface">
+          <div class="screenshot-caption">
+            <span>Экран управления HUD-паками: переключение активного стиля, быстрый экспорт URL для OBS</span>
+            <span class="screenshot-badge">Tauri v2 Desktop App</span>
+          </div>
+        </div>
+
+        <div class="card card-accent-blue">
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-label blue">1. Автоматическая настройка CS2</div>
+              <div class="feature-desc">Менеджер самостоятельно находит директорию игры в реестре Windows и генерирует <code>gamestate_integration_protokol.cfg</code>.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">2. Мгновенная смена активного HUD</div>
+              <div class="feature-desc">Переключение стилей оформления в один клик без перезагрузки браузерного источника в OBS Studio.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">3. Быстрый экспорт Browser Source</div>
+              <div class="feature-desc">Кнопка прямого копирования URL оверлея исключает ошибки ручного ввода адресов режиссером эфира.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label blue">4. Управление ростерами и матчами</div>
+              <div class="feature-desc">Быстрое редактирование названий команд, спонсорских баннеров, логотипов и привязок SteamID игроков в локальной БД SQLite.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Режиссёрский пульт</span>
+        </div>
+        <div class="footer-right">07 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 8: DATA FLOW & ARCHITECTURE
+         ==================================================================== -->
+    <div class="slide" data-slide="8" data-notes="Архитектурная надежность. Разделение ответственности: быстрый сетевой GSI-парсинг на Rust, трансляция по WebSocket на 60 FPS, изолированная запись в SQLite WAL.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--cyan-cyber);">Инженерия и надежность  •  High Performance</div>
+        <h2 class="slide-title">Архитектура сквозного конвейера данных (Data Flow)</h2>
+        <p class="slide-subtitle">Субмиллисекундная обработка пакетов Valve CS2 GSI и векторный радар на 18 соревновательных карт</p>
+      </div>
+
+      <div class="slide-body grid-3col">
+        <div class="card card-accent-cyan">
+          <div style="font-size: 13px; font-weight: 700; color: var(--cyan-cyber); text-transform: uppercase; margin-bottom: 14px;">
+            1. Приём телеметрии (GSI)
+          </div>
+          <ul class="feature-list" style="gap: 14px;">
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Слушатель Axum 0.7</div>
+              <div class="feature-desc">HTTP-приемник пакетов Valve Source Engine с частотой 10–60 раз в секунду на порту :1349.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Совместимый порт-мост</div>
+              <div class="feature-desc">Обработка входящих пакетов на порту :31982 с проверкой токена авторизации.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Парсинг SteamID фокуса</div>
+              <div class="feature-desc">Чтение нативного поля <code>player.steamid</code> с авто-фолбэком на <code>getSteamID</code>.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card card-accent-gold">
+          <div style="font-size: 13px; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; margin-bottom: 14px;">
+            2. Ядро и персистентность
+          </div>
+          <ul class="feature-list" style="gap: 14px;">
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">In-Memory State (Tokio)</div>
+              <div class="feature-desc">Атомарный MatchSnap обновляется в оперативной памяти без взаимных блокировок.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">SQLite в режиме WAL</div>
+              <div class="feature-desc">Write-Ahead Logging гарантирует сохранность истории раундов и статистики без задержек ввода-вывода.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Память 30–60 МБ</div>
+              <div class="feature-desc">Отсутствие утечек памяти на длительных дистанциях турнирных серий.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card card-accent-blue">
+          <div style="font-size: 13px; font-weight: 700; color: var(--blue-broadcast); text-transform: uppercase; margin-bottom: 14px;">
+            3. Трансляция и радар
+          </div>
+          <ul class="feature-list" style="gap: 14px;">
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Tokio WebSocket 60 Hz</div>
+              <div class="feature-desc">Мгновенный broadcast обновлений в оверлеи OBS Studio с минимальной латентностью.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Векторный радар (18 карт)</div>
+              <div class="feature-desc">Удален черный фон: прозрачный альфа-канал с неоновым контурным свечением.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="font-size: 15px;">Точные мировые координаты</div>
+              <div class="feature-desc">Прямой множитель scale Valve Source 2 без ошибок инверсии и выпадения маркеров.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Архитектура потоков данных</span>
+        </div>
+        <div class="footer-right">08 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 9: VERIFICATION & HONEST DISCLOSURE
+         ==================================================================== -->
+    <div class="slide" data-slide="9" data-notes="Прозрачный статус контроля качества. Инженерная честность повышает доверие руководства: мы четко фиксируем, что доказано автотестами, а что требует финальной приемочной проверки на Windows-машине режиссера.">
+      <div class="slide-header">
+        <div class="kicker" style="color: var(--green-verified);">Контроль качества  •  Verification Evidence</div>
+        <h2 class="slide-title">Честный статус готовности релизных компонентов</h2>
+        <p class="slide-subtitle">Результаты комплексного тестирования в изолированной Linux-песочнице и границы текущей валидации</p>
+      </div>
+
+      <div class="slide-body grid-2col-even">
+        <div class="card" style="border-left: 4px solid var(--green-verified);">
+          <div style="font-size: 14px; font-weight: 700; color: var(--green-verified); text-transform: uppercase; margin-bottom: 16px;">
+            ✓ Подтверждено автотестами (Verified)
+          </div>
+          <ul class="feature-list" style="gap: 16px;">
+            <li class="feature-item">
+              <div class="feature-label green">E2E тесты веб-камер 3 HUD</div>
+              <div class="feature-desc">Успешно декодируются видеокадры, muted playback, сохранение DOM при пакетах GSI, переключение фокуса между игроками.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label green">Геометрия оверлеев</div>
+              <div class="feature-desc">Проверено на 1280×720, 1920×1080 и 2560×1440. Отсутствуют наложения блоков и выходы за границы экрана.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label green">Типографика ростеров</div>
+              <div class="feature-desc">Математически подтверждена однострочная посадка длинных никнеймов игроков через <code>Range.getClientRects</code>.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label green">Бэкенд-инженерия</div>
+              <div class="feature-desc">33 E2E теста бэкенда пройдены успешно; 31 модульный тест Rust и 5 интеграционных тестов SQLite выполнены без ошибок.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-left: 4px solid var(--amber-warn);">
+          <div style="font-size: 14px; font-weight: 700; color: var(--amber-warn); text-transform: uppercase; margin-bottom: 16px;">
+            • Границы валидации и ограничения (Honest Disclosure)
+          </div>
+          <ul class="feature-list" style="gap: 16px;">
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Windows Runtime верификация</div>
+              <div class="feature-desc">Бинарник <code>protokol-hud-manager.exe</code> (18.8 МБ) и установщик NSIS (114 МБ) собраны; PE-заголовки и SHA-256 проверены. Финальный запуск с системным WebView2 запланирован на физической Windows-машине.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Синтетические видеопотоки</div>
+              <div class="feature-desc">Текущие скриншоты оверлеев зафиксированы на сгенерированных тест-паттернах (SMPTE таймкод), а не живых турнирных вебкамерах.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label" style="color: var(--amber-warn);">Отсутствие вымышленных заявлений</div>
+              <div class="feature-desc">В релизных материалах исключены нереалистичные бенчмарки и маркетинговые формулировки вроде «Major certified».</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>Протокол верификации</span>
+        </div>
+        <div class="footer-right">09 / 10</div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         SLIDE 10: STRATEGIC SUMMARY & ROADMAP
+         ==================================================================== -->
+    <div class="slide" data-slide="10" data-notes="Финальное резюме для принятия решения. Продукт готов к пилотному турнирному запуску. Сформулированы понятные шаги дальнейшего технологического лидерства.">
+      <div class="slide-header">
+        <div class="kicker">Итоги и дорожная карта  •  Strategic Vision</div>
+        <h2 class="slide-title">Готовность к внедрению и вектор технологического развития</h2>
+        <p class="slide-subtitle">Надежная основа для турнирных трансляций CS2 с прозрачным планом функционального масштабирования</p>
+      </div>
+
+      <div class="slide-body grid-2col-even">
+        <div class="card card-accent-gold">
+          <div style="font-size: 14px; font-weight: 700; color: var(--gold-primary); text-transform: uppercase; margin-bottom: 16px;">
+            ★ Ключевые выгоды для турнирного оператора
+          </div>
+          <ul class="feature-list" style="gap: 16px;">
+            <li class="feature-item">
+              <div class="feature-label gold">Снижение риска срыва эфира</div>
+              <div class="feature-desc">Минимальный след по оперативной памяти (30–60 МБ) и отсутствие тяжелого фонового рантайма гарантируют стабильность.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Премиальная картинка вещания</div>
+              <div class="feature-desc">Три готовых самобытных стиля (Cyber, Broadcast, Championship) закрывают форматы от квалификаций до арена-финалов.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Быстрый старт и авто-конфигурация</div>
+              <div class="feature-desc">Автогенерация GSI конфига и экспорт OBS Browser Source минимизируют человеческий фактор оператора.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label gold">Легкая замена графики</div>
+              <div class="feature-desc">Все скриншоты и стили вынесены в заменяемые пути: ререндер презентации выполняется одной командой.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card card-accent-cyan">
+          <div style="font-size: 14px; font-weight: 700; color: var(--cyan-cyber); text-transform: uppercase; margin-bottom: 16px;">
+            ➔ Дорожная карта развития (Roadmap v2.1+)
+          </div>
+          <ul class="feature-list" style="gap: 16px;">
+            <li class="feature-item">
+              <div class="feature-label cyan">WebRTC WebCam Hub</div>
+              <div class="feature-desc">Встроенный сервер WebRTC в Axum для прямого подключения мобильных телефонов игроков как вебкамер по QR-коду.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Интерактивный кастомизатор тем</div>
+              <div class="feature-desc">Возможность менять фирменные цвета и логотипы команд напрямую из менеджера без редактирования CSS.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Интеграция HLTV / Liquipedia API</div>
+              <div class="feature-desc">Автоматическая подгрузка актуальных аватаров игроков, истории матчей и турнирной сетки по коду встречи.</div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-label cyan">Событийный аудио-движок</div>
+              <div class="feature-desc">Синхронное воспроизведение саунд-эффектов (таймер C4, анонс Ace, гонг победы) напрямую в аудиоканал OBS.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="footer-left">
+          <span>PROTOKOL HUD Manager v2.0.0</span>
+          <span>•</span>
+          <span>План внедрения и развития</span>
+        </div>
+        <div class="footer-right">10 / 10</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Interactive Controls Overlay -->
+  <div id="ui-controls">
+    <button class="ctrl-btn" id="btn-prev" title="Предыдущий слайд (←)">← Назад</button>
+    <button class="ctrl-btn" id="btn-next" title="Следующий слайд (→)">Вперед →</button>
+    <button class="ctrl-btn" id="btn-notes" title="Заметки докладчика (N)">Заметки</button>
+    <button class="ctrl-btn" id="btn-fs" title="Полный экран (F)">16:9 Fullscreen</button>
+  </div>
+
+  <!-- Speaker Notes Drawer -->
+  <div id="notes-drawer">
+    <h4>
+      <span>Заметки докладчика</span>
+      <span id="notes-slide-num" style="color: var(--text-muted); font-size: 11px;">Слайд 01</span>
+    </h4>
+    <p id="notes-content">Текст заметок...</p>
+  </div>
+
+  <script>
+    (function() {
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+      let currentIndex = 0;
+
+      // Scale viewport to maintain 1920x1080 16:9 ratio in any window size
+      function resizeViewport() {
+        const vp = document.getElementById('deck-viewport');
+        const targetWidth = 1920;
+        const targetHeight = 1080;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        const scale = Math.min(windowWidth / targetWidth, windowHeight / targetHeight);
+        vp.style.transform = `scale(${scale})`;
+      }
+      window.addEventListener('resize', resizeViewport);
+      resizeViewport();
+
+      // Show slide by index
+      function showSlide(index) {
+        if (index < 0) index = 0;
+        if (index >= totalSlides) index = totalSlides - 1;
+        currentIndex = index;
+
+        slides.forEach((s, idx) => {
+          s.classList.toggle('active', idx === currentIndex);
+        });
+
+        // Update speaker notes
+        const currentSlideEl = slides[currentIndex];
+        const notesText = currentSlideEl.getAttribute('data-notes') || 'Заметки отсутствуют.';
+        document.getElementById('notes-content').textContent = notesText;
+        document.getElementById('notes-slide-num').textContent = `Слайд ${(currentIndex + 1).toString().padStart(2, '0')} / ${totalSlides.toString().padStart(2, '0')}`;
+
+        // Save progress in localStorage
+        try {
+          localStorage.setItem('protokol_deck_slide', currentIndex);
+        } catch(e) {}
+      }
+
+      // Read initial slide from storage or URL hash
+      try {
+        const hash = window.location.hash.replace('#', '');
+        const hashNum = parseInt(hash, 10);
+        if (!isNaN(hashNum) && hashNum >= 1 && hashNum <= totalSlides) {
+          currentIndex = hashNum - 1;
+        } else {
+          const saved = parseInt(localStorage.getItem('protokol_deck_slide'), 10);
+          if (!isNaN(saved) && saved >= 0 && saved < totalSlides) {
+            currentIndex = saved;
+          }
+        }
+      } catch(e) {}
+      showSlide(currentIndex);
+
+      window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.replace('#', '');
+        const hashNum = parseInt(hash, 10);
+        if (!isNaN(hashNum) && hashNum >= 1 && hashNum <= totalSlides) {
+          showSlide(hashNum - 1);
+        }
+      });
+
+      // Navigation actions
+      function nextSlide() { showSlide(currentIndex + 1); }
+      function prevSlide() { showSlide(currentIndex - 1); }
+
+      document.getElementById('btn-next').addEventListener('click', nextSlide);
+      document.getElementById('btn-prev').addEventListener('click', prevSlide);
+
+      // Speaker Notes toggle
+      const notesBtn = document.getElementById('btn-notes');
+      const notesDrawer = document.getElementById('notes-drawer');
+      function toggleNotes() {
+        notesDrawer.classList.toggle('open');
+        notesBtn.classList.toggle('active-btn', notesDrawer.classList.contains('open'));
+      }
+      notesBtn.addEventListener('click', toggleNotes);
+
+      // Fullscreen toggle
+      const fsBtn = document.getElementById('btn-fs');
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      });
+
+      // Keyboard navigation
+      window.addEventListener('keydown', (e) => {
+        switch (e.key) {
+          case 'ArrowRight':
+          case 'PageDown':
+          case ' ':
+            nextSlide();
+            break;
+          case 'ArrowLeft':
+          case 'PageUp':
+            prevSlide();
+            break;
+          case 'Home':
+            showSlide(0);
+            break;
+          case 'End':
+            showSlide(totalSlides - 1);
+            break;
+          case 'n':
+          case 'N':
+          case 'т':
+          case 'Т':
+            toggleNotes();
+            break;
+          case 'f':
+          case 'F':
+          case 'а':
+          case 'А':
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+              document.exitFullscreen().catch(() => {});
+            }
+            break;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

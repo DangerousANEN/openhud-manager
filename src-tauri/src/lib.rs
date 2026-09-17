@@ -1,4 +1,5 @@
 // PROTOKOL HUD Manager — Tauri application entry (library side).
+pub mod bundled;
 pub mod db;
 pub mod gsi;
 pub mod obs;
@@ -138,6 +139,31 @@ fn load_hud_layout(id: String) -> Result<Option<db::HudLayout>, String> {
 #[tauri::command]
 fn delete_hud_layout(id: String) -> Result<(), String> {
     db::delete_hud_layout(&id).map_err(err)
+}
+
+// ---------- Cameras ----------
+#[tauri::command]
+fn cameras_list() -> Result<Vec<db::Camera>, String> {
+    db::list_cameras().map_err(err)
+}
+
+#[tauri::command]
+fn cameras_get(steamid: String) -> Result<Option<db::Camera>, String> {
+    db::get_camera(&steamid).map_err(err)
+}
+
+#[tauri::command]
+fn cameras_save(state: tauri::State<Runtime>, camera: db::Camera) -> Result<db::Camera, String> {
+    let saved = db::save_camera(camera).map_err(err)?;
+    state.gsi.broadcast_event("cameras_changed", serde_json::json!({ "steamid": saved.steamid }));
+    Ok(saved)
+}
+
+#[tauri::command]
+fn cameras_delete(state: tauri::State<Runtime>, steamid: String) -> Result<(), String> {
+    db::delete_camera(&steamid).map_err(err)?;
+    state.gsi.broadcast_event("cameras_changed", serde_json::json!({ "steamid": steamid }));
+    Ok(())
 }
 
 // ---------- GSI / server ----------
@@ -451,6 +477,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
+            bundled::install(app)?;
+
             // Try the configured port first; if it is taken (a second app
             // instance, a leftover process), walk up to 10 ports higher so the
             // server still comes up instead of dying silently.
@@ -514,6 +542,10 @@ pub fn run() {
             tournaments_delete,
             setting_get,
             setting_set,
+            cameras_list,
+            cameras_get,
+            cameras_save,
+            cameras_delete,
             list_hud_layouts,
             save_hud_layout,
             load_hud_layout,
