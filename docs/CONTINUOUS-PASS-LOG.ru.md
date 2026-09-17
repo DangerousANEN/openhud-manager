@@ -17,11 +17,19 @@
 
 ## Лог циклов
 
-### Цикл 0 (родительская сессия, 03:00-03:55)
+### Цикл 0 (родительская сессия, 03:00-05:10)
 - Broadcast: phase labels, clockText (65.2→1:05), alive-counter всегда видим,
   экономика только на freezetime. Тесты: broadcast_clock 10/10 (node, песочница),
   broadcast_alive_e2e 3/3 фазы через реальный GSI→WS, 0 ошибок браузера,
   камера/радар-регрессии зелены. Коммит `301766f` запушен.
-- Незакрыто: bomb_countdown парсится бэкендом, но в WS-универсальный payload не уходил
-  (gsi.rs добавлены поля — в working tree, НЕ закоммичено, НЕ собрано, НЕ протестировано).
-- HUD-файлы в песочнице синхронизированы (workspace + protokol-test-data/PROTOKOL HUD).
+- **Цикл 0b — Bomb timer (завершён, коммит `ead51b8`):**
+  - `gsi.rs`: в universal WS payload добавлены `bomb_state`/`bomb_countdown`
+    (доказано голым WS-пробником `ws_bomb_probe.py`: ключи реально приходят).
+  - Broadcast HUD: на planted бомбе clock заменяется на C4-таймер с 40s заливкой,
+    green (>20s) → yellow (≤20s) → красный пульсирующий (≤10s).
+  - E2E `broadcast_bomb_e2e.py`: 4/4 через реальный GSI→WS→HUD
+    (40/12/3.5s + скрыт на live), ширина заливки asserted (±2%), 0 ошибок браузера.
+  - Регрессии зелены: broadcast_clock 10/10, alive 3/3, agent_radar 3/3, camera_e2e 3/3.
+- Урок: smoke-сервер поднимать только через `terminal(background=true)`;
+  внутри составных команд процесс умирает с shell (SIGTERM, exit 143).
+
