@@ -91,6 +91,28 @@ body {
 @keyframes c4-pulse { 0% { opacity: 1; } 100% { opacity: .35; } }
 .bug-round { font-size: 1.2rem; letter-spacing: .2em; color: var(--dim); }
 
+/* ══════════ TIMEOUT & PAUSE BANNER ══════════ */
+.timeout-bar {
+  position: absolute; top: 9.2rem; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: .5rem 1.6rem;
+  background: var(--panel);
+  border-radius: 3px;
+  box-shadow: 0 .4rem 1.6rem rgba(0, 0, 0, .5);
+  font-weight: 700;
+  z-index: 10;
+  letter-spacing: .08em;
+}
+.timeout-bar.timeout--ct { border-top: 3px solid var(--ct); }
+.timeout-bar.timeout--ct .timeout-team { color: var(--ct); }
+.timeout-bar.timeout--t  { border-top: 3px solid var(--t); }
+.timeout-bar.timeout--t  .timeout-team { color: var(--t); }
+.timeout-bar.timeout--tech { border-top: 3px solid #f5c518; }
+.timeout-bar.timeout--tech .timeout-team { color: #f5c518; }
+.timeout-team { font-size: 1.5rem; text-transform: uppercase; }
+.timeout-title { font-size: 1.3rem; color: #fff; }
+.timeout-remaining { font-size: 1.15rem; color: var(--dim); letter-spacing: .05em; }
+
 /* ══════════ ECONOMY STRIP ══════════ round flow + team money */
 .econ {
   /* original players-alive anchor: top-right corner */

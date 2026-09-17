@@ -210,6 +210,38 @@
     }
     show($('clock'), !planted);
 
+    var timeoutBar = $('timeout-bar');
+    if (timeoutBar) {
+      var isTimeoutCt = phase === 'timeout_ct';
+      var isTimeoutT = phase === 'timeout_t';
+      var isTechPause = phase === 'paused';
+      var showTimeout = isTimeoutCt || isTimeoutT || isTechPause;
+      show(timeoutBar, showTimeout);
+      if (showTimeout) {
+        var teamEl = $('timeout-team');
+        var titleEl = $('timeout-title');
+        var remEl = $('timeout-remaining');
+        if (isTimeoutCt) {
+          timeoutBar.className = 'timeout-bar timeout--ct';
+          if (teamEl) teamEl.textContent = s.ct_name || 'CT';
+          if (titleEl) titleEl.textContent = 'TACTICAL TIMEOUT';
+          var ctRem = s.ct_timeouts_remaining;
+          if (remEl) remEl.textContent = ctRem != null && ctRem !== '' ? ctRem + ' REMAINING' : '';
+        } else if (isTimeoutT) {
+          timeoutBar.className = 'timeout-bar timeout--t';
+          if (teamEl) teamEl.textContent = s.t_name || 'T';
+          if (titleEl) titleEl.textContent = 'TACTICAL TIMEOUT';
+          var tRem = s.t_timeouts_remaining;
+          if (remEl) remEl.textContent = tRem != null && tRem !== '' ? tRem + ' REMAINING' : '';
+        } else {
+          timeoutBar.className = 'timeout-bar timeout--tech';
+          if (teamEl) teamEl.textContent = 'MATCH';
+          if (titleEl) titleEl.textContent = 'TECHNICAL PAUSE';
+          if (remEl) remEl.textContent = 'ADMIN';
+        }
+      }
+    }
+
     $('ct-rows').innerHTML = ctx.ct.map(function (p) {
       return rowHtml(p, 'ct', s.focused_steamid, showMoney);
     }).join('');

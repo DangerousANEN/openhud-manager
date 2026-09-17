@@ -68,3 +68,20 @@ pub async fn rcon_changelevel(server_id: String, map_name: String) -> Result<Str
     let cmd = format!("changelevel {}", map_name.trim());
     rcon_exec(server_id, cmd).await
 }
+
+#[tauri::command]
+pub async fn rcon_pause_match(server_id: String) -> Result<String, String> {
+    rcon_exec(server_id, "mp_pause_match".into()).await
+}
+
+#[tauri::command]
+pub async fn rcon_unpause_match(server_id: String) -> Result<String, String> {
+    rcon_exec(server_id, "mp_unpause_match".into()).await
+}
+
+#[tauri::command]
+pub async fn rcon_timeout(server_id: String, team: String) -> Result<String, String> {
+    let cmd = if team.to_lowercase() == "t" { "timeout_t_start" } else { "timeout_ct_start" };
+    rcon_exec(server_id, cmd.into()).await
+}
+

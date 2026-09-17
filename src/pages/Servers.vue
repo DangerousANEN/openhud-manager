@@ -496,7 +496,9 @@ const quickCommands = [
   { label: 'mp_restartgame 1', cmd: 'mp_restartgame 1' },
   { label: 'exec competitive', cmd: 'exec gamemode_competitive' },
   { label: 'mp_pause_match', cmd: 'mp_pause_match' },
-  { label: 'mp_unpause_match', cmd: 'mp_unpause_match' }
+  { label: 'mp_unpause_match', cmd: 'mp_unpause_match' },
+  { label: 'timeout_ct_start', cmd: 'timeout_ct_start' },
+  { label: 'timeout_t_start', cmd: 'timeout_t_start' }
 ]
 
 const blankServer = (): Server => ({

@@ -82,6 +82,11 @@ pub struct GsiSnapshot {
     pub ct_loss_streak: i64,
     #[serde(default)]
     pub t_loss_streak: i64,
+    /// Tactical timeouts remaining per side (from map.team_ct.timeouts_remaining).
+    #[serde(default)]
+    pub ct_timeouts_remaining: i64,
+    #[serde(default)]
+    pub t_timeouts_remaining: i64,
     /// SteamID of the currently spectated player (drives webcam framing).
     pub focused_steamid: String,
     pub players: Vec<PlayerSnap>,
@@ -155,9 +160,12 @@ impl GsiState {
             "bomb": snap.bomb,
             "bomb_state": snap.bomb_state,
             "bomb_countdown": snap.bomb_countdown,
+            "phase_countdown_phase": snap.phase_countdown_phase,
             "round_time": snap.round_time,
             "ct_loss_streak": snap.ct_loss_streak,
             "t_loss_streak": snap.t_loss_streak,
+            "ct_timeouts_remaining": snap.ct_timeouts_remaining,
+            "t_timeouts_remaining": snap.t_timeouts_remaining,
             "focused_steamid": snap.focused_steamid,
             "players": snap.players,
             "updated_at": snap.updated_at
@@ -452,6 +460,8 @@ fn normalize(v: &Value) -> GsiSnapshot {
         ct_name: s(v, &["map", "team_ct", "name"]),
         ct_loss_streak: i(v, &["map", "team_ct", "consecutive_round_losses"]),
         t_loss_streak: i(v, &["map", "team_t", "consecutive_round_losses"]),
+        ct_timeouts_remaining: i(v, &["map", "team_ct", "timeouts_remaining"]),
+        t_timeouts_remaining: i(v, &["map", "team_t", "timeouts_remaining"]),
         t_name: s(v, &["map", "team_t", "name"]),
         bomb: s(v, &["round", "bomb"]),
         round_time: s(v, &["phase_countdowns", "phase_ends_in"]),
@@ -581,5 +591,15 @@ mod tests {
             "ammo_reserve": 2}});
         let ids2 = grenade_ids(&p2);
         assert_eq!(ids2.len(), 2);
+    }
+
+    #[test]
+    fn team_timeouts_remaining_extracted_from_map() {
+        let mut v = base_payload();
+        v["map"]["team_ct"]["timeouts_remaining"] = json!(3);
+        v["map"]["team_t"]["timeouts_remaining"] = json!(1);
+        let snap = normalize(&v);
+        assert_eq!(snap.ct_timeouts_remaining, 3);
+        assert_eq!(snap.t_timeouts_remaining, 1);
     }
 }

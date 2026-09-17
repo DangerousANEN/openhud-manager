@@ -43,3 +43,18 @@
 - Урок: smoke-сервер поднимать только через `terminal(background=true)`;
   внутри составных команд процесс умирает с shell (SIGTERM, exit 143).
 
+### Цикл 0f — Сериализация перерывов и пауз (гэп #2 закрыт)
+- **GSI Backend & State:**
+  - `gsi.rs`: добавлено извлечение `timeouts_remaining` для CT и T из `map.team_ct`/`map.team_t` в `GsiSnapshot` (`ct_timeouts_remaining`, `t_timeouts_remaining`).
+  - `gsi.rs`, `server.rs`: поля `ct_timeouts_remaining`, `t_timeouts_remaining` и `phase_countdown_phase` сериализуются в универсальный WS payload и отдаются клиентам оверлея.
+  - Rust unit-тест `team_timeouts_remaining_extracted_from_map` (cargo test --lib pass).
+- **RCON команды оператора:**
+  - `rcon.rs`, `lib.rs`: добавлены команды `rcon_pause_match`, `rcon_unpause_match`, `rcon_timeout(server_id, side)`.
+  - `src/pages/Servers.vue`: в `quickCommands` добавлены кнопки `timeout_ct_start` и `timeout_t_start`.
+- **Broadcast HUD UX:**
+  - `fennec-broadcast`: добавлен выделенный блок `#timeout-bar` под score bug с цветовой индикацией сторон (`timeout--ct`, `timeout--t`, `timeout--tech`), названием взявшей паузу команды (`s.ct_name`/`s.t_name`/`ADMIN`), типом паузы (`TACTICAL TIMEOUT`/`TECHNICAL PAUSE`) и счётчиком оставшихся таймаутов (`X REMAINING`).
+  - На время паузы таймер раунда/паузы честно форматирует обратный отсчёт, фазовая плашка отображает контекст команды, при возврате в `live` баннер скрывается. Позиции якорных зон оверлея не затронуты.
+- **Верификация в sandbox:**
+  - Целевой E2E `broadcast_timeout_e2e.py`: 4/4 кейса (timeout_ct с именем команды и остатком, timeout_t, paused tech pause, скрытие на live).
+  - Регрессионные E2E в песочнице: `broadcast_alive_e2e.py` (3/3), `broadcast_bomb_e2e.py` (5/5), `broadcast_score_e2e.py` (3/3), `broadcast_signal_e2e.py` (pass), 0 ошибок браузера.
+
