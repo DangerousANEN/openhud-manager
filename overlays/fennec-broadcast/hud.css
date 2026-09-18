@@ -58,6 +58,24 @@ body {
 .bug-team { display: flex; align-items: center; gap: 1.6rem; padding: 0 2rem; min-width: 26rem; }
 .bug-team--ct { justify-content: flex-end; border-bottom: 3px solid var(--ct); }
 .bug-team--t  { border-bottom: 3px solid var(--t); }
+
+.series-pips { display: flex; gap: .45rem; align-items: center; }
+.series-pips i {
+  width: .85rem; height: .85rem; border-radius: 2px;
+  background: rgba(255, 255, 255, .15);
+  border: 1px solid rgba(255, 255, 255, .3);
+}
+.bug-team--ct .series-pips i.is-won {
+  background: var(--ct); border-color: var(--ct); box-shadow: 0 0 .6rem var(--ct);
+}
+.bug-team--t .series-pips i.is-won {
+  background: var(--t); border-color: var(--t); box-shadow: 0 0 .6rem var(--t);
+}
+
+.bug-series {
+  font-size: 1.05rem; letter-spacing: .15em; color: var(--dim);
+  text-transform: uppercase; font-weight: 700;
+}
 .bug-name {
   font-size: 2.4rem; font-weight: 700; letter-spacing: .04em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 17rem;

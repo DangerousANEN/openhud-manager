@@ -54,7 +54,20 @@
 - **Broadcast HUD UX:**
   - `fennec-broadcast`: добавлен выделенный блок `#timeout-bar` под score bug с цветовой индикацией сторон (`timeout--ct`, `timeout--t`, `timeout--tech`), названием взявшей паузу команды (`s.ct_name`/`s.t_name`/`ADMIN`), типом паузы (`TACTICAL TIMEOUT`/`TECHNICAL PAUSE`) и счётчиком оставшихся таймаутов (`X REMAINING`).
   - На время паузы таймер раунда/паузы честно форматирует обратный отсчёт, фазовая плашка отображает контекст команды, при возврате в `live` баннер скрывается. Позиции якорных зон оверлея не затронуты.
+### Цикл 0g — Мажор-стандарты во всех 3 стилях худов и Bo3 матч-контекст (гэп #3 закрыт)
+- **Унификация 3 стилей (`fennec-broadcast`, `fennec-cyber`, `fennec-championship`):**
+  - Во все 3 оверлея интегрирован 40-секундный C4-прогресс бар с зонами safe/warn/crit и честным фолбэком `--` при отсутствии countdown (исключен показ ложного 0).
+  - Во все 3 оверлея добавлены плашки `#timeout-bar` (тактические таймауты CT/T с подсчётом остатка и технические паузы) и сторожевые бейджи `#signal-lost`.
+  - Во всех 3 оверлеях нормализовано отображение времени раунда функцией `clockText` (без сырых дробей).
+- **Закрытие гэпа #3 (Матч-контекст Bo3 / турнир):**
+  - Бэкенд (`src-tauri/src/server.rs`, `src-tauri/src/gsi.rs`) извлекает активный матч из локальной БД SQLite и обогащает WebSocket payload полями `series_match_type`, `series_left_score`, `series_right_score`, `tournament_name`.
+  - В верстку всех 3 стилей добавлены верхние плашки серии (`BO3 · MAP X` / турнир) и индикаторы выигранных карт серии (пипы/бусины `series-pips`).
 - **Верификация в sandbox:**
-  - Целевой E2E `broadcast_timeout_e2e.py`: 4/4 кейса (timeout_ct с именем команды и остатком, timeout_t, paused tech pause, скрытие на live).
-  - Регрессионные E2E в песочнице: `broadcast_alive_e2e.py` (3/3), `broadcast_bomb_e2e.py` (5/5), `broadcast_score_e2e.py` (3/3), `broadcast_signal_e2e.py` (pass), 0 ошибок браузера.
+  - Создан и успешно пройден сквозной интеграционный E2E-тест `scripts/huds_tournament_e2e.py`:
+    - `fennec-broadcast`: 10/10 тестов passed (часы 1:05, BO3 MAP 1, C4 35s/16s/7s/--, timeouts CT/T, tech pause, normal live), 0 ошибок JS.
+    - `fennec-cyber`: 10/10 тестов passed, 0 ошибок JS.
+    - `fennec-championship`: 10/10 тестов passed, 0 ошибок JS.
+  - Сохранены сквозные скриншоты-доказательства всех трёх стилей: `F:/anen/desktop/hud-evidence/fennec-*-tournament-verified.png`.
+  - Все unit-тесты Rust (`cargo test --lib gsi::` 6/6) пройдены.
+
 

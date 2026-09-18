@@ -258,6 +258,19 @@ fn make_universal_snapshot(st: &AppState) -> String {
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or_else(|| json!({}));
 
+    // Bo3 / Tournament match context from local SQLite DB
+    let current_match = crate::db::current_match().ok().flatten();
+    let (match_type, series_left_score, series_right_score, tournament_name) = match current_match {
+        Some(m) => {
+            let t_name = crate::db::list_tournaments()
+                .ok()
+                .and_then(|tours| tours.into_iter().next().map(|t| t.name))
+                .unwrap_or_default();
+            (m.match_type, m.left_score, m.right_score, t_name)
+        }
+        None => ("bo3".to_string(), 0, 0, String::new()),
+    };
+
     let msg = json!({
         "event": "state",
         "body": {
@@ -285,6 +298,10 @@ fn make_universal_snapshot(st: &AppState) -> String {
         "t_name": snap.t_name,
         "ct_timeouts_remaining": snap.ct_timeouts_remaining,
         "t_timeouts_remaining": snap.t_timeouts_remaining,
+        "series_match_type": match_type,
+        "series_left_score": series_left_score,
+        "series_right_score": series_right_score,
+        "tournament_name": tournament_name,
         "bomb": snap.bomb,
         "round_time": snap.round_time,
         "focused_steamid": snap.focused_steamid,

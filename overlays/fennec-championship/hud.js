@@ -13,6 +13,17 @@
 
   function show(el, on) { if (el) el.classList.toggle('hidden', !on); }
 
+  function clockText(raw) {
+    if (raw == null || raw === '') return '--:--';
+    if (typeof raw === 'string' && raw.indexOf(':') >= 0) return raw;
+    var n = Number(raw);
+    if (!Number.isFinite(n)) return '--:--';
+    var total = Math.max(0, Math.floor(n));
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
   function ring(el, pct) {
     if (!el) return;
     var v = Math.max(0, Math.min(100, pct || 0));
@@ -142,8 +153,85 @@
     $('t-name').textContent = s.t_name || 'T';
     $('ct-score').textContent = s.ct_score || 0;
     $('t-score').textContent = s.t_score || 0;
-    $('clock').textContent = s.round_time || '0:00';
-    $('round-state').textContent = 'ROUND ' + (s.round || 1);
+    $('clock').textContent = clockText(s.round_time);
+
+    var matchType = String(s.series_match_type || 'bo3').toLowerCase();
+    var needed = matchType === 'bo5' ? 3 : matchType === 'bo1' ? 1 : 2;
+    var ctMaps = Number(s.series_left_score) || 0;
+    var tMaps = Number(s.series_right_score) || 0;
+    var currentMap = Math.min(needed * 2 - 1, ctMaps + tMaps + 1);
+
+    var seriesStateEl = $('series-state');
+    if (seriesStateEl) {
+      var sText = matchType.toUpperCase() + ' · MAP ' + currentMap;
+      if (s.tournament_name) sText = s.tournament_name + ' · ' + sText;
+      seriesStateEl.textContent = sText;
+    }
+
+    function renderPips(el, won, total) {
+      if (!el) return;
+      if (total <= 1) { el.innerHTML = ''; return; }
+      var h = '';
+      for (var i = 0; i < total; i++) {
+        h += '<i class="' + (i < won ? 'is-won' : '') + '"></i>';
+      }
+      el.innerHTML = h;
+    }
+    renderPips($('ct-series'), ctMaps, needed);
+    renderPips($('t-series'), tMaps, needed);
+
+    var phase = String(s.phase_countdown_phase || s.phase || '').toLowerCase();
+    var phaseLabel = 'ROUND ' + (s.round || 1);
+    if (phase === 'freezetime') phaseLabel = 'BUY TIME';
+    else if (phase === 'warmup') phaseLabel = 'WARMUP';
+    else if (phase === 'over') phaseLabel = 'ROUND OVER';
+    else if (phase === 'halftime') phaseLabel = 'HALF TIME';
+    else if (phase === 'gameover') phaseLabel = 'MATCH OVER';
+    $('round-state').textContent = phaseLabel;
+
+    var planted = (s.bomb_state || '') === 'planted' || phase === 'bomb';
+    var bombEl = $('bomb-timer');
+    if (bombEl) {
+      show(bombEl, planted);
+      if (planted) {
+        var rawLeft = Number(s.bomb_countdown);
+        var known = s.bomb_countdown != null && s.bomb_countdown !== '' && Number.isFinite(rawLeft);
+        if (known) {
+          var left = Math.max(0, Math.floor(rawLeft));
+          bombEl.innerHTML = '<b>' + left + '</b><i style="width:' + (left / 40 * 100) + '%"></i>';
+          bombEl.className = 'crest-bomb' + (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe');
+        } else {
+          bombEl.innerHTML = '<b>--</b><i style="width:0%"></i>';
+          bombEl.className = 'crest-bomb';
+        }
+      }
+    }
+    show($('clock'), !planted);
+
+    var timeoutBar = $('timeout-bar');
+    if (timeoutBar) {
+      var isTimeoutCt = phase === 'timeout_ct';
+      var isTimeoutT = phase === 'timeout_t';
+      var isTechPause = phase === 'paused';
+      var showTimeout = isTimeoutCt || isTimeoutT || isTechPause;
+      show(timeoutBar, showTimeout);
+      if (showTimeout) {
+        var titleEl = $('timeout-title');
+        var countEl = $('timeout-count');
+        if (isTimeoutCt) {
+          if (titleEl) titleEl.textContent = (s.ct_name || 'CT') + ' TIMEOUT';
+          var ctRem = s.ct_timeouts_remaining;
+          if (countEl) countEl.textContent = ctRem != null && ctRem !== '' ? ctRem + ' REMAINING' : '';
+        } else if (isTimeoutT) {
+          if (titleEl) titleEl.textContent = (s.t_name || 'T') + ' TIMEOUT';
+          var tRem = s.t_timeouts_remaining;
+          if (countEl) countEl.textContent = tRem != null && tRem !== '' ? tRem + ' REMAINING' : '';
+        } else {
+          if (titleEl) titleEl.textContent = 'TECHNICAL PAUSE';
+          if (countEl) countEl.textContent = 'ADMIN';
+        }
+      }
+    }
 
     show($('tally'), true);
     $('ct-alive').textContent = ctx.ct.filter(function (p) { return p.health > 0; }).length;

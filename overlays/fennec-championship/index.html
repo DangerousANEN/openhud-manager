@@ -15,14 +15,23 @@
 
 <!-- Crest banner -->
 <header id="crest" class="crest hidden">
+  <div id="signal-lost" class="signal-lost hidden">SIGNAL LOST</div>
+  <div id="timeout-bar" class="crest-timeout hidden">
+    <span class="crest-timeout-title" id="timeout-title">PAUSE</span>
+    <span class="crest-timeout-count" id="timeout-count"></span>
+  </div>
+
   <div class="crest-side crest-side--ct">
+    <div class="series-pips" id="ct-series"></div>
     <span class="crest-name" id="ct-name">—</span>
     <span class="crest-val" id="ct-score">0</span>
   </div>
 
   <div class="crest-core">
+    <span class="crest-series" id="series-state">BO3 · MAP 1</span>
     <div class="crest-laurel">
       <span class="crest-clock" id="clock">0:00</span>
+      <div class="crest-bomb hidden" id="bomb-timer"><b>40</b><i></i></div>
     </div>
     <span class="crest-round" id="round-state">ROUND 1</span>
     <div class="crest-beads" id="round-beads"></div>
@@ -31,6 +40,7 @@
   <div class="crest-side crest-side--t">
     <span class="crest-val" id="t-score">0</span>
     <span class="crest-name" id="t-name">—</span>
+    <div class="series-pips" id="t-series"></div>
   </div>
 </header>
 

@@ -15,7 +15,14 @@
 
 <!-- Match pod: two hexagonal score capsules flanking a thin round rail -->
 <header id="pods" class="pods hidden">
+  <div id="signal-lost" class="signal-lost hidden">SIGNAL LOST</div>
+  <div id="timeout-bar" class="rail-timeout hidden">
+    <span class="rail-timeout-title" id="timeout-title">PAUSE</span>
+    <span class="rail-timeout-count" id="timeout-count"></span>
+  </div>
+
   <div class="pod pod--ct">
+    <div class="series-pips" id="ct-series"></div>
     <div class="pod-score" id="ct-score">0</div>
     <div class="pod-meta">
       <span class="pod-name" id="ct-name">—</span>
@@ -24,7 +31,9 @@
   </div>
 
   <div class="rail">
+    <div class="rail-series" id="series-state">BO3 · MAP 1</div>
     <div class="rail-clock" id="clock">0:00</div>
+    <div class="rail-bomb hidden" id="bomb-timer"><b>40</b><i></i></div>
     <div class="rail-track" id="round-rail"></div>
     <div class="rail-state" id="round-state">ROUND 1</div>
   </div>
@@ -35,6 +44,7 @@
       <span class="pod-tag">TERROR</span>
     </div>
     <div class="pod-score" id="t-score">0</div>
+    <div class="series-pips" id="t-series"></div>
   </div>
 </header>
 

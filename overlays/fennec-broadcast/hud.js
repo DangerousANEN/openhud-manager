@@ -170,6 +170,32 @@
     $('t-score').textContent = s.t_score || 0;
     $('clock').textContent = clockText(s.round_time);
     $('round-state').textContent = 'R' + (s.round || 1) + ' · ' + phaseLabel;
+
+    var matchType = String(s.series_match_type || 'bo3').toLowerCase();
+    var needed = matchType === 'bo5' ? 3 : matchType === 'bo1' ? 1 : 2;
+    var ctMaps = Number(s.series_left_score) || 0;
+    var tMaps = Number(s.series_right_score) || 0;
+    var currentMap = Math.min(needed * 2 - 1, ctMaps + tMaps + 1);
+
+    var seriesStateEl = $('series-state');
+    if (seriesStateEl) {
+      var sText = matchType.toUpperCase() + ' · MAP ' + currentMap;
+      if (s.tournament_name) sText = s.tournament_name + ' · ' + sText;
+      seriesStateEl.textContent = sText;
+    }
+
+    function renderPips(el, won, total) {
+      if (!el) return;
+      if (total <= 1) { el.innerHTML = ''; return; }
+      var h = '';
+      for (var i = 0; i < total; i++) {
+        h += '<i class="' + (i < won ? 'is-won' : '') + '"></i>';
+      }
+      el.innerHTML = h;
+    }
+    renderPips($('ct-series'), ctMaps, needed);
+    renderPips($('t-series'), tMaps, needed);
+
     $('ct-head').textContent = s.ct_name || 'CT';
     $('t-head').textContent = s.t_name || 'T';
     $('ct-econ').textContent = '$' + money(ctx.ct);

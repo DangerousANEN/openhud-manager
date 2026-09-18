@@ -133,6 +133,18 @@ impl GsiState {
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_else(|| serde_json::json!({}));
 
+        let current_match = crate::db::current_match().ok().flatten();
+        let (match_type, series_left_score, series_right_score, tournament_name) = match current_match {
+            Some(m) => {
+                let t_name = crate::db::list_tournaments()
+                    .ok()
+                    .and_then(|tours| tours.into_iter().next().map(|t| t.name))
+                    .unwrap_or_default();
+                (m.match_type, m.left_score, m.right_score, t_name)
+            }
+            None => ("bo3".to_string(), 0, 0, String::new()),
+        };
+
         let universal = serde_json::json!({
             "event": "state",
             "body": {
@@ -166,6 +178,10 @@ impl GsiState {
             "t_loss_streak": snap.t_loss_streak,
             "ct_timeouts_remaining": snap.ct_timeouts_remaining,
             "t_timeouts_remaining": snap.t_timeouts_remaining,
+            "series_match_type": match_type,
+            "series_left_score": series_left_score,
+            "series_right_score": series_right_score,
+            "tournament_name": tournament_name,
             "focused_steamid": snap.focused_steamid,
             "players": snap.players,
             "updated_at": snap.updated_at
