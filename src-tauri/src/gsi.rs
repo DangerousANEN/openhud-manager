@@ -115,9 +115,44 @@ impl GsiState {
 
     /// Accept a raw GSI POST body from CS2.
     pub fn ingest(&self, payload: Value) {
-        let snap = normalize(&payload);
+        let prev_map = self.snapshot.read().map.clone();
+        let new_map = s(&payload, &["map", "name"]);
+        let map_changed = !new_map.is_empty() && !prev_map.is_empty() && new_map != prev_map;
+
+        let accumulated = {
+            let mut raw_lock = self.raw.write();
+            let mut current = if map_changed {
+                serde_json::json!({})
+            } else {
+                raw_lock.take().unwrap_or_else(|| serde_json::json!({}))
+            };
+
+            if let (Value::Object(target), Value::Object(patch)) = (&mut current, &payload) {
+                for (k, v) in patch {
+                    if k == "allplayers" {
+                        if let Some(m) = v.as_object() {
+                            if !m.is_empty() {
+                                target.insert(k.clone(), v.clone());
+                            }
+                        }
+                    } else if let (Some(Value::Object(target_sub)), Value::Object(patch_sub)) = (target.get_mut(k), v) {
+                        for (sub_k, sub_v) in patch_sub {
+                            target_sub.insert(sub_k.clone(), sub_v.clone());
+                        }
+                    } else {
+                        target.insert(k.clone(), v.clone());
+                    }
+                }
+            } else {
+                current = payload.clone();
+            }
+
+            *raw_lock = Some(current.clone());
+            current
+        };
+
+        let snap = normalize(&accumulated);
         *self.snapshot.write() = snap.clone();
-        *self.raw.write() = Some(payload.clone());
         *self.last_seen.write() = Some(chrono::Utc::now().timestamp());
 
         // Universal multiplexed broadcast payload:
@@ -540,7 +575,16 @@ fn normalize(v: &Value) -> GsiSnapshot {
         bomb_state: bomb_state_raw(v),
         bomb_x: bomb_position(v).0,
         bomb_y: bomb_position(v).1,
-        bomb_countdown: s(v, &["bomb", "countdown"]),
+        bomb_countdown: {
+            let top = s(v, &["bomb", "countdown"]);
+            if !top.is_empty() {
+                top
+            } else if s(v, &["phase_countdowns", "phase"]) == "bomb" {
+                s(v, &["phase_countdowns", "phase_ends_in"])
+            } else {
+                String::new()
+            }
+        },
         phase_countdown_phase: s(v, &["phase_countdowns", "phase"]),
         win_team: s(v, &["round", "win_team"]),
         focused_steamid: {

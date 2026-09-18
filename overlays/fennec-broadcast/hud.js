@@ -55,7 +55,7 @@
       '<div class="row' + (dead ? ' row--out' : '') +
         (p.steamid === focusedId ? ' row--on' : '') + '">' +
         '<span class="rc rc--tag"><i class="tick tick--' + side + '"></i></span>' +
-        '<span class="rc rc--num">' + (p.observer_slot || '') + '</span>' +
+        '<span class="rc rc--num">' + C.formatSlot(p.observer_slot) + '</span>' +
         '<span class="rc rc--name">' + esc(p.name) + '</span>' +
         gunHtml +
         '<span class="rc rc--hp">' +
@@ -69,6 +69,78 @@
         '<span class="rc rc--money' + (showMoney ? '' : ' hidden') + '">$' + (p.money || 0) + '</span>' +
         '<span class="rc rc--eq">' + kit + '</span>' +
       '</div>';
+  }
+
+  /* ══════════ HIGH-PRECISION RADAR INTERPOLATOR (TIER-1 SMOOTHING) ══════════ */
+  var posHistory = new Map();
+  var animFrameRequested = false;
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function updateSmoothPositions() {
+    animFrameRequested = false;
+    var now = performance.now();
+    var hasActive = false;
+
+    posHistory.forEach(function (state, id) {
+      if (!state.el || !state.el.parentNode) {
+        posHistory.delete(id);
+        return;
+      }
+      var dt = (now - state.lastUpdate) / 1000;
+      var factor = 1 - Math.exp(-dt * 22);
+      if (factor > 1) factor = 1;
+
+      state.currentX = lerp(state.currentX, state.targetX, factor);
+      state.currentY = lerp(state.currentY, state.targetY, factor);
+      state.lastUpdate = now;
+
+      state.el.style.left = state.currentX.toFixed(2) + '%';
+      state.el.style.top = state.currentY.toFixed(2) + '%';
+
+      var dx = Math.abs(state.targetX - state.currentX);
+      var dy = Math.abs(state.targetY - state.currentY);
+      if (dx > 0.05 || dy > 0.05) {
+        hasActive = true;
+      }
+    });
+
+    if (hasActive) {
+      requestAnimationFrame(updateSmoothPositions);
+      animFrameRequested = true;
+    }
+  }
+
+  function setSmoothPos(id, el, targetX, targetY) {
+    var state = posHistory.get(id);
+    var now = performance.now();
+    if (!state) {
+      state = { el: el, currentX: targetX, currentY: targetY, targetX: targetX, targetY: targetY, lastUpdate: now };
+      posHistory.set(id, state);
+      el.style.left = targetX.toFixed(2) + '%';
+      el.style.top = targetY.toFixed(2) + '%';
+    } else {
+      state.el = el;
+      var dist = Math.hypot(targetX - state.currentX, targetY - state.currentY);
+      if (dist > 25) {
+        state.currentX = targetX;
+        state.currentY = targetY;
+      }
+      state.targetX = targetX;
+      state.targetY = targetY;
+      state.lastUpdate = now;
+    }
+
+    if (!animFrameRequested) {
+      animFrameRequested = true;
+      requestAnimationFrame(updateSmoothPositions);
+    }
+  }
+
+  function removeSmoothPos(id) {
+    posHistory.delete(id);
   }
 
   function renderRadar(ctx) {
@@ -91,18 +163,39 @@
       var pos = C.radarPos(p, cfg);
       d.className = 'blip blip--' + String(p.team || '').toLowerCase() +
         (dead ? ' blip--out' : '') +
-        (p.steamid === ctx.snap.focused_steamid ? ' blip--on' : '');
-      d.textContent = dead ? '' : (p.observer_slot || '');
+        (p.steamid === ctx.snap.focused_steamid ? ' blip--on' : '') +
+        (p.has_bomb ? ' blip--c4' : '');
+      d.textContent = dead ? '' : C.formatSlot(p.observer_slot);
       if (pos && !dead) {
         d.style.display = '';
-        d.style.left = pos.x + '%';
-        d.style.top = pos.y + '%';
-      } else d.style.display = 'none';
+        setSmoothPos(p.steamid, d, pos.x, pos.y);
+      } else {
+        d.style.display = 'none';
+        removeSmoothPos(p.steamid);
+      }
     });
     dots.forEach(function (d, id) {
-      if (!seen.has(id)) { d.remove(); dots.delete(id); }
+      if (!seen.has(id)) {
+        d.remove();
+        dots.delete(id);
+        removeSmoothPos(id);
+      }
     });
-    show($('radar-bomb'), ctx.snap.bomb === 'planted');
+    var bombPos = (ctx.snap.bomb_x != null && ctx.snap.bomb_y != null && (ctx.snap.bomb_x !== 0 || ctx.snap.bomb_y !== 0))
+      ? C.radarPos({ pos_x: ctx.snap.bomb_x, pos_y: ctx.snap.bomb_y }, cfg)
+      : null;
+    var bEl = $('radar-bomb');
+    if (bEl) {
+      var isPlanted = ctx.snap.bomb_state === 'planted' || ctx.snap.bomb === 'planted';
+      var isDropped = ctx.snap.bomb_state === 'dropped';
+      var showBomb = (isPlanted || isDropped) && !!bombPos;
+      show(bEl, showBomb);
+      if (bombPos && showBomb) {
+        setSmoothPos('__bomb__', bEl, bombPos.x, bombPos.y);
+      } else {
+        removeSmoothPos('__bomb__');
+      }
+    }
   }
 
   function renderStrap(ctx) {

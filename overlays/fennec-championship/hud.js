@@ -52,7 +52,7 @@
     return '' +
       '<div class="plinth' + (dead ? ' plinth--out' : '') +
         (p.steamid === focusedId ? ' plinth--on' : '') + '">' +
-        '<span class="plinth-slot">' + (p.observer_slot || '') + '</span>' +
+        '<span class="plinth-slot">' + C.formatSlot(p.observer_slot) + '</span>' +
         '<div class="plinth-dial-wrap">' +
           '<svg class="pdial" viewBox="0 0 44 44" aria-hidden="true">' +
             '<circle class="pdial-bg" cx="22" cy="22" r="' + R + '"></circle>' +
@@ -71,6 +71,87 @@
         '<span class="plinth-cash' + (showMoney ? '' : ' hidden') + '">$' + (p.money || 0) + '</span>' +
         '<span class="plinth-kit">' + kitHtml + '</span>' +
       '</div>';
+  }
+
+  /* ══════════ HIGH-PRECISION RADAR INTERPOLATOR (TIER-1 SMOOTHING) ══════════ */
+  var posHistory = new Map(); // id -> { currentX, currentY, targetX, targetY, lastUpdate }
+  var animFrameRequested = false;
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function updateSmoothPositions() {
+    animFrameRequested = false;
+    var now = performance.now();
+    var hasActive = false;
+
+    posHistory.forEach(function (state, id) {
+      if (!state.el || !state.el.parentNode) {
+        posHistory.delete(id);
+        return;
+      }
+      var dt = (now - state.lastUpdate) / 1000;
+      // Exponential decay lerp towards target position (~120ms smoothing half-life)
+      var factor = 1 - Math.exp(-dt * 22);
+      if (factor > 1) factor = 1;
+
+      state.currentX = lerp(state.currentX, state.targetX, factor);
+      state.currentY = lerp(state.currentY, state.targetY, factor);
+      state.lastUpdate = now;
+
+      state.el.style.left = state.currentX.toFixed(2) + '%';
+      state.el.style.top = state.currentY.toFixed(2) + '%';
+
+      var dx = Math.abs(state.targetX - state.currentX);
+      var dy = Math.abs(state.targetY - state.currentY);
+      if (dx > 0.05 || dy > 0.05) {
+        hasActive = true;
+      }
+    });
+
+    if (hasActive) {
+      requestAnimationFrame(updateSmoothPositions);
+      animFrameRequested = true;
+    }
+  }
+
+  function setSmoothPos(id, el, targetX, targetY) {
+    var state = posHistory.get(id);
+    var now = performance.now();
+    if (!state) {
+      state = {
+        el: el,
+        currentX: targetX,
+        currentY: targetY,
+        targetX: targetX,
+        targetY: targetY,
+        lastUpdate: now
+      };
+      posHistory.set(id, state);
+      el.style.left = targetX.toFixed(2) + '%';
+      el.style.top = targetY.toFixed(2) + '%';
+    } else {
+      state.el = el;
+      // Teleport if sudden huge jump (> 25% of radar, e.g. respawn)
+      var dist = Math.hypot(targetX - state.currentX, targetY - state.currentY);
+      if (dist > 25) {
+        state.currentX = targetX;
+        state.currentY = targetY;
+      }
+      state.targetX = targetX;
+      state.targetY = targetY;
+      state.lastUpdate = now;
+    }
+
+    if (!animFrameRequested) {
+      animFrameRequested = true;
+      requestAnimationFrame(updateSmoothPositions);
+    }
+  }
+
+  function removeSmoothPos(id) {
+    posHistory.delete(id);
   }
 
   function renderRadar(ctx) {
@@ -93,18 +174,39 @@
       var pos = C.radarPos(p, cfg);
       d.className = 'medal medal--' + String(p.team || '').toLowerCase() +
         (dead ? ' medal--out' : '') +
-        (p.steamid === ctx.snap.focused_steamid ? ' medal--on' : '');
-      d.textContent = dead ? '' : (p.observer_slot || '');
+        (p.steamid === ctx.snap.focused_steamid ? ' medal--on' : '') +
+        (p.has_bomb ? ' medal--c4' : '');
+      d.textContent = dead ? '' : C.formatSlot(p.observer_slot);
       if (pos && !dead) {
         d.style.display = '';
-        d.style.left = pos.x + '%';
-        d.style.top = pos.y + '%';
-      } else d.style.display = 'none';
+        setSmoothPos(p.steamid, d, pos.x, pos.y);
+      } else {
+        d.style.display = 'none';
+        removeSmoothPos(p.steamid);
+      }
     });
     dots.forEach(function (d, id) {
-      if (!seen.has(id)) { d.remove(); dots.delete(id); }
+      if (!seen.has(id)) {
+        d.remove();
+        dots.delete(id);
+        removeSmoothPos(id);
+      }
     });
-    show($('radar-bomb'), ctx.snap.bomb === 'planted');
+    var bombPos = (ctx.snap.bomb_x != null && ctx.snap.bomb_y != null && (ctx.snap.bomb_x !== 0 || ctx.snap.bomb_y !== 0))
+      ? C.radarPos({ pos_x: ctx.snap.bomb_x, pos_y: ctx.snap.bomb_y }, cfg)
+      : null;
+    var bEl = $('radar-bomb');
+    if (bEl) {
+      var isPlanted = ctx.snap.bomb_state === 'planted' || ctx.snap.bomb === 'planted';
+      var isDropped = ctx.snap.bomb_state === 'dropped';
+      var showBomb = (isPlanted || isDropped) && !!bombPos;
+      show(bEl, showBomb);
+      if (bombPos && showBomb) {
+        setSmoothPos('__bomb__', bEl, bombPos.x, bombPos.y);
+      } else {
+        removeSmoothPos('__bomb__');
+      }
+    }
   }
 
   function renderSpotlight(ctx) {
@@ -119,7 +221,7 @@
     s.classList.toggle('is-cam', !!ctx.liveCam || ctx.options.avatars !== false);
     $('cam-inner').style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(assets/agents-' + (ct ? 'ct' : 't') + '.png)' : 'none';
 
-    $('op-slot').textContent = f.observer_slot || '';
+    $('op-slot').textContent = C.formatSlot(f.observer_slot);
     $('op-name').textContent = f.name || '';
     $('op-team').textContent = ct
       ? (ctx.snap.ct_name || 'CT') : (ctx.snap.t_name || 'T');
@@ -224,20 +326,23 @@
     else if (phase === 'gameover') phaseLabel = 'MATCH OVER';
     $('round-state').textContent = phaseLabel;
 
-    var planted = (s.bomb_state || '') === 'planted' || phase === 'bomb';
+    var planted = (s.bomb_state || '') === 'planted' || (s.bomb_state || '') === 'defusing' || phase === 'bomb';
     var bombEl = $('bomb-timer');
     if (bombEl) {
       show(bombEl, planted);
       if (planted) {
-        var rawLeft = Number(s.bomb_countdown);
-        var known = s.bomb_countdown != null && s.bomb_countdown !== '' && Number.isFinite(rawLeft);
+        var rawStr = (s.bomb_countdown != null && s.bomb_countdown !== '') ? s.bomb_countdown : (phase === 'bomb' ? s.round_time : '');
+        var rawLeft = Number(rawStr);
+        var known = Number.isFinite(rawLeft) && rawLeft > 0;
+        var isDefusing = s.bomb_state === 'defusing';
         if (known) {
           var left = Math.max(0, Math.floor(rawLeft));
-          bombEl.innerHTML = '<b>' + left + '</b><i style="width:' + (left / 40 * 100) + '%"></i>';
-          bombEl.className = 'crest-bomb' + (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe');
+          var pct = Math.min(100, Math.max(0, (rawLeft / 40) * 100));
+          bombEl.innerHTML = '<b>' + (isDefusing ? 'DEFUSE ' : '') + left + '</b><i style="width:' + pct.toFixed(1) + '%"></i>';
+          bombEl.className = 'crest-bomb' + (isDefusing ? ' c4-defuse' : (left <= 10 ? ' c4-crit' : left <= 20 ? ' c4-warn' : ' c4-safe'));
         } else {
-          bombEl.innerHTML = '<b>--</b><i style="width:0%"></i>';
-          bombEl.className = 'crest-bomb';
+          bombEl.innerHTML = '<b>' + (isDefusing ? 'DEFUSING' : 'C4') + '</b><i style="width:100%"></i>';
+          bombEl.className = 'crest-bomb' + (isDefusing ? ' c4-defuse' : ' c4-crit');
         }
       }
     }

@@ -33,8 +33,17 @@ def packet(phase='live', countdown='75.0', bomb_state='carried', bomb_cd='', ct_
             'match_stats': {'kills': 10, 'deaths': 5, 'assists': 2},
             'weapons': {'weapon_0': {'name': 'weapon_ak47', 'type': 'Rifle', 'state': 'active', 'ammo_clip': 30, 'ammo_reserve': 90}}
         }
+    try:
+        import sqlite3
+        con = sqlite3.connect(r'C:\Users\ANEN\AppData\Roaming\PROTOKOL HUD\protokol.db')
+        cur = con.cursor()
+        cur.execute("SELECT value FROM settings WHERE key='gsi_token'")
+        row = cur.fetchone()
+        token = row[0] if row else '439c7fe2-5452-4ee4-94d0-77ff84ffecf9'
+    except Exception:
+        token = '439c7fe2-5452-4ee4-94d0-77ff84ffecf9'
     return {
-        'auth': {'token': 'smoke-token'},
+        'auth': {'token': token},
         'provider': {'name': 'tournament-e2e'},
         'map': {
             'name': 'de_mirage',

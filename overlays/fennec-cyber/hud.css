@@ -272,16 +272,20 @@ body {
   display: grid; place-items: center;
   font-size: 1.3rem; font-weight: 700; color: #04121a;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);   /* diamond pips */
+  will-change: left, top;
 }
 .pip--ct { background: var(--ct); }
 .pip--t  { background: var(--t); color: #1c0010; }
 .pip--dead { background: rgba(120,120,120,.7); }
 .pip--live { box-shadow: 0 0 0 2px #fff; }
+.pip--c4 { box-shadow: 0 0 0 2px #ff453a, 0 0 1rem rgba(255,69,58,.9); }
 .scope-bomb {
-  position: absolute; left: 50%; top: 50%; width: 2.6rem; height: 2.6rem;
+  position: absolute; width: 2.6rem; height: 2.6rem;
   margin: -1.3rem 0 0 -1.3rem;
   background: url(assets/icons/c4.svg) center/contain no-repeat;
   filter: brightness(0) saturate(100%) invert(28%) sepia(90%) saturate(3000%) hue-rotate(352deg);
+  will-change: left, top;
+  animation: c4-pulse .6s ease-in-out infinite;
 }
 
 /* ══════════ DOSSIER ══════════ vertical operator panel, right side */
