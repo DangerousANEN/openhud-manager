@@ -156,11 +156,12 @@ window.ProtokolCore = (function () {
     };
   }
 
-  /* Map art preference: SimpleRadar → in-game → outline mask. */
+  /* Map art preference: in-game official CS2 (pixel-calibrated 1024x1024) → simpleradar → clean */
   function radarArt(imgEl, mapKey) {
     if (imgEl.dataset.map === mapKey) return;
     imgEl.dataset.map = mapKey;
     var chain = [
+      'assets/radars/ingame/' + mapKey + '.webp',
       'assets/radars/simpleradar/' + mapKey + '.webp',
       'assets/radar-maps-clean/' + mapKey + '.png'
     ];

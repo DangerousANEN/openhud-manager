@@ -303,14 +303,14 @@ body {
 .plate { position: absolute; top: 0; left: 0; width: 48rem; }
 .plate-frame {
   position: relative; aspect-ratio: 1;
-  padding: 1rem;
+  padding: 0;
   background: transparent;
   box-shadow: none;
   clip-path: polygon(2.4rem 0, 100% 0, 100% calc(100% - 2.4rem), calc(100% - 2.4rem) 100%, 0 100%);
 }
 .plate-map { width: 100%; height: 100%; object-fit: contain;
   filter: sepia(.18) drop-shadow(0 0 .6rem rgba(232,195,122,.3)); }
-.plate-dots { position: absolute; inset: 1rem; }
+.plate-dots { position: absolute; inset: 0; }
 .plate-name {
   margin-top: .6rem; text-align: center;
   font-size: 1.3rem; font-weight: 700; letter-spacing: .34em; color: var(--gold);

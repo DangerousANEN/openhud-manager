@@ -2,13 +2,19 @@
 // Creates an always-on-top, click-through (transparent) overlay directly over CS2.
 
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 
 static HOTKEY_INITIALIZED: AtomicBool = AtomicBool::new(false);
+static TOGGLE_LOCK: Mutex<()> = Mutex::new(());
 
 #[tauri::command]
 pub fn operator_overlay_status(app: AppHandle) -> bool {
-    app.get_webview_window("operator_overlay").is_some()
+    if let Some(win) = app.get_webview_window("operator_overlay") {
+        win.is_visible().unwrap_or(false)
+    } else {
+        false
+    }
 }
 
 #[cfg(windows)]
@@ -16,7 +22,6 @@ unsafe extern "system" fn enum_child_proc(
     hwnd: windows_sys::Win32::Foundation::HWND,
     _lparam: windows_sys::Win32::Foundation::LPARAM,
 ) -> windows_sys::Win32::Foundation::BOOL {
-    use windows_sys::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, SWP_FRAMECHANGED,
         SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WS_EX_LAYERED, WS_EX_TRANSPARENT,
@@ -36,8 +41,6 @@ unsafe extern "system" fn enum_child_proc(
         0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE,
     );
-    // Disable the child window so Windows hit-testing passes straight through to whatever is underneath
-    EnableWindow(hwnd, 0);
     1 // TRUE (continue enumeration)
 }
 
@@ -67,7 +70,7 @@ pub fn apply_click_through(hwnd_usize: usize) {
             0,
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE,
         );
-        // Also ensure all child windows (WebView2 controller, Chrome_WidgetWin_0, etc.) are click-through
+        // Ensure child windows pass cursor events without disabling their message queues
         EnumChildWindows(hwnd, Some(enum_child_proc), 0);
     }
 }
@@ -91,7 +94,6 @@ fn ensure_global_hotkey(app: AppHandle) {
 
             const HOTKEY_ID_F10: i32 = 1349;
             unsafe {
-                // Register F10 globally
                 RegisterHotKey(
                     std::ptr::null_mut(),
                     HOTKEY_ID_F10,
@@ -102,9 +104,12 @@ fn ensure_global_hotkey(app: AppHandle) {
                 let mut msg: MSG = std::mem::zeroed();
                 while GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) > 0 {
                     if msg.message == WM_HOTKEY && msg.wParam == HOTKEY_ID_F10 as usize {
-                        let _ = operator_overlay_toggle(app_handle.clone(), None);
-                        let is_active = operator_overlay_status(app_handle.clone());
-                        let _ = app_handle.emit("overlay_status_changed", is_active);
+                        let h = app_handle.clone();
+                        let _ = app_handle.run_on_main_thread(move || {
+                            let _ = operator_overlay_toggle(h.clone(), None);
+                            let is_active = operator_overlay_status(h.clone());
+                            let _ = h.emit("overlay_status_changed", is_active);
+                        });
                     }
                     DispatchMessageW(&msg);
                 }
@@ -115,12 +120,22 @@ fn ensure_global_hotkey(app: AppHandle) {
 
 #[tauri::command]
 pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bool, String> {
+    let _lock = TOGGLE_LOCK.lock().map_err(|e| e.to_string())?;
     ensure_global_hotkey(app.clone());
 
+    // If overlay window already exists, toggle visibility without destroying or recreating it
     if let Some(win) = app.get_webview_window("operator_overlay") {
-        win.close().map_err(|e| e.to_string())?;
-        let _ = app.emit("overlay_status_changed", false);
-        return Ok(false);
+        let is_visible = win.is_visible().unwrap_or(false);
+        if is_visible {
+            win.hide().map_err(|e| e.to_string())?;
+            let _ = app.emit("overlay_status_changed", false);
+            return Ok(false);
+        } else {
+            win.show().map_err(|e| e.to_string())?;
+            let _ = win.set_always_on_top(true);
+            let _ = app.emit("overlay_status_changed", true);
+            return Ok(true);
+        }
     }
 
     let raw_url = url.unwrap_or_else(|| "http://127.0.0.1:1349/hud/".to_string());
@@ -162,10 +177,10 @@ pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bo
             let hwnd_usize = raw_hwnd.0 as usize;
             apply_click_through(hwnd_usize);
 
-            // Periodically re-apply click-through to ensure WebView2 child window gets WS_EX_TRANSPARENT as soon as it initializes
+            // Re-apply click-through styling as child WebView surfaces initialize
             std::thread::spawn(move || {
-                for _ in 0..12 {
-                    std::thread::sleep(std::time::Duration::from_millis(250));
+                for _ in 0..6 {
+                    std::thread::sleep(std::time::Duration::from_millis(300));
                     apply_click_through(hwnd_usize);
                 }
             });
@@ -178,8 +193,9 @@ pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bo
 
 #[tauri::command]
 pub fn operator_overlay_close(app: AppHandle) -> Result<(), String> {
+    let _lock = TOGGLE_LOCK.lock().map_err(|e| e.to_string())?;
     if let Some(win) = app.get_webview_window("operator_overlay") {
-        win.close().map_err(|e| e.to_string())?;
+        let _ = win.hide();
     }
     let _ = app.emit("overlay_status_changed", false);
     Ok(())
