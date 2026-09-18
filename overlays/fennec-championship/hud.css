@@ -27,11 +27,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
-/* Agent art is an explicit fallback, never a pretend live feed. */
-#cam-inner[data-camera-state="unconfigured"] { background-size: contain; background-position: center bottom; background-repeat: no-repeat; }
-#cam-inner[data-camera-state="unconfigured"]::before { content: "AGENT"; }
-#cam-inner[data-camera-state="unconfigured"]::after { content: ""; }
+/* Camera states & Agent fallback — Clean Major broadcast style (no borders, no tags) */
+#cam-inner { background-size: contain; background-position: center bottom; background-repeat: no-repeat; background-color: transparent; border: none !important; box-shadow: none !important; }
+#cam-inner::before, #cam-inner::after { display: none !important; content: none !important; }
+#cam-inner[data-camera-state="external"] { background: transparent; }
 
 /* ══════════ CREST BANNER (SCORE TOP-CENTER 960-WIDE) ══════════ */
 .crest {
@@ -306,26 +305,12 @@ body {
 .spot-cam-inner {
   width: 28.8rem; height: 16.2rem;         /* strict 16:9 */
   position: relative;
-  border: 2px solid var(--gold);
-  box-shadow: 0 0 0 1px rgba(232,195,122,.35), 0 .8rem 2.6rem rgba(0,0,0,.55);
-  clip-path: polygon(1.1rem 0, 100% 0, 100% 100%, 0 100%, 0 1.1rem);
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
-.spot-cam-inner::before {
-  content: 'LIVE';
-  position: absolute; top: .7rem; left: .8rem;
-  font-size: 1.1rem; font-weight: 700; letter-spacing: .2em;
-  padding: .25rem .9rem;
-  background: linear-gradient(180deg, #f4d79a, #d4a373); color: #1a1610;
-}
-.spot-cam-inner::after {
-  content: 'PLAYER CAM';
-  position: absolute; top: .7rem; right: .8rem;
-  font-size: 1rem; font-weight: 700; letter-spacing: .22em;
-  color: rgba(232,195,122,.9);
-  background: rgba(14, 12, 9, .75);
-  padding: .2rem .6rem;
-  border: 1px solid var(--gold-dim);
-}
+.spot-cam-inner::before,
+.spot-cam-inner::after { display: none !important; content: none !important; }
 
 .spot-plaque {
   display: flex; align-items: center; gap: 1.6rem;

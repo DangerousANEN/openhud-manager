@@ -1,15 +1,9 @@
 .scope-name { background: rgba(8,12,18,.88); text-shadow: 0 1px 2px #000; }
-/* Camera states distinguish iframe load from actual decoded video. */
-#cam-inner { background-size: cover; background-position: center; }
-#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
-/* Agent art is an explicit fallback, never a pretend live feed. */
-#cam-inner[data-camera-state="unconfigured"] { background-size: contain; background-position: center bottom; background-repeat: no-repeat; }
-#cam-inner[data-camera-state="unconfigured"]::before { content: "AGENT"; }
-#cam-inner[data-camera-state="unconfigured"]::after { content: ""; }
+/* Camera states & Agent fallback — Clean Major broadcast style (no borders, no tags) */
+#cam-inner { background-size: contain; background-position: center bottom; background-repeat: no-repeat; background-color: transparent; border: none !important; box-shadow: none !important; }
+#cam-inner::before, #cam-inner::after { display: none !important; content: none !important; }
 #cam-inner[data-camera-state="external"] { background: transparent; }
-#cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
-#cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
-#cam-inner[data-camera-state="embedded"]::before { content: "CAM"; }
+
 /* PROTOKOL CYBER — vertical tactical HUD stylesheet.
    Components unique to this HUD: hexagonal score pods, vertical draining
    HP columns, a segmented ammo ladder, a utility rail and a scanline scope. */
@@ -315,24 +309,13 @@ body {
 .dossier-cam { position: absolute; left: 0; bottom: 100%; margin-bottom: .8rem; }
 .dossier-cam-inner {
   width: 28.8rem; height: 16.2rem;          /* strict 16:9, docked above */
-  border: 2px solid rgba(255,255,255,.28);
+  border: none;
   position: relative;
   overflow: hidden;
-  background: #080d14;
+  background: transparent;
+  box-shadow: none;
 }
-.dossier.is-ct .dossier-cam-inner { border-color: rgba(0,229,255,.7); }
-.dossier.is-t  .dossier-cam-inner { border-color: rgba(255,45,120,.7); }
-.dossier-cam-inner::before {
-  content: '▸ LIVE CAM';
-  position: absolute; top: .6rem; left: .6rem;
-  font-size: 1.1rem; font-weight: 700; letter-spacing: .12em;
-  padding: .25rem .7rem;
-  background: var(--ct); color: #00151a;
-  clip-path: polygon(0 0, 100% 0, calc(100% - .5rem) 100%, 0 100%);
-  z-index: 2;
-  pointer-events: none;
-}
-.dossier.is-t .dossier-cam-inner::before { background: var(--t); color: #1a0010; }
+.dossier-cam-inner::before { display: none !important; content: none !important; }
 
 .dossier-id { display: flex; align-items: baseline; gap: .8rem; min-width: 22rem; }
 .dossier-slot {

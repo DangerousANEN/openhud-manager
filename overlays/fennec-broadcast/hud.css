@@ -1,14 +1,8 @@
-/* Camera states distinguish iframe load from actual decoded video. */
-#cam-inner { background-size: cover; background-position: center; }
-#cam-inner::before, #cam-inner::after { z-index: 3; pointer-events: none; }
-/* Agent art is an explicit fallback, never a pretend live feed. */
-#cam-inner[data-camera-state="unconfigured"] { background-size: contain; background-position: center bottom; background-repeat: no-repeat; }
-#cam-inner[data-camera-state="unconfigured"]::before { content: "AGENT"; }
-#cam-inner[data-camera-state="unconfigured"]::after { content: ""; }
+/* Camera states & Agent fallback — Clean Major broadcast style (no borders, no tags) */
+#cam-inner { background-size: contain; background-position: center bottom; background-repeat: no-repeat; background-color: transparent; border: none !important; box-shadow: none !important; }
+#cam-inner::before, #cam-inner::after { display: none !important; content: none !important; }
 #cam-inner[data-camera-state="external"] { background: transparent; }
-#cam-inner[data-camera-state="error"]::before, #cam-inner[data-camera-state="timeout"]::before { content: "CAM OFFLINE"; background: #a62132; color: white; }
-#cam-inner[data-camera-state="loading"]::before, #cam-inner[data-camera-state="buffering"]::before { content: "CONNECTING"; }
-#cam-inner[data-camera-state="embedded"]::before { content: "CAM"; }
+
 /* PROTOKOL BROADCAST — television scoreboard HUD stylesheet.
    Components unique to this HUD: a centre score bug, an economy flow strip,
    TABLE-style roster sheets with header rows, an inset radar box and a
@@ -303,19 +297,13 @@ body {
 .strap.is-cam .strap-cam { display: block; }
 .strap-cam-inner {
   width: 28.8rem; height: 16.2rem;          /* strict 16:9 */
-  border: 2px solid rgba(255, 255, 255, .28);
-  border-radius: 4px;
+  border: none;
+  border-radius: 0;
   position: relative;
+  background: transparent;
+  box-shadow: none;
 }
-.strap.is-ct .strap-cam-inner { border-color: rgba(47, 129, 247, .8); }
-.strap.is-t  .strap-cam-inner { border-color: rgba(245, 158, 11, .8); }
-.strap-cam-inner::before {
-  content: '● LIVE';
-  position: absolute; top: .7rem; left: .7rem;
-  font-size: 1.1rem; font-weight: 700; letter-spacing: .1em;
-  padding: .3rem .8rem; border-radius: 999px;
-  background: rgba(229, 55, 47, .95); color: #fff;
-}
+.strap-cam-inner::before { display: none !important; content: none !important; }
 
 .strap-body {
   width: 100%; flex: none;

@@ -104,7 +104,7 @@ window.ProtokolCore = (function () {
     container.dataset.cameraState = 'loading';
     var media = document.createElement(source.kind === 'video' ? 'video' : 'iframe');
     media.dataset.protokolCamera = sid;
-    Object.assign(media.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', border: '0', objectFit: 'cover', background: '#080d14', zIndex: '1' });
+    Object.assign(media.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', border: '0', objectFit: 'cover', background: 'transparent', zIndex: '1' });
     var slot = { key: key, media: media, timer: null };
     cameraSlots.set(container, slot);
     function state(value) { if (cameraSlots.get(container) === slot) container.dataset.cameraState = value; }
