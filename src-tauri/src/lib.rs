@@ -625,6 +625,8 @@ pub fn run() {
                 eprintln!("[protokol] bundled::install warning: {e}");
             }
 
+            overlay_window::init_global_hotkey(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

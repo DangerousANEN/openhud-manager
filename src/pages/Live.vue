@@ -14,7 +14,7 @@
               ? 'bg-status-success text-black font-bold border-status-success hover:bg-status-success/90' 
               : 'bg-gold/10 border-gold/40 text-gold hover:bg-gold/20']">
           <span :class="['w-2 h-2 rounded-full', overlayActive ? 'bg-black animate-ping' : 'bg-gold']"></span>
-          {{ overlayActive ? 'ОТКЛЮЧИТЬ HUD в CS2 (F10)' : 'Включить HUD поверх CS2 (F10)' }}
+          {{ overlayActive ? 'Выключить худ поверх игры (F10)' : 'Включить худ поверх игры (F10)' }}
         </button>
 
         <!-- CS2 connection indicator -->

@@ -22,15 +22,17 @@ unsafe extern "system" fn enum_child_proc(
     hwnd: windows_sys::Win32::Foundation::HWND,
     _lparam: windows_sys::Win32::Foundation::LPARAM,
 ) -> windows_sys::Win32::Foundation::BOOL {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, SWP_FRAMECHANGED,
-        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WS_EX_LAYERED, WS_EX_TRANSPARENT,
+        GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE,
+        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+        WS_EX_NOACTIVATE, WS_EX_TRANSPARENT,
     };
     let ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
     SetWindowLongPtrW(
         hwnd,
         GWL_EXSTYLE,
-        ex | (WS_EX_TRANSPARENT as isize) | (WS_EX_LAYERED as isize),
+        ex | (WS_EX_TRANSPARENT as isize) | (WS_EX_NOACTIVATE as isize),
     );
     SetWindowPos(
         hwnd,
@@ -41,17 +43,23 @@ unsafe extern "system" fn enum_child_proc(
         0,
         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE,
     );
+    // Disable input events on the child WebView2 window so mouse clicks pass through to CS2
+    EnableWindow(hwnd, 0);
     1 // TRUE (continue enumeration)
 }
 
 #[cfg(windows)]
 pub fn apply_click_through(hwnd_usize: usize) {
+    use windows_sys::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        EnumChildWindows, GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE,
-        SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WS_EX_LAYERED,
-        WS_EX_NOACTIVATE, WS_EX_TRANSPARENT,
+        EnumChildWindows, GetWindowLongPtrW, SetLayeredWindowAttributes,
+        SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, LWA_ALPHA, SWP_FRAMECHANGED, SWP_NOACTIVATE,
+        SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, WS_EX_LAYERED, WS_EX_NOACTIVATE,
+        WS_EX_TOPMOST, WS_EX_TRANSPARENT,
     };
     let hwnd = hwnd_usize as windows_sys::Win32::Foundation::HWND;
+    const HWND_TOPMOST: windows_sys::Win32::Foundation::HWND = -1isize as _;
+
     unsafe {
         let ex = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
         SetWindowLongPtrW(
@@ -59,24 +67,33 @@ pub fn apply_click_through(hwnd_usize: usize) {
             GWL_EXSTYLE,
             ex | (WS_EX_TRANSPARENT as isize)
                 | (WS_EX_LAYERED as isize)
-                | (WS_EX_NOACTIVATE as isize),
+                | (WS_EX_NOACTIVATE as isize)
+                | (WS_EX_TOPMOST as isize),
         );
+
+        // Required on Windows when WS_EX_LAYERED is set to ensure DWM composites the transparent surface
+        SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+
         SetWindowPos(
             hwnd,
-            std::ptr::null_mut(),
+            HWND_TOPMOST,
             0,
             0,
-            0,
-            0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE,
+            1920,
+            1080,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_SHOWWINDOW,
         );
-        // Ensure child windows pass cursor events without disabling their message queues
+
+        // Disable input on root window so Windows hit-testing skips the overlay window entirely
+        EnableWindow(hwnd, 0);
+
+        // Apply click-through to all child windows (WebView2 render targets)
         EnumChildWindows(hwnd, Some(enum_child_proc), 0);
     }
 }
 
-/// Spawns a background thread listening for global hotkey F10 to toggle the overlay on/off
-fn ensure_global_hotkey(app: AppHandle) {
+/// Initializes global hotkey F10 to toggle the overlay on/off from anywhere (even while inside CS2)
+pub fn init_global_hotkey(app: AppHandle) {
     if HOTKEY_INITIALIZED.swap(true, Ordering::SeqCst) {
         return;
     }
@@ -121,7 +138,7 @@ fn ensure_global_hotkey(app: AppHandle) {
 #[tauri::command]
 pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bool, String> {
     let _lock = TOGGLE_LOCK.lock().map_err(|e| e.to_string())?;
-    ensure_global_hotkey(app.clone());
+    init_global_hotkey(app.clone());
 
     // If overlay window already exists, toggle visibility without destroying or recreating it
     if let Some(win) = app.get_webview_window("operator_overlay") {
@@ -133,12 +150,19 @@ pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bo
         } else {
             win.show().map_err(|e| e.to_string())?;
             let _ = win.set_always_on_top(true);
+            #[cfg(windows)]
+            {
+                if let Ok(raw_hwnd) = win.hwnd() {
+                    let hwnd_usize = raw_hwnd.0 as usize;
+                    apply_click_through(hwnd_usize);
+                }
+            }
             let _ = app.emit("overlay_status_changed", true);
             return Ok(true);
         }
     }
 
-    let raw_url = url.unwrap_or_else(|| "http://127.0.0.1:1349/hud/".to_string());
+    let raw_url = url.unwrap_or_else(|| "http://127.0.0.1:1349/hud/index.html".to_string());
     let target_url = if raw_url.starts_with("http://") || raw_url.starts_with("https://") {
         raw_url
     } else {
@@ -177,10 +201,10 @@ pub fn operator_overlay_toggle(app: AppHandle, url: Option<String>) -> Result<bo
             let hwnd_usize = raw_hwnd.0 as usize;
             apply_click_through(hwnd_usize);
 
-            // Re-apply click-through styling as child WebView surfaces initialize
+            // Re-apply click-through styling as child WebView surfaces initialize asynchronously
             std::thread::spawn(move || {
-                for _ in 0..6 {
-                    std::thread::sleep(std::time::Duration::from_millis(300));
+                for _ in 0..12 {
+                    std::thread::sleep(std::time::Duration::from_millis(250));
                     apply_click_through(hwnd_usize);
                 }
             });

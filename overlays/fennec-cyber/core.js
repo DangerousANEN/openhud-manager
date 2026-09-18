@@ -156,14 +156,15 @@ window.ProtokolCore = (function () {
     };
   }
 
-  /* Map art preference: in-game official CS2 (pixel-calibrated 1024x1024) → simpleradar → clean */
+  /* Map art preference: Clean stylish transparent minimap (1024x1024) → Simpleradar → in-game */
   function radarArt(imgEl, mapKey) {
     if (imgEl.dataset.map === mapKey) return;
     imgEl.dataset.map = mapKey;
     var chain = [
-      'assets/radars/ingame/' + mapKey + '.webp',
+      'assets/radar-maps-clean/' + mapKey + '_radar_psd.png',
+      'assets/radar-maps-clean/' + mapKey + '.png',
       'assets/radars/simpleradar/' + mapKey + '.webp',
-      'assets/radar-maps-clean/' + mapKey + '.png'
+      'assets/radars/ingame/' + mapKey + '.webp'
     ];
     var i = 0;
     imgEl.onerror = function () {

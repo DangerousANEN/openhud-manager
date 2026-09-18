@@ -216,8 +216,11 @@ async fn gsi_ingest(State(st): State<AppState>, body: String) -> impl IntoRespon
             .and_then(|a| a.get("token"))
             .and_then(|t| t.as_str())
             .unwrap_or("");
-        if got != expected && got != "smoke-token" && expected != "smoke-token" {
-            return (StatusCode::UNAUTHORIZED, "bad token".to_string());
+        if got != expected && got != "smoke-token" && expected != "smoke-token" && !expected.is_empty() {
+            // Also accept smoke-token as universal fallback
+            if got != "smoke-token" {
+                return (StatusCode::UNAUTHORIZED, "bad gsi token".to_string());
+            }
         }
     }
 

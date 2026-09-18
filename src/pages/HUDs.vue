@@ -39,7 +39,7 @@
               ? 'bg-status-success text-black hover:bg-status-success/90 shadow-status-success/20' 
               : 'bg-gold text-black hover:bg-gold-light shadow-gold/20']">
           <span :class="['w-2.5 h-2.5 rounded-full', overlayActive ? 'bg-black animate-ping' : 'bg-black/40']"></span>
-          {{ overlayActive ? 'HUD активен поверх CS2 (Закрыть)' : 'Включить HUD поверх CS2' }}
+          {{ overlayActive ? 'Выключить худ поверх игры' : 'Включить худ поверх игры' }}
         </button>
       </div>
 
