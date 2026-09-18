@@ -32,15 +32,16 @@
   }
 
   /* ── One stacked podium plinth row per player, with radial HP dial ── */
-  function plinthHtml(p, side, focusedId, showMoney) {
+  function plinthHtml(p, side, focusedId, showMoney, s) {
     var hp = Math.max(0, Math.min(100, p.health));
     var dead = hp <= 0;
     var off = (CIRC * (1 - hp / 100)).toFixed(2);
+    var isPlanting = (s && (s.bomb_state === 'planting' || s.phase_countdown_phase === 'planting') && p.has_bomb);
 
     var kitHtml =
       (p.armor > 0 ? '<i class="ux ux--' + (p.helmet ? 'helm' : 'vest') + '"></i>' : '') +
       (p.defusekit && side === 'ct' ? '<i class="ux ux--kit"></i>' : '') +
-      (p.has_bomb ? '<i class="ux ux--bomb"></i>' : '') +
+      (p.has_bomb ? (isPlanting ? '<span class="badge-planting">PLANTING</span>' : '<i class="ux ux--bomb"></i>') : '') +
       (p.grenades || []).slice(0, 4).map(function (g) {
         return '<i class="ux nade-' + esc(g) + '"></i>';
       }).join('');
@@ -312,8 +313,10 @@
     var showMoney = !!(ctx.options && ctx.options.economy);
 
     show($('crest'), true);
-    $('ct-name').textContent = s.ct_name || 'CT';
-    $('t-name').textContent = s.t_name || 'T';
+    var ctDisplayName = s.ct_name || s.match_left_name || 'CT';
+    var tDisplayName = s.t_name || s.match_right_name || 'T';
+    $('ct-name').textContent = ctDisplayName;
+    $('t-name').textContent = tDisplayName;
     $('ct-score').textContent = s.ct_score || 0;
     $('t-score').textContent = s.t_score || 0;
     $('clock').textContent = clockText(s.round_time);
@@ -387,11 +390,16 @@
     else if (phase === 'gameover') phaseLabel = 'MATCH OVER';
     $('round-state').textContent = phaseLabel;
 
+    var isPlanting = (s.bomb_state || '') === 'planting' || phase === 'planting';
     var planted = (s.bomb_state || '') === 'planted' || (s.bomb_state || '') === 'defusing' || phase === 'bomb';
+    var showBombTimer = planted || isPlanting;
     var bombEl = $('bomb-timer');
     if (bombEl) {
-      show(bombEl, planted);
-      if (planted) {
+      show(bombEl, showBombTimer);
+      if (isPlanting) {
+        bombEl.innerHTML = '<b>PLANTING</b><i style="width:100%"></i>';
+        bombEl.className = 'crest-bomb c4-planting';
+      } else if (planted) {
         var rawStr = (s.bomb_countdown != null && s.bomb_countdown !== '') ? s.bomb_countdown : (phase === 'bomb' ? s.round_time : '');
         var rawLeft = Number(rawStr);
         var known = Number.isFinite(rawLeft) && rawLeft > 0;
@@ -407,7 +415,7 @@
         }
       }
     }
-    show($('clock'), !planted);
+    show($('clock'), !showBombTimer);
 
     var timeoutBar = $('timeout-bar');
     if (timeoutBar) {
@@ -449,10 +457,10 @@
     });
 
     $('ct-podium').innerHTML = ctx.ct.map(function (p) {
-      return plinthHtml(p, 'ct', s.focused_steamid, showMoney);
+      return plinthHtml(p, 'ct', s.focused_steamid, showMoney, s);
     }).join('');
     $('t-podium').innerHTML = ctx.t.map(function (p) {
-      return plinthHtml(p, 't', s.focused_steamid, showMoney);
+      return plinthHtml(p, 't', s.focused_steamid, showMoney, s);
     }).join('');
 
     document.querySelectorAll('.plinth-name').forEach(function (el) {

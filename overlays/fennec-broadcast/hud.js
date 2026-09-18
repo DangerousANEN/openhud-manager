@@ -320,8 +320,10 @@
 
     show($('bug'), true);
     show($('econ'), showMoney);
-    $('ct-name').textContent = s.ct_name || 'CT';
-    $('t-name').textContent = s.t_name || 'T';
+    var ctDisplayName = s.ct_name || s.match_left_name || 'CT';
+    var tDisplayName = s.t_name || s.match_right_name || 'T';
+    $('ct-name').textContent = ctDisplayName;
+    $('t-name').textContent = tDisplayName;
     $('ct-score').textContent = s.ct_score || 0;
     $('t-score').textContent = s.t_score || 0;
     $('clock').textContent = clockText(s.round_time);
@@ -406,11 +408,16 @@
     flow.textContent = ctAlive + ' CT  ·  ALIVE  ·  ' + tAlive + ' T';
     flow.className = 'alive-line';
 
+    var isPlanting = (s.bomb_state || '') === 'planting' || phase === 'planting';
     var planted = (s.bomb_state || '') === 'planted' || phase === 'bomb';
+    var showBombTimer = planted || isPlanting;
     var bombEl = $('bomb-timer');
     if (bombEl) {
-      show(bombEl, planted);
-      if (planted) {
+      show(bombEl, showBombTimer);
+      if (isPlanting) {
+        bombEl.innerHTML = '<b>PLANTING</b><i style="width:100%"></i>';
+        bombEl.className = 'bomb-timer c4-planting';
+      } else if (planted) {
         var rawLeft = Number(s.bomb_countdown);
         // Number('') === 0 in JS: a missing countdown must NOT render as "0"
         // (a fake detonation-imminent state on air). Show an honest "--".
@@ -425,7 +432,7 @@
         }
       }
     }
-    show($('clock'), !planted);
+    show($('clock'), !showBombTimer);
 
     var timeoutBar = $('timeout-bar');
     if (timeoutBar) {

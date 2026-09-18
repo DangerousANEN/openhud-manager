@@ -79,8 +79,40 @@ body {
 .crest-bomb.c4-crit i { animation: c4-pulse .5s steps(2, jump-none) infinite; }
 .crest-bomb.c4-defuse b, .crest-bomb.c4-defuse i { color: #5bc0de; background: #5bc0de; }
 .crest-bomb.c4-defuse b { background: none; font-size: 1.5rem; letter-spacing: 0.05rem; }
+.crest-bomb.c4-planting b {
+  background: none; font-size: 1.8rem; letter-spacing: 0.12em; color: #ff3b30;
+  animation: c4-planting-pulse .4s ease-in-out infinite alternate;
+}
+.crest-bomb.c4-planting i {
+  height: .6rem;
+  background: linear-gradient(90deg, #ff9500, #ff3b30);
+  box-shadow: 0 0 12px rgba(255, 59, 48, .9);
+  animation: c4-planting-bar .4s ease-in-out infinite alternate;
+}
 
 @keyframes c4-pulse { 50% { opacity: .3; } }
+@keyframes c4-planting-pulse {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  100% { transform: scale(1.04); opacity: 1; text-shadow: 0 0 12px rgba(255, 59, 48, 0.8); }
+}
+@keyframes c4-planting-bar {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.badge-planting {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: #ff3b30;
+  border-radius: 3px;
+  vertical-align: middle;
+  animation: c4-planting-pulse .4s ease-in-out infinite alternate;
+}
 
 .crest-side {
   display: flex; align-items: center; gap: 1.8rem;

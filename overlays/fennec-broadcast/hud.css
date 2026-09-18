@@ -122,7 +122,27 @@ body {
 .bomb-timer.c4-warn i { background: #f5c518; }
 .bomb-timer.c4-crit b { color: #ff3b30; }
 .bomb-timer.c4-crit i { background: #ff3b30; animation: c4-pulse .5s steps(2, jump-none) infinite; }
+.bomb-timer.c4-defuse b, .bomb-timer.c4-defuse i { color: #5bc0de; background: #5bc0de; }
+.bomb-timer.c4-planting b {
+  background: none; font-size: 1.8rem; letter-spacing: 0.12em; color: #ff3b30;
+  animation: c4-planting-pulse .4s ease-in-out infinite alternate;
+}
+.bomb-timer.c4-planting i {
+  height: .6rem;
+  background: linear-gradient(90deg, #ff9500, #ff3b30);
+  box-shadow: 0 0 12px rgba(255, 59, 48, .9);
+  animation: c4-planting-bar .4s ease-in-out infinite alternate;
+}
+
 @keyframes c4-pulse { 0% { opacity: 1; } 100% { opacity: .35; } }
+@keyframes c4-planting-pulse {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  100% { transform: scale(1.04); opacity: 1; text-shadow: 0 0 12px rgba(255, 59, 48, 0.8); }
+}
+@keyframes c4-planting-bar {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
 .bug-round { font-size: 1.2rem; letter-spacing: .2em; color: var(--dim); }
 
 /* ══════════ TIMEOUT & PAUSE BANNER ══════════ */

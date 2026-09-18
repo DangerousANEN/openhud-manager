@@ -77,9 +77,27 @@ body {
 .rail-bomb.c4-warn b { background: none; }
 .rail-bomb.c4-crit b, .rail-bomb.c4-crit i { color: #ff3b30; background: #ff3b30; }
 .rail-bomb.c4-crit b { background: none; }
-.rail-bomb.c4-crit i { animation: c4-pulse .5s steps(2, jump-none) infinite; }
+.rail-bomb.c4-defuse b, .rail-bomb.c4-defuse i { color: #5bc0de; background: #5bc0de; }
+.rail-bomb.c4-planting b {
+  background: none; font-size: 1.8rem; letter-spacing: 0.12em; color: #ff3b30;
+  animation: c4-planting-pulse .4s ease-in-out infinite alternate;
+}
+.rail-bomb.c4-planting i {
+  height: .6rem;
+  background: linear-gradient(90deg, #ff9500, #ff3b30);
+  box-shadow: 0 0 12px rgba(255, 59, 48, .9);
+  animation: c4-planting-bar .4s ease-in-out infinite alternate;
+}
 
 @keyframes c4-pulse { 50% { opacity: .3; } }
+@keyframes c4-planting-pulse {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  100% { transform: scale(1.04); opacity: 1; text-shadow: 0 0 12px rgba(255, 59, 48, 0.8); }
+}
+@keyframes c4-planting-bar {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
 
 .pod {
   display: flex; align-items: center; gap: 1.4rem;
