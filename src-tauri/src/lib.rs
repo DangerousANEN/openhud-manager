@@ -582,11 +582,6 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(move |app| {
-            bundled::install(app)?;
-
-            // Try the configured port first; if it is taken (a second app
-            // instance, a leftover process), walk up to 10 ports higher so the
-            // server still comes up instead of dying silently.
             let mut chosen: Option<u16> = None;
             for candidate in port..port + 10 {
                 if server::can_bind(candidate) {
@@ -624,6 +619,10 @@ pub fn run() {
                         port,
                     });
                 }
+            }
+
+            if let Err(e) = bundled::install(app) {
+                eprintln!("[protokol] bundled::install warning: {e}");
             }
 
             Ok(())

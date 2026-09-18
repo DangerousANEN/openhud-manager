@@ -15,11 +15,19 @@ fn install_tree(source: &Path, destination: &Path) -> io::Result<()> {
             let target=dest.join(rel); let kind=entry.file_type()?;
             if kind.is_dir() { fs::create_dir_all(&target)?; walk(root,&path,dest,old,next)?; }
             else if kind.is_file() {
-                let key=rel.to_string_lossy().replace('\\',"/");
-                let bytes=fs::read(&path)?; let hash=digest(&bytes);
-                let existing=fs::read(&target).ok().map(|b|digest(&b));
-                if existing.is_none() || existing.as_ref()==old.get(&key) || existing.as_ref()==Some(&hash) {
-                    fs::write(&target,&bytes)?; next.insert(key,hash);
+                let key = rel.to_string_lossy().replace('\\', "/");
+                if let (Ok(m_src), Ok(m_dst)) = (entry.metadata(), fs::metadata(&target)) {
+                    if m_src.len() == m_dst.len() && old.contains_key(&key) {
+                        next.insert(key.clone(), old.get(&key).unwrap().clone());
+                        continue;
+                    }
+                }
+                let bytes = fs::read(&path)?;
+                let hash = digest(&bytes);
+                let existing = fs::read(&target).ok().map(|b| digest(&b));
+                if existing.is_none() || existing.as_ref() == old.get(&key) || existing.as_ref() == Some(&hash) {
+                    fs::write(&target, &bytes)?;
+                    next.insert(key, hash);
                 }
                 // An untracked or edited user file is preserved, never silently overwritten.
             }
