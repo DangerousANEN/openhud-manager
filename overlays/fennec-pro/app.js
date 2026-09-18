@@ -48,6 +48,127 @@
       localStorage.getItem('cam_mode') === 'live';
   }
 
+  /* Catmull-Rom spline interpolation between 4 points */
+  function catmullRom(p0, p1, p2, p3, t) {
+    var t2 = t * t;
+    var t3 = t2 * t;
+    return 0.5 * (
+      (2 * p1) +
+      (-p0 + p2) * t +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+      (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+    );
+  }
+
+  var RadarTracker = (function () {
+    var entities = new Map();
+    var rafActive = false;
+
+    function push(id, el, targetX, targetY) {
+      var now = performance.now();
+      var state = entities.get(id);
+      if (!state) {
+        state = { el: el, samples: [{ t: now, x: targetX, y: targetY }], avgInterval: 280 };
+        entities.set(id, state);
+        el.style.left = targetX.toFixed(2) + '%';
+        el.style.top = targetY.toFixed(2) + '%';
+        startLoop();
+        return;
+      }
+      state.el = el;
+      var last = state.samples[state.samples.length - 1];
+      var dt = now - last.t;
+      if (dt > 40 && dt < 1500) {
+        state.avgInterval = state.avgInterval * 0.7 + dt * 0.3;
+      }
+      var dist = Math.hypot(targetX - last.x, targetY - last.y);
+      if (dist > 25) {
+        state.samples = [{ t: now, x: targetX, y: targetY }];
+      } else {
+        state.samples.push({ t: now, x: targetX, y: targetY });
+        while (state.samples.length > 2 && state.samples[0].t < (now - 2500)) {
+          state.samples.shift();
+        }
+      }
+      startLoop();
+    }
+
+    function remove(id) { entities.delete(id); }
+
+    function startLoop() {
+      if (!rafActive) {
+        rafActive = true;
+        requestAnimationFrame(tick);
+      }
+    }
+
+    function tick() {
+      var now = performance.now();
+      var activeCount = 0;
+      entities.forEach(function (state, id) {
+        if (!state.el || !state.el.parentNode) {
+          entities.delete(id);
+          return;
+        }
+        activeCount++;
+        var smp = state.samples;
+        if (smp.length === 1) {
+          state.el.style.left = smp[0].x.toFixed(2) + '%';
+          state.el.style.top = smp[0].y.toFixed(2) + '%';
+          return;
+        }
+
+        var delay = Math.min(360, Math.max(180, state.avgInterval * 1.05));
+        var renderT = now - delay;
+
+        var curX, curY;
+        if (renderT <= smp[0].t) {
+          curX = smp[0].x;
+          curY = smp[0].y;
+        } else if (renderT >= smp[smp.length - 1].t) {
+          var last = smp[smp.length - 1];
+          var prev = smp.length > 1 ? smp[smp.length - 2] : last;
+          var segDt = last.t - prev.t;
+          var extraDt = renderT - last.t;
+          if (segDt > 20 && extraDt < 400) {
+            var vx = (last.x - prev.x) / segDt;
+            var vy = (last.y - prev.y) / segDt;
+            var drag = Math.max(0, 1 - Math.pow(extraDt / 400, 2));
+            curX = last.x + vx * extraDt * drag;
+            curY = last.y + vy * extraDt * drag;
+          } else {
+            curX = last.x;
+            curY = last.y;
+          }
+        } else {
+          for (var i = 0; i < smp.length - 1; i++) {
+            var s1 = smp[i];
+            var s2 = smp[i + 1];
+            if (s1.t <= renderT && renderT <= s2.t) {
+              var segLen = s2.t - s1.t;
+              var frac = segLen > 0 ? (renderT - s1.t) / segLen : 0;
+              var s0 = i > 0 ? smp[i - 1] : s1;
+              var s3 = (i + 2 < smp.length) ? smp[i + 2] : s2;
+              curX = catmullRom(s0.x, s1.x, s2.x, s3.x, frac);
+              curY = catmullRom(s0.y, s1.y, s2.y, s3.y, frac);
+              break;
+            }
+          }
+        }
+
+        if (curX != null && curY != null) {
+          state.el.style.left = curX.toFixed(2) + '%';
+          state.el.style.top = curY.toFixed(2) + '%';
+        }
+      });
+
+      if (activeCount > 0) requestAnimationFrame(tick);
+      else rafActive = false;
+    }
+
+    return { push: push, remove: remove };
+  })();
+
   /* ── Radar (unchanged math: Eidetic offset/scale formula) ── */
   function renderRadar(snap) {
     var key = sanitizeMap(snap.map);
@@ -90,21 +211,43 @@
       dot.className = 'radar-dot --' + String(p.team || '').toLowerCase() +
         (dead ? ' --dead' : '') +
         (p.steamid === snap.focused_steamid ? ' --focused' : '');
-      if (dead) { dot.textContent = '\u2715'; dot.style.left = ''; dot.style.top = ''; }
-      else {
-        dot.textContent = p.observer_slot || '';
-        if (x !== null) { dot.style.display = ''; dot.style.left = x + '%'; dot.style.top = y + '%'; }
-        else dot.style.display = 'none';
+      if (dead) {
+        dot.textContent = '\u2715';
+        dot.style.display = 'none';
+        RadarTracker.remove(p.steamid);
+      } else {
+        dot.textContent = C.formatSlot ? C.formatSlot(p.observer_slot) : (p.observer_slot || '');
+        if (x !== null) {
+          dot.style.display = '';
+          RadarTracker.push(p.steamid, dot, x, y);
+        } else {
+          dot.style.display = 'none';
+          RadarTracker.remove(p.steamid);
+        }
       }
     });
     dotEls.forEach(function (dot, id) {
-      if (!seen.has(id)) { dot.remove(); dotEls.delete(id); }
+      if (!seen.has(id)) {
+        dot.remove();
+        dotEls.delete(id);
+        RadarTracker.remove(id);
+      }
     });
 
-    if (snap.bomb === 'planted') {
+    if (snap.bomb === 'planted' || snap.bomb_state === 'planted') {
       els.radarBomb.classList.remove('hidden');
-      els.radarBomb.style.left = '50%'; els.radarBomb.style.top = '50%';
-    } else els.radarBomb.classList.add('hidden');
+      var bx = snap.bomb_x, by = snap.bomb_y;
+      if (bx != null && by != null && (bx !== 0 || by !== 0) && cfg && cfg.resolution) {
+        var bpx = ((bx - cfg.offset.x) / cfg.resolution / 1024) * 100;
+        var bpy = ((by - cfg.offset.y) / -cfg.resolution / 1024) * 100;
+        RadarTracker.push('__bomb__', els.radarBomb, bpx, bpy);
+      } else {
+        els.radarBomb.style.left = '50%'; els.radarBomb.style.top = '50%';
+      }
+    } else {
+      els.radarBomb.classList.add('hidden');
+      RadarTracker.remove('__bomb__');
+    }
   }
 
   /* ── Sidebar card: ORIGINAL fennec two-row grid ── */

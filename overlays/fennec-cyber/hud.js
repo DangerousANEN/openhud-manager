@@ -122,77 +122,140 @@
       pill('molotov', counts.moly);
   }
 
-  /* ══════════ HIGH-PRECISION RADAR INTERPOLATOR (TIER-1 SMOOTHING) ══════════ */
-  var posHistory = new Map();
-  var animFrameRequested = false;
-
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
+  /* Catmull-Rom spline interpolation between 4 points */
+  function catmullRom(p0, p1, p2, p3, t) {
+    var t2 = t * t;
+    var t3 = t2 * t;
+    return 0.5 * (
+      (2 * p1) +
+      (-p0 + p2) * t +
+      (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+      (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+    );
   }
 
-  function updateSmoothPositions() {
-    animFrameRequested = false;
-    var now = performance.now();
-    var hasActive = false;
+  /* ══════════ TIER-1 BROADCAST RADAR INTERPOLATOR ══════════ */
+  var RadarTracker = (function () {
+    var entities = new Map();
+    var rafActive = false;
 
-    posHistory.forEach(function (state, id) {
-      if (!state.el || !state.el.parentNode) {
-        posHistory.delete(id);
+    function push(id, el, targetX, targetY) {
+      var now = performance.now();
+      var state = entities.get(id);
+      if (!state) {
+        state = {
+          el: el,
+          samples: [{ t: now, x: targetX, y: targetY }],
+          avgInterval: 280
+        };
+        entities.set(id, state);
+        el.style.left = targetX.toFixed(2) + '%';
+        el.style.top = targetY.toFixed(2) + '%';
+        startLoop();
         return;
       }
-      var dt = (now - state.lastUpdate) / 1000;
-      var factor = 1 - Math.exp(-dt * 22);
-      if (factor > 1) factor = 1;
-
-      state.currentX = lerp(state.currentX, state.targetX, factor);
-      state.currentY = lerp(state.currentY, state.targetY, factor);
-      state.lastUpdate = now;
-
-      state.el.style.left = state.currentX.toFixed(2) + '%';
-      state.el.style.top = state.currentY.toFixed(2) + '%';
-
-      var dx = Math.abs(state.targetX - state.currentX);
-      var dy = Math.abs(state.targetY - state.currentY);
-      if (dx > 0.05 || dy > 0.05) {
-        hasActive = true;
-      }
-    });
-
-    if (hasActive) {
-      requestAnimationFrame(updateSmoothPositions);
-      animFrameRequested = true;
-    }
-  }
-
-  function setSmoothPos(id, el, targetX, targetY) {
-    var state = posHistory.get(id);
-    var now = performance.now();
-    if (!state) {
-      state = { el: el, currentX: targetX, currentY: targetY, targetX: targetX, targetY: targetY, lastUpdate: now };
-      posHistory.set(id, state);
-      el.style.left = targetX.toFixed(2) + '%';
-      el.style.top = targetY.toFixed(2) + '%';
-    } else {
       state.el = el;
-      var dist = Math.hypot(targetX - state.currentX, targetY - state.currentY);
-      if (dist > 25) {
-        state.currentX = targetX;
-        state.currentY = targetY;
+      var last = state.samples[state.samples.length - 1];
+      var dt = now - last.t;
+      if (dt > 40 && dt < 1500) {
+        state.avgInterval = state.avgInterval * 0.7 + dt * 0.3;
       }
-      state.targetX = targetX;
-      state.targetY = targetY;
-      state.lastUpdate = now;
+      var dist = Math.hypot(targetX - last.x, targetY - last.y);
+      if (dist > 25) {
+        state.samples = [{ t: now, x: targetX, y: targetY }];
+      } else {
+        state.samples.push({ t: now, x: targetX, y: targetY });
+        while (state.samples.length > 2 && state.samples[0].t < (now - 2500)) {
+          state.samples.shift();
+        }
+      }
+      startLoop();
     }
 
-    if (!animFrameRequested) {
-      animFrameRequested = true;
-      requestAnimationFrame(updateSmoothPositions);
+    function remove(id) {
+      entities.delete(id);
     }
-  }
 
-  function removeSmoothPos(id) {
-    posHistory.delete(id);
-  }
+    function startLoop() {
+      if (!rafActive) {
+        rafActive = true;
+        requestAnimationFrame(tick);
+      }
+    }
+
+    function tick() {
+      var now = performance.now();
+      var activeCount = 0;
+
+      entities.forEach(function (state, id) {
+        if (!state.el || !state.el.parentNode) {
+          entities.delete(id);
+          return;
+        }
+        activeCount++;
+        var smp = state.samples;
+        if (smp.length === 1) {
+          state.el.style.left = smp[0].x.toFixed(2) + '%';
+          state.el.style.top = smp[0].y.toFixed(2) + '%';
+          return;
+        }
+
+        var delay = Math.min(360, Math.max(180, state.avgInterval * 1.05));
+        var renderT = now - delay;
+
+        var curX, curY;
+        if (renderT <= smp[0].t) {
+          curX = smp[0].x;
+          curY = smp[0].y;
+        } else if (renderT >= smp[smp.length - 1].t) {
+          var last = smp[smp.length - 1];
+          var prev = smp.length > 1 ? smp[smp.length - 2] : last;
+          var segDt = last.t - prev.t;
+          var extraDt = renderT - last.t;
+          if (segDt > 20 && extraDt < 400) {
+            var vx = (last.x - prev.x) / segDt;
+            var vy = (last.y - prev.y) / segDt;
+            var drag = Math.max(0, 1 - Math.pow(extraDt / 400, 2));
+            curX = last.x + vx * extraDt * drag;
+            curY = last.y + vy * extraDt * drag;
+          } else {
+            curX = last.x;
+            curY = last.y;
+          }
+        } else {
+          for (var i = 0; i < smp.length - 1; i++) {
+            var s1 = smp[i];
+            var s2 = smp[i + 1];
+            if (s1.t <= renderT && renderT <= s2.t) {
+              var segLen = s2.t - s1.t;
+              var frac = segLen > 0 ? (renderT - s1.t) / segLen : 0;
+              var s0 = i > 0 ? smp[i - 1] : s1;
+              var s3 = (i + 2 < smp.length) ? smp[i + 2] : s2;
+              curX = catmullRom(s0.x, s1.x, s2.x, s3.x, frac);
+              curY = catmullRom(s0.y, s1.y, s2.y, s3.y, frac);
+              break;
+            }
+          }
+        }
+
+        if (curX != null && curY != null) {
+          state.el.style.left = curX.toFixed(2) + '%';
+          state.el.style.top = curY.toFixed(2) + '%';
+        }
+      });
+
+      if (activeCount > 0) {
+        requestAnimationFrame(tick);
+      } else {
+        rafActive = false;
+      }
+    }
+
+    return {
+      push: push,
+      remove: remove
+    };
+  })();
 
   function renderRadar(ctx) {
     var cfg = ctx.radarCfg;
@@ -222,17 +285,17 @@
       d.textContent = dead ? '' : C.formatSlot(p.observer_slot);
       if (pos && !dead) {
         d.style.display = '';
-        setSmoothPos(p.steamid, d, pos.x, pos.y);
+        RadarTracker.push(p.steamid, d, pos.x, pos.y);
       } else {
         d.style.display = 'none';
-        removeSmoothPos(p.steamid);
+        RadarTracker.remove(p.steamid);
       }
     });
     dots.forEach(function (d, id) {
       if (!seen.has(id)) {
         d.remove();
         dots.delete(id);
-        removeSmoothPos(id);
+        RadarTracker.remove(id);
       }
     });
     var bombPos = (ctx.snap.bomb_x != null && ctx.snap.bomb_y != null && (ctx.snap.bomb_x !== 0 || ctx.snap.bomb_y !== 0))
@@ -245,9 +308,9 @@
       var showBomb = (isPlanted || isDropped) && !!bombPos;
       show(bEl, showBomb);
       if (bombPos && showBomb) {
-        setSmoothPos('__bomb__', bEl, bombPos.x, bombPos.y);
+        RadarTracker.push('__bomb__', bEl, bombPos.x, bombPos.y);
       } else {
-        removeSmoothPos('__bomb__');
+        RadarTracker.remove('__bomb__');
       }
     }
   }
