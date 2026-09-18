@@ -6,6 +6,7 @@ pub mod obs;
 pub mod packs;
 pub mod rcon;
 pub mod server;
+pub mod overlay_window;
 
 use gsi::{GsiSnapshot, GsiState};
 use serde_json::Value;
@@ -583,6 +584,9 @@ pub fn run() {
             obs::obs_export_scene_collection,
             packs::huds_import,
             packs::huds_delete,
+            overlay_window::operator_overlay_status,
+            overlay_window::operator_overlay_toggle,
+            overlay_window::operator_overlay_close,
         ])
         .run(tauri::generate_context!())
         .expect("error while running PROTOKOL HUD Manager");

@@ -123,9 +123,17 @@ pub fn active_hud_dir() -> PathBuf {
         }
     }
 
-    let fennec = root.join("fennec-official");
-    if fennec.exists() {
-        return fennec;
+    let championship = root.join("fennec-championship");
+    if championship.exists() {
+        return championship;
+    }
+    let broadcast = root.join("fennec-broadcast");
+    if broadcast.exists() {
+        return broadcast;
+    }
+    let cyber = root.join("fennec-cyber");
+    if cyber.exists() {
+        return cyber;
     }
     let fennec_pro = root.join("fennec-pro");
     if fennec_pro.exists() {

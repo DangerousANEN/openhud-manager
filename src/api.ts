@@ -192,6 +192,14 @@ export const huds = {
   remove: (id: string) => invoke<string>('huds_delete', { id }),
 }
 
+// ---------- Operator Game Overlay (Direct on CS2) ----------
+
+export const operatorOverlay = {
+  status: () => isDesktop ? invoke<boolean>('operator_overlay_status') : Promise.resolve(false),
+  toggle: (url?: string) => isDesktop ? invoke<boolean>('operator_overlay_toggle', { url }) : Promise.resolve(false),
+  close: () => isDesktop ? invoke<void>('operator_overlay_close') : Promise.resolve(),
+}
+
 // ---------- OBS Studio (obs-websocket v5) ----------
 
 export interface ObsStatus {
