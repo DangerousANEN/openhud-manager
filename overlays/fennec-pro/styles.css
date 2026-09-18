@@ -44,6 +44,12 @@ img { display: block; }
 /* HTML `hidden` must beat the blanket img rule, or wrong-team icons show up */
 [hidden] { display: none !important; }
 
+html, body {
+  pointer-events: none !important;
+  user-select: none !important;
+  background: transparent !important;
+}
+
 body {
   width: 1920px;
   height: 1080px;

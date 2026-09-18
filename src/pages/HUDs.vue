@@ -45,13 +45,18 @@
 
       <!-- Instructions Grid -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-xs border-t border-gold/15">
-        <div class="p-3 rounded-lg bg-bg-base/70 border border-bg-border space-y-1">
-          <div class="text-white font-semibold flex items-center gap-1.5">
-            <span class="w-4 h-4 rounded-full bg-gold/20 text-gold text-[10px] flex items-center justify-center font-bold">1</span>
-            Режим экрана в CS2
+        <div class="p-3 rounded-lg bg-bg-base/70 border border-bg-border space-y-2">
+          <div class="text-white font-semibold flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <span class="w-4 h-4 rounded-full bg-gold/20 text-gold text-[10px] flex items-center justify-center font-bold">1</span>
+              Режим экрана CS2
+            </span>
+            <button @click="fixCs2Borderless" class="text-[10px] bg-gold/20 hover:bg-gold/30 text-gold px-2 py-0.5 rounded border border-gold/30 cursor-pointer">
+              Исправить авто
+            </button>
           </div>
           <div class="text-text-muted text-[11px]">
-            Настройки графики CS2 $\rightarrow$ Режим отображения: <b>В окне без рамки</b> (Fullscreen Windowed).
+            В настройках CS2: <b>В окне без рамки</b> (Fullscreen Windowed). В эксклюзивном полноэкранном Windows прячет все оверлеи.
           </div>
         </div>
 
@@ -61,17 +66,17 @@
             Скрыть стандартный худ игры
           </div>
           <div class="text-text-muted text-[11px]">
-            В консоли CS2 ввести: <code class="text-gold font-mono">cl_drawhud 0</code> (или <code class="text-gold font-mono">cl_draw_only_deathnotices 1</code>).
+            В консоли CS2: <code class="text-gold font-mono">cl_drawhud 0</code> (или <code class="text-gold font-mono">cl_draw_only_deathnotices 1</code>).
           </div>
         </div>
 
         <div class="p-3 rounded-lg bg-bg-base/70 border border-bg-border space-y-1">
           <div class="text-white font-semibold flex items-center gap-1.5">
             <span class="w-4 h-4 rounded-full bg-status-success/20 text-status-success text-[10px] flex items-center justify-center font-bold">3</span>
-            Безопасность VAC
+            Быстрая клавиша F10
           </div>
           <div class="text-text-muted text-[11px]">
-            <b>100% безопасно</b>: чистое внешнее веб-окно без внедрения DLL в память процесса игры.
+            Нажмите <b>F10</b> на клавиатуре в любой момент (даже внутри CS2) для мгновенного включения или закрытия оверлея.
           </div>
         </div>
       </div>
@@ -183,13 +188,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   Layers, FolderOpen, RefreshCw, Link, MonitorPlay, CheckCircle,
   ExternalLink, AlertTriangle, Download, Tv
 } from 'lucide-vue-next'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { huds, overlay, settings, obs, operatorOverlay, isDesktop, type HudPack } from '../api'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
 const packs = ref<HudPack[]>([])
 const overlaysFolder = ref('')
@@ -198,6 +204,7 @@ const overlayActive = ref(false)
 const loading = ref(false)
 const error = ref('')
 const copiedKey = ref('')
+let unlistenOverlay: UnlistenFn | null = null
 
 const activePack = computed(() => packs.value.find(p => p.id === activeHudId.value) ?? packs.value[0] ?? null)
 
@@ -267,6 +274,16 @@ const toggleGameOverlay = async () => {
     overlayActive.value = await operatorOverlay.toggle(url)
   } catch (e) {
     error.value = `Ошибка переключения оверлея: ${e}`
+  }
+}
+
+const fixCs2Borderless = async () => {
+  if (!isDesktop) return
+  try {
+    const res = await operatorOverlay.setCs2Borderless()
+    alert(res || 'Режим В окне без рамки успешно установлен для CS2!')
+  } catch (e) {
+    error.value = `Ошибка настройки CS2: ${e}`
   }
 }
 
@@ -354,6 +371,15 @@ onMounted(async () => {
       })
     }
     overlayActive.value = await operatorOverlay.status()
+    try {
+      unlistenOverlay = await listen<boolean>('overlay_status_changed', (event) => {
+        overlayActive.value = event.payload
+      })
+    } catch (_) {}
   } catch { /* first launch */ }
+})
+
+onUnmounted(() => {
+  if (unlistenOverlay) unlistenOverlay()
 })
 </script>

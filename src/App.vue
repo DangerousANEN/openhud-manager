@@ -89,13 +89,33 @@
       </nav>
 
       <!-- Footer -->
-      <div class="px-3 py-4 border-t border-bg-border space-y-0.5">
+      <div class="px-3 py-3 border-t border-bg-border space-y-2">
+        <!-- Quick In-Game Overlay Control (Global in Sidebar) -->
+        <div v-if="isDesktop" class="p-2.5 rounded-lg bg-bg-base border border-gold/20 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-white flex items-center gap-1.5">
+              <Tv :size="13" class="text-gold" /> HUD в игре
+            </span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-gold/15 text-gold border border-gold/30">
+              F10
+            </span>
+          </div>
+          <button @click="toggleGameOverlay"
+            :class="['w-full py-1.5 px-2 rounded font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 shadow cursor-pointer',
+              overlayActive 
+                ? 'bg-status-success text-black hover:bg-status-success/90 shadow-status-success/20' 
+                : 'bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25']">
+            <span :class="['w-2 h-2 rounded-full', overlayActive ? 'bg-black animate-ping' : 'bg-gold']"></span>
+            {{ overlayActive ? 'ОТКЛЮЧИТЬ (ВКЛ)' : 'Включить поверх CS2' }}
+          </button>
+        </div>
+
         <router-link to="/config" custom v-slot="{ isActive, navigate }">
           <button @click="navigate" :class="['nav-link w-full text-left flex items-center gap-2.5', isActive ? 'active' : '']">
             <Settings :size="15" /> Настройки
           </button>
         </router-link>
-        <div class="px-3 pt-3">
+        <div class="px-3 pt-1">
           <div class="text-[10px] text-text-muted">PROTOKOL HUD Manager</div>
           <div class="text-[10px] text-text-muted">v0.2.0</div>
         </div>
@@ -110,11 +130,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   Radio, Swords, Trophy, Server, Shield, Users,
-  Layers, LayoutGrid, MonitorPlay, Banknote, Settings, Camera
+  Layers, LayoutGrid, MonitorPlay, Banknote, Settings, Camera, Tv
 } from 'lucide-vue-next'
+import { operatorOverlay, isDesktop } from './api'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
 const gsiConnected = ref(false)
+const overlayActive = ref(false)
+let unlistenStatus: UnlistenFn | null = null
+
+const checkOverlay = async () => {
+  if (isDesktop) {
+    overlayActive.value = await operatorOverlay.status()
+  }
+}
+
+const toggleGameOverlay = async () => {
+  try {
+    overlayActive.value = await operatorOverlay.toggle()
+  } catch (e) {
+    console.error('Failed to toggle overlay:', e)
+  }
+}
+
+onMounted(async () => {
+  await checkOverlay()
+  if (isDesktop) {
+    try {
+      unlistenStatus = await listen<boolean>('overlay_status_changed', (event) => {
+        overlayActive.value = event.payload
+      })
+    } catch (_) {}
+  }
+})
+
+onUnmounted(() => {
+  if (unlistenStatus) unlistenStatus()
+})
 </script>

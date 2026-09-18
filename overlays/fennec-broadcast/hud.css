@@ -32,6 +32,12 @@ img { display: block; }
 }
 @keyframes sig-blink { 0% { opacity: 1; } 100% { opacity: .55; } }
 
+html, body {
+  pointer-events: none !important;
+  user-select: none !important;
+  background: transparent !important;
+}
+
 body {
   width: 100vw; height: 100vh; overflow: hidden;
   background: transparent;

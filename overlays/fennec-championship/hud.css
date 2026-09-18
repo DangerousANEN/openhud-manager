@@ -18,6 +18,12 @@
 img { display: block; }
 [hidden], .hidden { display: none !important; }
 
+html, body {
+  pointer-events: none !important;
+  user-select: none !important;
+  background: transparent !important;
+}
+
 body {
   width: 1920px; height: 1080px; overflow: hidden;
   background: transparent;

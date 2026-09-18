@@ -318,6 +318,66 @@ fn gsi_cfg_install(state: tauri::State<Runtime>, cs2_cfg_path: Option<String>) -
     ))
 }
 
+/// Configures CS2 video settings to Borderless Windowed ("В окне без рамки")
+/// so that in-game transparent overlays can render on top of the game without exclusive fullscreen blocking them.
+#[tauri::command]
+fn cs2_set_borderless() -> Result<String, String> {
+    let mut updated = Vec::new();
+    let steam_dirs = [
+        PathBuf::from(r"C:\Program Files (x86)\Steam\userdata"),
+        PathBuf::from(r"C:\Program Files\Steam\userdata"),
+    ];
+
+    for base in &steam_dirs {
+        if let Ok(users) = std::fs::read_dir(base) {
+            for u in users.flatten() {
+                let p = u.path();
+                if !p.is_dir() {
+                    continue;
+                }
+                let cfg_file = p.join("730").join("local").join("cfg").join("cs2_video.txt");
+                if cfg_file.is_file() {
+                    if let Ok(content) = std::fs::read_to_string(&cfg_file) {
+                        let lines: Vec<String> = content
+                            .lines()
+                            .map(|line| {
+                                let trimmed = line.trim();
+                                if trimmed.starts_with("\"setting.nowindowborder\"") {
+                                    "\t\"setting.nowindowborder\"\t\t\"1\"".to_string()
+                                } else if trimmed.starts_with("\"setting.coop_fullscreen\"") {
+                                    "\t\"setting.coop_fullscreen\"\t\t\"1\"".to_string()
+                                } else if trimmed.starts_with("\"setting.fullscreen\"") {
+                                    "\t\"setting.fullscreen\"\t\t\"0\"".to_string()
+                                } else {
+                                    line.to_string()
+                                }
+                            })
+                            .collect();
+                        let new_content = lines.join("
+\n");
+                        if new_content != content {
+                            if std::fs::write(&cfg_file, new_content).is_ok() {
+                                updated.push(cfg_file.display().to_string());
+                            }
+                        } else {
+                            updated.push(format!("{} (уже настроено)", cfg_file.display()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if updated.is_empty() {
+        return Err("Файлы cs2_video.txt не найдены. Запустите CS2 хотя бы один раз.".into());
+    }
+
+    Ok(format!(
+        "Режим 'В окне без рамки' успешно настроен для CS2:\n{}",
+        updated.join("\n")
+    ))
+}
+
 #[tauri::command]
 fn db_location() -> String {
     db::db_path().to_string_lossy().to_string()
@@ -628,6 +688,7 @@ pub fn run() {
             obs::obs_export_scene_collection,
             packs::huds_import,
             packs::huds_delete,
+            cs2_set_borderless,
             overlay_window::operator_overlay_status,
             overlay_window::operator_overlay_toggle,
             overlay_window::operator_overlay_close,

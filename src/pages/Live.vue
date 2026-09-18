@@ -9,12 +9,12 @@
       <div class="flex items-center gap-3">
         <!-- In-Game Overlay Button -->
         <button v-if="isDesktop" @click="toggleGameOverlay"
-          :class="['px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all border shadow',
+          :class="['px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all border shadow cursor-pointer',
             overlayActive 
-              ? 'bg-status-success/20 border-status-success text-status-success hover:bg-status-success/30' 
+              ? 'bg-status-success text-black font-bold border-status-success hover:bg-status-success/90' 
               : 'bg-gold/10 border-gold/40 text-gold hover:bg-gold/20']">
-          <span :class="['w-2 h-2 rounded-full', overlayActive ? 'bg-status-success animate-ping' : 'bg-gold']"></span>
-          {{ overlayActive ? 'HUD поверх CS2: ВКЛ' : 'Включить HUD поверх CS2' }}
+          <span :class="['w-2 h-2 rounded-full', overlayActive ? 'bg-black animate-ping' : 'bg-gold']"></span>
+          {{ overlayActive ? 'ОТКЛЮЧИТЬ HUD в CS2 (F10)' : 'Включить HUD поверх CS2 (F10)' }}
         </button>
 
         <!-- CS2 connection indicator -->
@@ -291,6 +291,7 @@ import {
   useGsiFeed, gsi, matches, teams, overlay, operatorOverlay, isDesktop,
   type Match, type Team, type GsiStatus,
 } from '../api'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 
 const { snapshot: snap, connected: wsConnected, stop } = useGsiFeed()
 
@@ -500,6 +501,7 @@ const pushScore = async () => {
 }
 
 let poll: number | undefined
+let unlistenOverlay: UnlistenFn | null = null
 
 onMounted(async () => {
   if (!isDesktop) return
@@ -508,6 +510,12 @@ onMounted(async () => {
     overlayActive.value = await operatorOverlay.status()
     allTeams.value = await teams.list()
     activeMatch.value = await matches.current()
+
+    try {
+      unlistenOverlay = await listen<boolean>('overlay_status_changed', (event) => {
+        overlayActive.value = event.payload
+      })
+    } catch (_) {}
 
     if (activeMatch.value) {
       selectedLeftTeamId.value = activeMatch.value.left_team_id || ''
@@ -533,5 +541,6 @@ onMounted(async () => {
 onUnmounted(() => {
   stop()
   if (poll) clearInterval(poll)
+  if (unlistenOverlay) unlistenOverlay()
 })
 </script>

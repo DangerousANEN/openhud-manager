@@ -43,6 +43,13 @@ zip = "8.6.0"
 rfd = "0.15"
 url = "2.5"
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+] }
+
 [profile.release]
 codegen-units = 1
 lto = true

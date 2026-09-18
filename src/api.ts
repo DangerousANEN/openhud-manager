@@ -201,6 +201,7 @@ export const operatorOverlay = {
   status: () => isDesktop ? invoke<boolean>('operator_overlay_status') : Promise.resolve(false),
   toggle: (url?: string) => isDesktop ? invoke<boolean>('operator_overlay_toggle', { url }) : Promise.resolve(false),
   close: () => isDesktop ? invoke<void>('operator_overlay_close') : Promise.resolve(),
+  setCs2Borderless: () => isDesktop ? invoke<string>('cs2_set_borderless') : Promise.resolve(''),
 }
 
 // ---------- OBS Studio (obs-websocket v5) ----------
