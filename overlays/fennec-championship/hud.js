@@ -161,11 +161,46 @@
     var tMaps = Number(s.series_right_score) || 0;
     var currentMap = Math.min(needed * 2 - 1, ctMaps + tMaps + 1);
 
+    var pickTag = s.map_pick_tag || '';
+    if (!pickTag) {
+      if ((matchType === 'bo3' && currentMap === 3) || (matchType === 'bo5' && currentMap === 5) || matchType === 'bo1') {
+        pickTag = 'DECIDER';
+      }
+    }
+
     var seriesStateEl = $('series-state');
     if (seriesStateEl) {
       var sText = matchType.toUpperCase() + ' · MAP ' + currentMap;
+      if (pickTag) sText += ' · ' + pickTag;
       if (s.tournament_name) sText = s.tournament_name + ' · ' + sText;
       seriesStateEl.textContent = sText;
+    }
+
+    var ctPickEl = $('ct-pick');
+    var tPickEl = $('t-pick');
+    if (ctPickEl && tPickEl) {
+      var isDecider = pickTag === 'DECIDER';
+      var ctIsPick = false;
+      var tIsPick = false;
+      if (!isDecider && pickTag) {
+        var ctNameUpper = (s.ct_name || '').toUpperCase();
+        var tNameUpper = (s.t_name || '').toUpperCase();
+        if (ctNameUpper && pickTag.toUpperCase().indexOf(ctNameUpper) >= 0) {
+          ctIsPick = true;
+        } else if (tNameUpper && pickTag.toUpperCase().indexOf(tNameUpper) >= 0) {
+          tIsPick = true;
+        } else if (pickTag === 'PICK') {
+          if (currentMap === 1) {
+            ctIsPick = (s.match_left_name && ctNameUpper === s.match_left_name.toUpperCase()) || (!s.match_left_name);
+            tIsPick = !ctIsPick;
+          } else if (currentMap === 2) {
+            tIsPick = (s.match_right_name && tNameUpper === s.match_right_name.toUpperCase()) || (!s.match_right_name);
+            ctIsPick = !tIsPick;
+          }
+        }
+      }
+      ctPickEl.classList.toggle('hidden', !ctIsPick);
+      tPickEl.classList.toggle('hidden', !tIsPick);
     }
 
     function renderPips(el, won, total) {

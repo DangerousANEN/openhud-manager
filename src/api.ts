@@ -29,6 +29,7 @@ export interface Match {
   right_score: number
   match_type: string
   current: boolean
+  vetos?: string
 }
 
 export interface Sponsor {
@@ -248,6 +249,22 @@ export const obs = {
       sourceName,
       source_name: sourceName,
       visible,
+    }),
+  syncBrowserSource: (hudUrl: string, sceneName?: string, sourceName?: string) =>
+    invoke<string>('obs_sync_browser_source', {
+      hudUrl,
+      hud_url: hudUrl,
+      sceneName: sceneName ?? null,
+      scene_name: sceneName ?? null,
+      sourceName: sourceName ?? null,
+      source_name: sourceName ?? null,
+    }),
+  exportSceneCollection: (hudUrl: string, collectionName?: string) =>
+    invoke<string>('obs_export_scene_collection', {
+      hudUrl,
+      hud_url: hudUrl,
+      collectionName: collectionName ?? null,
+      collection_name: collectionName ?? null,
     }),
 }
 

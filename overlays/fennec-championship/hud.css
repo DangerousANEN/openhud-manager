@@ -92,6 +92,28 @@ body {
 .crest-side--t {
   clip-path: polygon(0 0, 100% 0, calc(100% - 2.2rem) 100%, 0 100%); }
 
+.side-badge {
+  font-size: 1.05rem; font-weight: 800; letter-spacing: .08em;
+  padding: .15rem .6rem; border-radius: 3px; line-height: 1;
+}
+.side-badge--ct {
+  background: rgba(43, 114, 186, .25); color: #7ec4ff;
+  border: 1px solid rgba(91, 192, 222, .5);
+}
+.side-badge--t {
+  background: rgba(217, 131, 36, .25); color: #ffb861;
+  border: 1px solid rgba(240, 173, 78, .5);
+}
+
+.pick-badge {
+  font-size: .95rem; font-weight: 800; letter-spacing: .1em;
+  padding: .15rem .55rem; border-radius: 3px; line-height: 1;
+  background: rgba(212, 175, 55, .2); color: #e5c158;
+  border: 1px solid rgba(212, 175, 55, .6);
+  box-shadow: 0 0 .5rem rgba(212, 175, 55, .4);
+}
+.pick-badge.hidden { display: none !important; }
+
 .series-pips { display: flex; gap: .45rem; align-items: center; }
 .series-pips i {
   width: .85rem; height: .85rem;

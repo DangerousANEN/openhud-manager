@@ -62,6 +62,9 @@
           <button @click="copy(activePack.url_path)" class="btn-outline text-xs py-1.5 flex items-center gap-1.5">
             <Link :size="13" /> {{ copiedKey === activePack.url_path ? 'Скопировано' : 'OBS URL' }}
           </button>
+          <button @click="exportObsScene(activePack)" class="btn-outline text-xs py-1.5 flex items-center gap-1.5">
+            <Download :size="13" /> Пресет OBS (.json)
+          </button>
           <button @click="preview(activePack)" class="text-xs px-3 py-1.5 rounded-btn bg-bg-elevated border border-gold/30 text-gold hover:bg-gold/10 transition-all font-medium flex items-center gap-1.5">
             <MonitorPlay :size="13" /> Превью
           </button>
@@ -147,10 +150,10 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   Layers, FolderOpen, RefreshCw, Link, MonitorPlay, CheckCircle,
-  ExternalLink, AlertTriangle, Info, X
+  ExternalLink, AlertTriangle, Info, X, Download
 } from 'lucide-vue-next'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { huds, overlay, settings, isDesktop, type HudPack, type HudImportResult } from '../api'
+import { huds, overlay, settings, obs, isDesktop, type HudPack, type HudImportResult } from '../api'
 
 const packs = ref<HudPack[]>([])
 const overlaysFolder = ref('')
@@ -228,6 +231,22 @@ const preview = async (pack: HudPack) => {
     }
   }
   window.open(pack.url_path, '_blank')
+}
+
+const exportObsScene = async (pack: HudPack) => {
+  if (!isDesktop) return
+  try {
+    const collectionJson = await obs.exportSceneCollection(pack.url_path, `PROTOKOL - ${pack.name}`)
+    const blob = new Blob([collectionJson], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `obs-scene-${pack.id}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    error.value = `Ошибка экспорта сцены OBS: ${e}`
+  }
 }
 
 const importPack = async () => {

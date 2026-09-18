@@ -163,6 +163,8 @@ pub struct Match {
     pub match_type: String,
     #[serde(default)]
     pub current: bool,
+    #[serde(default)]
+    pub vetos: String,
 }
 
 fn default_bo() -> String {
@@ -277,6 +279,25 @@ pub fn list_teams() -> Result<Vec<Team>> {
     Ok(rows)
 }
 
+pub fn get_team(id: &str) -> Result<Option<Team>> {
+    let conn = open()?;
+    let mut stmt =
+        conn.prepare("SELECT id, name, short_name, country, logo FROM teams WHERE id = ?1 LIMIT 1")?;
+    let mut rows = stmt.query_map([id], |r| {
+        Ok(Team {
+            id: r.get(0)?,
+            name: r.get(1)?,
+            short_name: r.get(2)?,
+            country: r.get(3)?,
+            logo: r.get(4)?,
+        })
+    })?;
+    match rows.next() {
+        Some(res) => Ok(Some(res?)),
+        None => Ok(None),
+    }
+}
+
 pub fn save_team(mut t: Team) -> Result<Team> {
     let conn = open()?;
     if t.id.is_empty() {
@@ -345,7 +366,7 @@ pub fn delete_player(id: &str) -> Result<()> {
 pub fn list_matches() -> Result<Vec<Match>> {
     let conn = open()?;
     let mut stmt = conn.prepare(
-        "SELECT id, left_team_id, right_team_id, left_score, right_score, match_type, current
+        "SELECT id, left_team_id, right_team_id, left_score, right_score, match_type, current, vetos
          FROM matches ORDER BY created_at DESC",
     )?;
     let rows = stmt
@@ -358,6 +379,7 @@ pub fn list_matches() -> Result<Vec<Match>> {
                 right_score: r.get(4)?,
                 match_type: r.get(5)?,
                 current: r.get::<_, i64>(6)? != 0,
+                vetos: r.get::<_, Option<String>>(7)?.unwrap_or_else(|| "[]".into()),
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -372,14 +394,17 @@ pub fn save_match(mut m: Match) -> Result<Match> {
     if m.current {
         conn.execute("UPDATE matches SET current = 0", [])?;
     }
+    if m.vetos.trim().is_empty() {
+        m.vetos = "[]".into();
+    }
     conn.execute(
-        "INSERT INTO matches (id, left_team_id, right_team_id, left_score, right_score, match_type, current)
-         VALUES (?1,?2,?3,?4,?5,?6,?7)
+        "INSERT INTO matches (id, left_team_id, right_team_id, left_score, right_score, match_type, current, vetos)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
          ON CONFLICT(id) DO UPDATE SET left_team_id=?2, right_team_id=?3,
-           left_score=?4, right_score=?5, match_type=?6, current=?7",
+           left_score=?4, right_score=?5, match_type=?6, current=?7, vetos=?8",
         params![
             m.id, m.left_team_id, m.right_team_id, m.left_score,
-            m.right_score, m.match_type, m.current as i64
+            m.right_score, m.match_type, m.current as i64, m.vetos
         ],
     )?;
     Ok(m)

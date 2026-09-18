@@ -579,6 +579,8 @@ pub fn run() {
             obs::obs_toggle_record,
             obs::obs_save_replay,
             obs::obs_set_source_visible,
+            obs::obs_sync_browser_source,
+            obs::obs_export_scene_collection,
             packs::huds_import,
             packs::huds_delete,
         ])

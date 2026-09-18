@@ -72,6 +72,28 @@ body {
   background: var(--t); border-color: var(--t); box-shadow: 0 0 .6rem var(--t);
 }
 
+.side-badge {
+  font-size: 1.05rem; font-weight: 800; letter-spacing: .08em;
+  padding: .15rem .6rem; border-radius: 3px; line-height: 1;
+}
+.side-badge--ct {
+  background: rgba(43, 114, 186, .25); color: #7ec4ff;
+  border: 1px solid rgba(91, 192, 222, .5);
+}
+.side-badge--t {
+  background: rgba(217, 131, 36, .25); color: #ffb861;
+  border: 1px solid rgba(240, 173, 78, .5);
+}
+
+.pick-badge {
+  font-size: .95rem; font-weight: 800; letter-spacing: .1em;
+  padding: .15rem .55rem; border-radius: 3px; line-height: 1;
+  background: rgba(245, 166, 35, .2); color: #f5a623;
+  border: 1px solid rgba(245, 166, 35, .6);
+  text-shadow: 0 0 .4rem rgba(245, 166, 35, .4);
+}
+.pick-badge.hidden { display: none !important; }
+
 .bug-series {
   font-size: 1.05rem; letter-spacing: .15em; color: var(--dim);
   text-transform: uppercase; font-weight: 700;

@@ -432,6 +432,124 @@ pub async fn obs_set_source_visible(
     ))
 }
 
+/// Ensure or update a browser source in OBS with the active HUD URL.
+#[tauri::command]
+pub async fn obs_sync_browser_source(
+    scene_name: Option<String>,
+    source_name: Option<String>,
+    hud_url: String,
+) -> Result<String, String> {
+    let mut sock = connect().await?;
+    let target_source = source_name.unwrap_or_else(|| "PROTOKOL CS2 HUD".to_string());
+
+    let scene = match scene_name {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            let cur = request(&mut sock, "GetCurrentProgramScene", json!({})).await?;
+            cur.get("currentProgramSceneName")
+                .and_then(Value::as_str)
+                .unwrap_or("CS2")
+                .to_string()
+        }
+    };
+
+    // Try setting input settings first (if input already exists)
+    let update_res = request(
+        &mut sock,
+        "SetInputSettings",
+        json!({
+            "inputName": target_source,
+            "inputSettings": {
+                "url": hud_url,
+                "width": 1920,
+                "height": 1080,
+                "fps": 60,
+                "shutdown": false,
+                "restart_when_active": false
+            },
+            "overlay": true
+        }),
+    )
+    .await;
+
+    if update_res.is_ok() {
+        let _ = sock.close(None).await;
+        return Ok(format!("Источник «{target_source}» в OBS успешно обновлен: {hud_url}"));
+    }
+
+    // Otherwise create new browser input in the given scene
+    request(
+        &mut sock,
+        "CreateInput",
+        json!({
+            "sceneName": scene,
+            "inputName": target_source,
+            "inputKind": "browser_source",
+            "inputSettings": {
+                "url": hud_url,
+                "width": 1920,
+                "height": 1080,
+                "fps": 60,
+                "shutdown": false,
+                "restart_when_active": false
+            },
+            "sceneItemEnabled": true
+        }),
+    )
+    .await?;
+
+    let _ = sock.close(None).await;
+    Ok(format!("Источник «{target_source}» успешно создан в сцене «{scene}» с URL: {hud_url}"))
+}
+
+/// Generate a standalone OBS Studio Scene Collection JSON for 1-click import.
+#[tauri::command]
+pub fn obs_export_scene_collection(hud_url: String, collection_name: Option<String>) -> Result<String, String> {
+    let name = collection_name.unwrap_or_else(|| "PROTOKOL HUD Production".to_string());
+    let scene_name = "CS2 Live Match";
+    let source_name = "PROTOKOL CS2 Overlay";
+
+    let collection = json!({
+        "current_program_scene": scene_name,
+        "current_scene": scene_name,
+        "name": name,
+        "sources": [
+            {
+                "id": "browser_source",
+                "name": source_name,
+                "versioned_id": "browser_source",
+                "settings": {
+                    "fps": 60,
+                    "fps_custom": true,
+                    "height": 1080,
+                    "width": 1920,
+                    "restart_when_active": false,
+                    "shutdown": false,
+                    "reroute_audio": true,
+                    "url": hud_url
+                }
+            },
+            {
+                "id": "scene",
+                "name": scene_name,
+                "settings": {
+                    "items": [
+                        {
+                            "name": source_name,
+                            "visible": true,
+                            "locked": true,
+                            "bounds": { "x": 1920.0, "y": 1080.0 },
+                            "bounds_type": 2
+                        }
+                    ]
+                }
+            }
+        ]
+    });
+
+    serde_json::to_string_pretty(&collection).map_err(|e| format!("Ошибка экспорта OBS коллекции: {e}"))
+}
+
 // ─── Unit tests ──────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -479,5 +597,24 @@ mod tests {
     fn build_auth_output_is_base64_sha256_length() {
         // 32 raw bytes → 44 chars of standard base64 with padding.
         assert_eq!(build_auth("pw", "s", "c").len(), 44);
+    }
+
+    #[test]
+    fn obs_export_scene_collection_generates_valid_json() {
+        let json_str = super::obs_export_scene_collection(
+            "http://127.0.0.1:1349/overlay/fennec-broadcast/index.html".to_string(),
+            Some("Major Preset".to_string()),
+        ).expect("valid json export");
+
+        let v: serde_json::Value = serde_json::from_str(&json_str).expect("parseable json");
+        assert_eq!(v["name"], "Major Preset");
+        assert_eq!(v["current_scene"], "CS2 Live Match");
+        let sources = v["sources"].as_array().expect("sources array");
+        let bsource = sources.iter().find(|s| s["id"] == "browser_source").expect("browser_source item");
+        assert_eq!(bsource["settings"]["url"], "http://127.0.0.1:1349/overlay/fennec-broadcast/index.html");
+        assert_eq!(bsource["settings"]["width"], 1920);
+        assert_eq!(bsource["settings"]["height"], 1080);
+        assert_eq!(bsource["settings"]["shutdown"], false);
+        assert_eq!(bsource["settings"]["restart_when_active"], false);
     }
 }

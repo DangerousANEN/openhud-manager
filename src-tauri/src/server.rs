@@ -260,15 +260,68 @@ fn make_universal_snapshot(st: &AppState) -> String {
 
     // Bo3 / Tournament match context from local SQLite DB
     let current_match = crate::db::current_match().ok().flatten();
-    let (match_type, series_left_score, series_right_score, tournament_name) = match current_match {
+    let (match_type, series_left_score, series_right_score, tournament_name, map_pick_tag, left_team_name, right_team_name) = match current_match {
         Some(m) => {
             let t_name = crate::db::list_tournaments()
                 .ok()
                 .and_then(|tours| tours.into_iter().next().map(|t| t.name))
                 .unwrap_or_default();
-            (m.match_type, m.left_score, m.right_score, t_name)
+
+            let all_teams = crate::db::list_teams().unwrap_or_default();
+            let left_t = m.left_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
+            let right_t = m.right_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
+            let left_name = left_t.map(|t| t.name.clone()).unwrap_or_default();
+            let right_name = right_t.map(|t| t.name.clone()).unwrap_or_default();
+
+            // Compute map pick / decider status from vetos JSON or map count
+            let mut pick_tag = String::new();
+            let current_map_clean = snap.map.trim_start_matches("de_").to_lowercase();
+            if let Ok(vetos_val) = serde_json::from_str::<Value>(&m.vetos) {
+                if let Some(arr) = vetos_val.as_array() {
+                    for item in arr {
+                        let map_name = item.get("map").and_then(Value::as_str).unwrap_or("").to_lowercase();
+                        let action = item.get("action").and_then(Value::as_str).unwrap_or("").to_lowercase();
+                        let team_key = item.get("team_id")
+                            .or_else(|| item.get("team"))
+                            .and_then(Value::as_str)
+                            .unwrap_or("");
+
+                        if map_name == current_map_clean || map_name == snap.map.to_lowercase() {
+                            if action == "pick" {
+                                let team_label = if !team_key.is_empty() {
+                                    if left_t.as_ref().map(|t| t.id == team_key || t.name == team_key || t.short_name == team_key).unwrap_or(false) {
+                                        left_t.as_ref().map(|t| if !t.short_name.is_empty() { t.short_name.clone() } else { t.name.clone() }).unwrap_or_else(|| left_name.clone())
+                                    } else if right_t.as_ref().map(|t| t.id == team_key || t.name == team_key || t.short_name == team_key).unwrap_or(false) {
+                                        right_t.as_ref().map(|t| if !t.short_name.is_empty() { t.short_name.clone() } else { t.name.clone() }).unwrap_or_else(|| right_name.clone())
+                                    } else {
+                                        team_key.to_string()
+                                    }
+                                } else {
+                                    String::new()
+                                };
+                                pick_tag = if !team_label.is_empty() {
+                                    format!("{team_label} PICK")
+                                } else {
+                                    "PICK".to_string()
+                                };
+                            } else if action == "decider" {
+                                pick_tag = "DECIDER".to_string();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            if pick_tag.is_empty() {
+                let total_played = m.left_score + m.right_score;
+                if (m.match_type == "bo3" && total_played >= 2) || (m.match_type == "bo5" && total_played >= 4) {
+                    pick_tag = "DECIDER".to_string();
+                }
+            }
+
+            (m.match_type, m.left_score, m.right_score, t_name, pick_tag, left_name, right_name)
         }
-        None => ("bo3".to_string(), 0, 0, String::new()),
+        None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new()),
     };
 
     let msg = json!({
@@ -302,6 +355,9 @@ fn make_universal_snapshot(st: &AppState) -> String {
         "series_left_score": series_left_score,
         "series_right_score": series_right_score,
         "tournament_name": tournament_name,
+        "map_pick_tag": map_pick_tag,
+        "match_left_name": left_team_name,
+        "match_right_name": right_team_name,
         "bomb": snap.bomb,
         "round_time": snap.round_time,
         "focused_steamid": snap.focused_steamid,

@@ -70,4 +70,22 @@
   - Сохранены сквозные скриншоты-доказательства всех трёх стилей: `F:/anen/desktop/hud-evidence/fennec-*-tournament-verified.png`.
   - Все unit-тесты Rust (`cargo test --lib gsi::` 6/6) пройдены.
 
+### Цикл 0h — Pick/Decider статус карт, Side-индикаторы и экспорт OBS-сцен (гэпы #4 и #6 закрыты)
+- **Закрытие гэпа #4 (Pick/Decider и смена сторон):**
+  - В схему SQLite и структуру `Match` добавлена поддержка поля `vetos` (`m.vetos` JSON).
+  - В `server.rs` и `gsi.rs` реализован алгоритм анализа драфта карт: сопоставление имени текущей карты с историей банов/пиков команд. Формируются теги `map_pick_tag` (`[TEAM] PICK` или `DECIDER`).
+  - Во всех 3 оверлеях (`fennec-broadcast`, `fennec-cyber`, `fennec-championship`) добавлены side-индикаторы (`CT`/`T`) и динамические бейджи `#ct-pick`/`#t-pick`, корректно отслеживающие сторону выбравшей карту команды даже после смены сторон в 15-м раунде (Halftime swap).
+- **Закрытие гэпа #6 (Отказоустойчивость OBS-сцены и экспорт пресетов):**
+  - В `obs.rs` и `lib.rs` добавлены команды `obs_sync_browser_source` (прямое обновление/создание Browser Source в OBS Studio через obs-websocket v5) и `obs_export_scene_collection` (генерация валидного JSON коллекции сцен OBS Studio с разрешением 1920x1080, CEF 60 FPS, shutdown=false, restart_when_active=false).
+  - В интерфейс `HUDs.vue` и `Config.vue` добавлены кнопки синхронизации с подключенным OBS и экспорта готового `.json` пресета сцен.
+  - Написан Rust unit-тест `obs_export_scene_collection_generates_valid_json` (8/8 unit-тестов модуля OBS passed).
+- **Сквозная E2E-валидация:**
+  - Разработан и пройден сквозной Playwright E2E-тест `scripts/pick_decider_e2e.py` по всем 3 стилям худов:
+    - Проверка первой половины: NAVI CT / FaZe T, плашка `BO3 · MAP 1 · NAVI PICK`, бейдж `PICK` на CT стороне.
+    - Проверка смены сторон во второй половине: NAVI переходит за T сторону — бейдж `PICK` автоматически переходит на сторону T!
+    - Проверка третьей решающей карты: плашка `BO3 · MAP 3 · DECIDER`, бейджи индивидуальных пиков корректно скрыты.
+    - 100% успех на всех 3 худах.
+  - Сохранены скриншоты-доказательства: `F:/anen/desktop/hud-evidence/fennec-*-verified-major-standards.png`.
+
+
 

@@ -115,6 +115,19 @@
             · <span :class="obsStatus.streaming ? 'text-brand-red' : ''">{{ obsStatus.streaming ? 'стрим идёт' : 'стрим выключен' }}</span>
           </div>
         </div>
+
+        <div class="pt-2 border-t border-bg-border space-y-2">
+          <button @click="syncObsSource" :disabled="obsSyncing || !obsStatus?.connected || !isDesktop"
+            class="btn-outline w-full flex items-center justify-center gap-2 text-xs py-2 disabled:opacity-40">
+            <RefreshCw :size="13" :class="obsSyncing ? 'animate-spin' : ''" />
+            {{ obsSyncing ? 'Синхронизация...' : 'Синхронизировать HUD в OBS' }}
+          </button>
+          <button @click="exportObsPreset" :disabled="!isDesktop"
+            class="btn-outline w-full flex items-center justify-center gap-2 text-xs py-2">
+            <Download :size="13" /> Экспорт сцены OBS (.json)
+          </button>
+          <div v-if="obsSyncMsg" class="text-[11px] text-gold leading-relaxed">{{ obsSyncMsg }}</div>
+        </div>
       </div>
 
       <!-- Network -->
@@ -199,7 +212,7 @@ import { ref, onMounted } from 'vue'
 import {
   Gamepad2, Eye, EyeOff, FileText, CheckCircle, XCircle,
   MonitorPlay, Plug, Network, Globe, Wifi, FolderOpen, Folder,
-  Database, Upload, Download, Copy, AlertTriangle, ChevronDown,
+  Database, Upload, Download, Copy, AlertTriangle, ChevronDown, RefreshCw,
 } from 'lucide-vue-next'
 import {
   gsi, settings, overlay, obs, dbLocation, dbExport, dbImport,
@@ -231,6 +244,40 @@ const obsPort = ref('4455')
 const obsPassword = ref('')
 const obsTesting = ref(false)
 const obsStatus = ref<ObsStatus | null>(null)
+const obsSyncing = ref(false)
+const obsSyncMsg = ref('')
+
+const syncObsSource = async () => {
+  if (!isDesktop) return
+  obsSyncing.value = true
+  obsSyncMsg.value = ''
+  try {
+    const hudUrl = `http://127.0.0.1:${livePort.value}/overlay/`
+    obsSyncMsg.value = await obs.syncBrowserSource(hudUrl)
+  } catch (e) {
+    obsSyncMsg.value = `Ошибка: ${e}`
+  } finally {
+    obsSyncing.value = false
+  }
+}
+
+const exportObsPreset = async () => {
+  if (!isDesktop) return
+  try {
+    const hudUrl = `http://127.0.0.1:${livePort.value}/overlay/`
+    const collectionJson = await obs.exportSceneCollection(hudUrl, 'PROTOKOL CS2 HUD')
+    const blob = new Blob([collectionJson], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'protokol-obs-scenes.json'
+    a.click()
+    URL.revokeObjectURL(url)
+    obsSyncMsg.value = 'Пресет OBS (.json) готов к импорту в OBS Studio!'
+  } catch (e) {
+    obsSyncMsg.value = `Ошибка экспорта: ${e}`
+  }
+}
 
 const copyToken = async () => {
   try {
