@@ -22,9 +22,9 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 IMAGE_PATHS = {
     "mark": os.path.join(ASSETS_DIR, "protokol-mark.png"),
-    "cyber": os.path.join(ASSETS_DIR, "fennec-cyber-agent-transparent.png"),
-    "broadcast": os.path.join(ASSETS_DIR, "fennec-broadcast-agent-transparent.png"),
-    "championship": os.path.join(ASSETS_DIR, "fennec-championship-agent-transparent.png"),
+    "cyber": os.path.join(ASSETS_DIR, "fennec-cyber-verified-major-standards.png"),
+    "broadcast": os.path.join(ASSETS_DIR, "fennec-broadcast-verified-major-standards.png"),
+    "championship": os.path.join(ASSETS_DIR, "fennec-championship-verified-major-standards.png"),
     "championship_orig": os.path.join(ASSETS_DIR, "championship-names-fixed.png"),
     "manager_desktop": os.path.join(ASSETS_DIR, "manager-desktop.png"),
     "manager_preview": os.path.join(ASSETS_DIR, "manager-camera-preview.png"),
