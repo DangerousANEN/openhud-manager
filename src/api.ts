@@ -73,6 +73,7 @@ export interface GsiSnapshot {
   t_name: string
   bomb: string
   round_time: string
+  focused_steamid?: string
   players: PlayerSnap[]
   updated_at: string
 }
@@ -82,8 +83,10 @@ export interface GsiStatus {
   seconds_since_update: number | null
   listeners: number
   port: number
+  lan_ip?: string
   gsi_url: string
   overlay_url: string
+  lan_overlay_url?: string
 }
 
 /** True when running inside the Tauri shell (false in a plain browser tab). */
@@ -153,7 +156,7 @@ export const gsi = {
       cs2_cfg_path: cs2CfgPath ?? null,
     }),
   /** Probe whether the CS2 cfg folder is discoverable. */
-  cfgProbe: () => invoke<{ found: boolean; path: string }>('gsi_cfg_probe'),
+  cfgProbe: () => invoke<{ found: boolean; path: string; all_paths?: string[] }>('gsi_cfg_probe'),
 }
 
 export const overlay = {

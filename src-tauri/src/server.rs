@@ -142,6 +142,10 @@ pub fn active_hud_dir() -> PathBuf {
     root
 }
 
+async fn overlay_root_redirect() -> impl IntoResponse {
+    axum::response::Redirect::temporary("/hud/").into_response()
+}
+
 pub fn router(state: AppState) -> Router {
     let overlays = overlays_dir();
     let deps = dependencies_dir();
@@ -155,6 +159,8 @@ pub fn router(state: AppState) -> Router {
         // Universal WebSocket endpoints
         .route("/ws", get(ws_upgrade))
         .route("/", get(root_handler))
+        .route("/overlay", get(overlay_root_redirect))
+        .route("/overlay/", get(overlay_root_redirect))
         // Lexogrine LHM Socket.io emulation
         .route("/socket.io/", get(socketio_handler).post(socketio_post))
         .route("/socket.io", get(socketio_handler).post(socketio_post))

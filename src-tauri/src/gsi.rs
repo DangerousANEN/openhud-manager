@@ -296,6 +296,87 @@ impl GsiState {
         }
     }
 
+    /// Push current snapshot with fresh match context to all WS subscribers immediately.
+    pub fn push_current_state(&self) {
+        let snap = self.snapshot.read().clone();
+        let raw = self.raw.read().clone().unwrap_or(serde_json::json!({}));
+        let active = crate::server::active_hud_dir();
+        let radars: Value = std::fs::read_to_string(active.join("radars.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(|| serde_json::json!({}));
+        let bombsites: Value = std::fs::read_to_string(active.join("bombsites.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_else(|| serde_json::json!({}));
+
+        let current_match = crate::db::current_match().ok().flatten();
+        let (match_type, series_left_score, series_right_score, tournament_name, left_team_name, right_team_name) = match current_match {
+            Some(m) => {
+                let t_name = crate::db::list_tournaments()
+                    .ok()
+                    .and_then(|tours| tours.into_iter().next().map(|t| t.name))
+                    .unwrap_or_default();
+
+                let all_teams = crate::db::list_teams().unwrap_or_default();
+                let left_t = m.left_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
+                let right_t = m.right_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
+                let left_name = left_t.map(|t| t.name.clone()).unwrap_or_default();
+                let right_name = right_t.map(|t| t.name.clone()).unwrap_or_default();
+                (m.match_type, m.left_score, m.right_score, t_name, left_name, right_name)
+            }
+            None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new()),
+        };
+
+        let universal = serde_json::json!({
+            "event": "state",
+            "body": {
+                "gsiState": raw,
+                "additionalState": {
+                    "lastKnownMapName": snap.map,
+                    "lastKnownBombPlantedCountdown": {},
+                    "lastKnownPlayerObserverSlot": {},
+                    "moneyAtStartOfRound": {},
+                    "roundDamages": {}
+                },
+                "bombsites": bombsites,
+                "options": {},
+                "radars": radars,
+                "unixTimestamp": chrono::Utc::now().timestamp_millis()
+            },
+            "snapshot": snap,
+            "map": snap.map,
+            "phase": snap.phase,
+            "round": snap.round,
+            "ct_score": snap.ct_score,
+            "t_score": snap.t_score,
+            "ct_name": snap.ct_name,
+            "t_name": snap.t_name,
+            "bomb": snap.bomb,
+            "bomb_state": snap.bomb_state,
+            "bomb_countdown": snap.bomb_countdown,
+            "phase_countdown_phase": snap.phase_countdown_phase,
+            "round_time": snap.round_time,
+            "ct_loss_streak": snap.ct_loss_streak,
+            "t_loss_streak": snap.t_loss_streak,
+            "ct_timeouts_remaining": snap.ct_timeouts_remaining,
+            "t_timeouts_remaining": snap.t_timeouts_remaining,
+            "series_match_type": match_type,
+            "series_left_score": series_left_score,
+            "series_right_score": series_right_score,
+            "tournament_name": tournament_name,
+            "match_left_name": left_team_name,
+            "match_right_name": right_team_name,
+            "focused_steamid": snap.focused_steamid,
+            "players": snap.players,
+            "updated_at": snap.updated_at
+        });
+
+        if let Ok(json) = serde_json::to_string(&universal) {
+            let _ = self.tx.send(json);
+        }
+    }
+
     pub fn connected(&self) -> bool {
         match *self.last_seen.read() {
             Some(t) => chrono::Utc::now().timestamp() - t < 10,

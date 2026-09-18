@@ -44,8 +44,11 @@
               <FolderOpen :size="14" />
             </button>
           </div>
-          <div v-if="cfgProbe.found" class="text-[11px] text-status-success flex items-center gap-1.5">
+          <div v-if="cfgProbe.found" class="text-[11px] text-status-success flex items-center gap-1.5 flex-wrap">
             <CheckCircle :size="12" /> CS2 найдена: {{ cfgProbe.path }}
+            <span v-if="cfgProbe.all_paths && cfgProbe.all_paths.length > 1" class="text-[10px] text-text-muted">
+              (всего найдено путей установки: {{ cfgProbe.all_paths.length }})
+            </span>
           </div>
           <div v-else-if="probed" class="text-[11px] text-gold flex items-center gap-1.5">
             <AlertTriangle :size="12" /> Папка cfg не найдена автоматически — укажите путь выше
@@ -237,7 +240,7 @@ const overlaysPath = ref('')
 const dbPath = ref('')
 const cs2CfgPath = ref('')
 const probed = ref(false)
-const cfgProbe = ref<{ found: boolean; path: string }>({ found: false, path: '' })
+const cfgProbe = ref<{ found: boolean; path: string; all_paths?: string[] }>({ found: false, path: '' })
 
 const obsHost = ref('localhost')
 const obsPort = ref('4455')

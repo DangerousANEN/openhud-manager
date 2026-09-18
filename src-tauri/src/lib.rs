@@ -32,8 +32,10 @@ fn teams_list() -> Result<Vec<db::Team>, String> {
 }
 
 #[tauri::command]
-fn teams_save(team: db::Team) -> Result<db::Team, String> {
-    db::save_team(team).map_err(err)
+fn teams_save(state: tauri::State<Runtime>, team: db::Team) -> Result<db::Team, String> {
+    let saved = db::save_team(team).map_err(err)?;
+    state.gsi.push_current_state();
+    Ok(saved)
 }
 
 #[tauri::command]
@@ -64,13 +66,17 @@ fn matches_list() -> Result<Vec<db::Match>, String> {
 }
 
 #[tauri::command]
-fn matches_save(match_: db::Match) -> Result<db::Match, String> {
-    db::save_match(match_).map_err(err)
+fn matches_save(state: tauri::State<Runtime>, match_: db::Match) -> Result<db::Match, String> {
+    let saved = db::save_match(match_).map_err(err)?;
+    state.gsi.push_current_state();
+    Ok(saved)
 }
 
 #[tauri::command]
-fn matches_delete(id: String) -> Result<(), String> {
-    db::delete_match(&id).map_err(err)
+fn matches_delete(state: tauri::State<Runtime>, id: String) -> Result<(), String> {
+    db::delete_match(&id).map_err(err)?;
+    state.gsi.push_current_state();
+    Ok(())
 }
 
 #[tauri::command]
@@ -167,6 +173,16 @@ fn cameras_delete(state: tauri::State<Runtime>, steamid: String) -> Result<(), S
     Ok(())
 }
 
+fn local_lan_ip() -> Option<String> {
+    let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("8.8.8.8:80").ok()?;
+    let addr = socket.local_addr().ok()?;
+    match addr.ip() {
+        std::net::IpAddr::V4(ip) => Some(ip.to_string()),
+        _ => None,
+    }
+}
+
 // ---------- GSI / server ----------
 #[tauri::command]
 fn gsi_snapshot(state: tauri::State<Runtime>) -> GsiSnapshot {
@@ -175,13 +191,16 @@ fn gsi_snapshot(state: tauri::State<Runtime>) -> GsiSnapshot {
 
 #[tauri::command]
 fn gsi_status(state: tauri::State<Runtime>) -> Value {
+    let lan = local_lan_ip().unwrap_or_else(|| "127.0.0.1".to_string());
     serde_json::json!({
         "connected": state.gsi.connected(),
         "seconds_since_update": state.gsi.seconds_since_update(),
         "listeners": state.gsi.tx.receiver_count(),
         "port": state.port,
+        "lan_ip": lan,
         "gsi_url": format!("http://127.0.0.1:{}/api/gsi", state.port),
-        "overlay_url": format!("http://127.0.0.1:{}/overlay/", state.port),
+        "overlay_url": format!("http://127.0.0.1:{}/hud/", state.port),
+        "lan_overlay_url": format!("http://{}:{}/hud/", lan, state.port),
     })
 }
 
@@ -196,82 +215,107 @@ fn overlays_path() -> String {
     server::overlays_dir().to_string_lossy().to_string()
 }
 
-/// Locate the CS2 `cfg` folder: explicit override first, then the default
-/// Steam install path. Returns Err with a human-readable hint when not found.
-fn find_cs2_cfg_dir(override_path: Option<String>) -> Result<PathBuf, String> {
+/// Locate all candidate CS2 `cfg` folders across all drives and Steam libraries.
+fn find_all_cs2_cfg_dirs(override_path: Option<String>) -> Vec<PathBuf> {
+    let mut out = Vec::new();
     if let Some(p) = override_path {
         let p = PathBuf::from(&p);
         if p.is_dir() {
-            return Ok(p);
+            out.push(p);
         }
     }
-    for base in [
+
+    let defaults = [
         PathBuf::from("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
         PathBuf::from("C:\\Program Files\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
         PathBuf::from("D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
-    ] {
-        if base.is_dir() {
-            return Ok(base);
+        PathBuf::from("E:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+        PathBuf::from("F:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+    ];
+    for d in defaults {
+        if d.is_dir() && !out.contains(&d) {
+            out.push(d);
         }
     }
-    // Last resort: scan every drive root for a Steam library pointing at CS2.
+
+    // Scan drives C through Z
     for letter in b'C'..=b'Z' {
-        let lib = PathBuf::from(format!(
-            "{letter}:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"
-        ));
-        if lib.is_dir() {
-            return Ok(lib);
-        }
-        let steam = PathBuf::from(format!(
-            "{letter}:\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"
-        ));
-        if steam.is_dir() {
-            return Ok(steam);
+        let l = letter as char;
+        for sub in [
+            format!("{l}:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+            format!("{l}:\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+            format!("{l}:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+            format!("{l}:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg"),
+        ] {
+            let p = PathBuf::from(sub);
+            if p.is_dir() && !out.contains(&p) {
+                out.push(p);
+            }
         }
     }
-    Err(
-        "Папка cfg игры CS2 не найдена. Укажи путь вручную в поле ниже \
-         (пример: C:\\Program Files (x86)\\Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg)"
-            .to_string(),
-    )
-}
-
-/// Write gamestate_integration_protokol.cfg straight into the CS2 cfg folder.
-#[tauri::command]
-fn gsi_cfg_install(state: tauri::State<Runtime>, cs2_cfg_path: Option<String>) -> Result<String, String> {
-    let dir = find_cs2_cfg_dir(cs2_cfg_path)?;
-    // Remember a working path so future installs skip discovery.
-    let _ = db::set_setting("cs2_cfg_path", &dir.to_string_lossy());
-
-    let text = gsi_cfg_text_inner(state.port, &state.gsi.token.read().clone());
-    let file = dir.join("gamestate_integration_protokol.cfg");
-    std::fs::write(&file, &text).map_err(|e| format!("Не удалось записать {}: {e}", file.display()))?;
-    Ok(format!(
-        "GSI cfg установлен: {}",
-        file.display()
-    ))
+    out
 }
 
 #[derive(serde::Serialize)]
 pub struct Cs2CfgProbe {
     pub found: bool,
     pub path: String,
+    pub all_paths: Vec<String>,
 }
 
 /// Probe whether the CS2 cfg folder is discoverable (for UI hints).
 #[tauri::command]
 fn gsi_cfg_probe() -> Cs2CfgProbe {
     let stored = db::get_setting("cs2_cfg_path").ok().flatten();
-    match find_cs2_cfg_dir(stored) {
-        Ok(dir) => Cs2CfgProbe {
+    let dirs = find_all_cs2_cfg_dirs(stored);
+    if let Some(first) = dirs.first() {
+        Cs2CfgProbe {
             found: true,
-            path: dir.to_string_lossy().to_string(),
-        },
-        Err(_) => Cs2CfgProbe {
+            path: first.to_string_lossy().to_string(),
+            all_paths: dirs.iter().map(|d| d.to_string_lossy().to_string()).collect(),
+        }
+    } else {
+        Cs2CfgProbe {
             found: false,
             path: String::new(),
-        },
+            all_paths: Vec::new(),
+        }
     }
+}
+
+/// Write gamestate_integration_protokol.cfg straight into all discovered CS2 cfg folders.
+#[tauri::command]
+fn gsi_cfg_install(state: tauri::State<Runtime>, cs2_cfg_path: Option<String>) -> Result<String, String> {
+    let dirs = find_all_cs2_cfg_dirs(cs2_cfg_path);
+    if dirs.is_empty() {
+        return Err(
+            "Папка cfg игры CS2 не найдена. Укажи путь вручную в поле (пример: F:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg)"
+                .to_string(),
+        );
+    }
+
+    let token = state.gsi.token.read().clone();
+    let text = gsi_cfg_text_inner(state.port, &token);
+    let mut installed = Vec::new();
+
+    for dir in &dirs {
+        let _ = db::set_setting("cs2_cfg_path", &dir.to_string_lossy());
+        let file = dir.join("gamestate_integration_protokol.cfg");
+        if std::fs::write(&file, &text).is_ok() {
+            installed.push(file.display().to_string());
+        }
+    }
+
+    if installed.is_empty() {
+        return Err("Не удалось записать файл cfg ни в одну из папок CS2 (проверьте права доступа)".to_string());
+    }
+
+    Ok(format!(
+        "GSI cfg успешно установлен (порт: {}, токен: {}):\n{}",
+        state.port,
+        if token.len() > 8 { &token[..8] } else { &token },
+        installed.join("\n")
+    ))
 }
 
 #[tauri::command]
@@ -419,8 +463,8 @@ fn gsi_cfg_text_inner(port: u16, token: &str) -> String {
 {{
     "uri" "http://127.0.0.1:{port}/api/gsi"
     "timeout" "5.0"
-    "buffer" "0.1"
-    "throttle" "0.1"
+    "buffer" "0.0"
+    "throttle" "0.0"
     "heartbeat" "10.0"
     "auth"
     {{
@@ -428,20 +472,20 @@ fn gsi_cfg_text_inner(port: u16, token: &str) -> String {
     }}
     "data"
     {{
-        "provider"            "1"
-        "map"                 "1"
-        "round"               "1"
-        "player_id"           "1"
-        "player_state"        "1"
-        "player_weapons"      "1"
-        "player_match_stats"  "1"
-        "allplayers_id"       "1"
-        "allplayers_state"    "1"
+        "provider"               "1"
+        "map"                    "1"
+        "round"                  "1"
+        "player_id"              "1"
+        "player_state"           "1"
+        "player_weapons"         "1"
+        "player_match_stats"     "1"
+        "allplayers_id"          "1"
+        "allplayers_state"       "1"
         "allplayers_match_stats" "1"
-        "allplayers_weapons"  "1"
-        "allplayers_position"  "1"
-        "phase_countdowns"    "1"
-        "bomb"                "1"
+        "allplayers_weapons"     "1"
+        "allplayers_position"    "1"
+        "phase_countdowns"       "1"
+        "bomb"                   "1"
     }}
 }}
 "#
