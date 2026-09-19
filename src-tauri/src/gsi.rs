@@ -43,10 +43,12 @@ pub struct PlayerSnap {
     /// True when this player is carrying the C4.
     #[serde(default)]
     pub has_bomb: bool,
-    /// Value of everything the player is holding (for the team equipment bar).
     #[serde(default)]
     pub equip_value: i64,
+    #[serde(default)]
     pub round_kills: i64,
+    #[serde(default)]
+    pub avatar: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -151,7 +153,7 @@ impl GsiState {
             current
         };
 
-        let snap = normalize(&accumulated);
+        let mut snap = normalize(&accumulated);
         *self.snapshot.write() = snap.clone();
         *self.last_seen.write() = Some(chrono::Utc::now().timestamp());
 
@@ -169,7 +171,7 @@ impl GsiState {
             .unwrap_or_else(|| serde_json::json!({}));
 
         let current_match = crate::db::current_match().ok().flatten();
-        let (match_type, series_left_score, series_right_score, tournament_name, map_pick_tag, left_team_name, right_team_name) = match current_match {
+        let (match_type, series_left_score, series_right_score, tournament_name, map_pick_tag, left_team_name, right_team_name, left_logo, right_logo, _left_short, right_short) = match current_match {
             Some(m) => {
                 let t_name = crate::db::list_tournaments()
                     .ok()
@@ -228,10 +230,28 @@ impl GsiState {
                     }
                 }
 
-                (m.match_type, m.left_score, m.right_score, t_name, pick_tag, left_name, right_name)
+                let left_logo = left_t.map(|t| t.logo.clone()).unwrap_or_default();
+                let right_logo = right_t.map(|t| t.logo.clone()).unwrap_or_default();
+                let left_short = left_t.map(|t| t.short_name.clone()).unwrap_or_default();
+                let right_short = right_t.map(|t| t.short_name.clone()).unwrap_or_default();
+
+                (m.match_type, m.left_score, m.right_score, t_name, pick_tag, left_name, right_name, left_logo, right_logo, left_short, right_short)
             }
-            None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new()),
+            None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new()),
         };
+
+        if let Ok(db_players) = crate::db::list_players() {
+            let p_map: std::collections::HashMap<String, String> = db_players
+                .into_iter()
+                .filter(|p| !p.steamid.is_empty() && !p.avatar.is_empty())
+                .map(|p| (p.steamid, p.avatar))
+                .collect();
+            for p in &mut snap.players {
+                if let Some(av) = p_map.get(&p.steamid) {
+                    p.avatar = av.clone();
+                }
+            }
+        }
 
         let universal = serde_json::json!({
             "event": "state",
@@ -259,6 +279,8 @@ impl GsiState {
             "t_name": snap.t_name,
             "bomb": snap.bomb,
             "bomb_state": snap.bomb_state,
+            "bomb_x": snap.bomb_x,
+            "bomb_y": snap.bomb_y,
             "bomb_countdown": snap.bomb_countdown,
             "phase_countdown_phase": snap.phase_countdown_phase,
             "round_time": snap.round_time,
@@ -273,6 +295,20 @@ impl GsiState {
             "map_pick_tag": map_pick_tag,
             "match_left_name": left_team_name,
             "match_right_name": right_team_name,
+            "match_left_logo": left_logo,
+            "match_right_logo": right_logo,
+            "left_team_logo": left_logo,
+            "right_team_logo": right_logo,
+            "ct_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+                right_logo.clone()
+            } else {
+                left_logo.clone()
+            },
+            "t_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+                left_logo
+            } else {
+                right_logo
+            },
             "focused_steamid": snap.focused_steamid,
             "players": snap.players,
             "updated_at": snap.updated_at
@@ -298,7 +334,7 @@ impl GsiState {
 
     /// Push current snapshot with fresh match context to all WS subscribers immediately.
     pub fn push_current_state(&self) {
-        let snap = self.snapshot.read().clone();
+        let mut snap = self.snapshot.read().clone();
         let raw = self.raw.read().clone().unwrap_or(serde_json::json!({}));
         let active = crate::server::active_hud_dir();
         let radars: Value = std::fs::read_to_string(active.join("radars.json"))
@@ -311,7 +347,7 @@ impl GsiState {
             .unwrap_or_else(|| serde_json::json!({}));
 
         let current_match = crate::db::current_match().ok().flatten();
-        let (match_type, series_left_score, series_right_score, tournament_name, left_team_name, right_team_name) = match current_match {
+        let (match_type, series_left_score, series_right_score, tournament_name, left_team_name, right_team_name, left_logo, right_logo, _left_short, right_short) = match current_match {
             Some(m) => {
                 let t_name = crate::db::list_tournaments()
                     .ok()
@@ -319,14 +355,31 @@ impl GsiState {
                     .unwrap_or_default();
 
                 let all_teams = crate::db::list_teams().unwrap_or_default();
-                let left_t = m.left_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
-                let right_t = m.right_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id));
-                let left_name = left_t.map(|t| t.name.clone()).unwrap_or_default();
-                let right_name = right_t.map(|t| t.name.clone()).unwrap_or_default();
-                (m.match_type, m.left_score, m.right_score, t_name, left_name, right_name)
+                let left_t = m.left_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id)).cloned();
+                let right_t = m.right_team_id.as_ref().and_then(|id| all_teams.iter().find(|t| &t.id == id)).cloned();
+                let left_name = left_t.as_ref().map(|t| t.name.clone()).unwrap_or_default();
+                let right_name = right_t.as_ref().map(|t| t.name.clone()).unwrap_or_default();
+                let left_logo = left_t.as_ref().map(|t| t.logo.clone()).unwrap_or_default();
+                let right_logo = right_t.as_ref().map(|t| t.logo.clone()).unwrap_or_default();
+                let left_short = left_t.as_ref().map(|t| t.short_name.clone()).unwrap_or_default();
+                let right_short = right_t.as_ref().map(|t| t.short_name.clone()).unwrap_or_default();
+                (m.match_type, m.left_score, m.right_score, t_name, left_name, right_name, left_logo, right_logo, left_short, right_short)
             }
-            None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new()),
+            None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new()),
         };
+
+        if let Ok(db_players) = crate::db::list_players() {
+            let p_map: std::collections::HashMap<String, String> = db_players
+                .into_iter()
+                .filter(|p| !p.steamid.is_empty() && !p.avatar.is_empty())
+                .map(|p| (p.steamid, p.avatar))
+                .collect();
+            for p in &mut snap.players {
+                if let Some(av) = p_map.get(&p.steamid) {
+                    p.avatar = av.clone();
+                }
+            }
+        }
 
         let universal = serde_json::json!({
             "event": "state",
@@ -354,6 +407,8 @@ impl GsiState {
             "t_name": snap.t_name,
             "bomb": snap.bomb,
             "bomb_state": snap.bomb_state,
+            "bomb_x": snap.bomb_x,
+            "bomb_y": snap.bomb_y,
             "bomb_countdown": snap.bomb_countdown,
             "phase_countdown_phase": snap.phase_countdown_phase,
             "round_time": snap.round_time,
@@ -367,6 +422,20 @@ impl GsiState {
             "tournament_name": tournament_name,
             "match_left_name": left_team_name,
             "match_right_name": right_team_name,
+            "match_left_logo": left_logo,
+            "match_right_logo": right_logo,
+            "left_team_logo": left_logo,
+            "right_team_logo": right_logo,
+            "ct_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+                right_logo.clone()
+            } else {
+                left_logo.clone()
+            },
+            "t_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+                left_logo
+            } else {
+                right_logo
+            },
             "focused_steamid": snap.focused_steamid,
             "players": snap.players,
             "updated_at": snap.updated_at
@@ -634,6 +703,7 @@ fn normalize(v: &Value) -> GsiSnapshot {
                     .unwrap_or(false),
                 equip_value: i(p, &["state", "equip_value"]),
                 round_kills: i(p, &["state", "round_kills"]),
+                avatar: String::new(),
             });
         }
         players.sort_by_key(|p| (p.team.clone(), p.observer_slot));

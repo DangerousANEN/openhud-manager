@@ -304,10 +304,12 @@
     var bEl = $('radar-bomb');
     if (bEl) {
       var isPlanted = ctx.snap.bomb_state === 'planted' || ctx.snap.bomb === 'planted';
-      var isDropped = ctx.snap.bomb_state === 'dropped';
+      var isDropped = ctx.snap.bomb_state === 'dropped' || ctx.snap.bomb === 'dropped';
       var showBomb = (isPlanted || isDropped) && !!bombPos;
       show(bEl, showBomb);
       if (bombPos && showBomb) {
+        bEl.classList.toggle('is-dropped', isDropped);
+        bEl.classList.toggle('is-planted', isPlanted);
         RadarTracker.push('__bomb__', bEl, bombPos.x, bombPos.y);
       } else {
         RadarTracker.remove('__bomb__');
@@ -336,7 +338,8 @@
     d.classList.toggle('is-ct', ct);
     d.classList.toggle('is-t', !ct);
     d.classList.toggle('is-cam', !!ctx.liveCam || ctx.options.avatars !== false);
-    camInner.style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(assets/agents-' + (ct ? 'ct' : 't') + '.png)' : 'none';
+    var agentPic = C.getPlayerAgent ? C.getPlayerAgent(f, ctx.mapKey) : (f.avatar || ('assets/agents-' + (ct ? 'ct' : 't') + '.png'));
+    camInner.style.backgroundImage = !ctx.liveCam && ctx.options.avatars !== false ? 'url(' + agentPic + ')' : 'none';
 
     $('op-slot').textContent = C.formatSlot(f.observer_slot);
     $('op-name').textContent = f.name || '';
@@ -368,6 +371,28 @@
     var tDisplayName = s.t_name || s.match_right_name || 'T';
     $('ct-name').textContent = ctDisplayName;
     $('t-name').textContent = tDisplayName;
+
+    var ctLogoEl = $('ct-logo');
+    var tLogoEl = $('t-logo');
+    if (ctLogoEl) {
+      var ctLogoUrl = s.ct_logo || s.match_left_logo || s.left_team_logo || '';
+      if (ctLogoUrl && (!ctx.options || ctx.options.logos !== false)) {
+        ctLogoEl.style.backgroundImage = 'url(' + ctLogoUrl + ')';
+        show(ctLogoEl, true);
+      } else {
+        show(ctLogoEl, false);
+      }
+    }
+    if (tLogoEl) {
+      var tLogoUrl = s.t_logo || s.match_right_logo || s.right_team_logo || '';
+      if (tLogoUrl && (!ctx.options || ctx.options.logos !== false)) {
+        tLogoEl.style.backgroundImage = 'url(' + tLogoUrl + ')';
+        show(tLogoEl, true);
+      } else {
+        show(tLogoEl, false);
+      }
+    }
+
     $('ct-score').textContent = s.ct_score || 0;
     $('t-score').textContent = s.t_score || 0;
     $('clock').textContent = clockText(s.round_time);

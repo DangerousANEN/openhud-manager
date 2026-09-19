@@ -276,7 +276,7 @@ fn make_universal_snapshot(st: &AppState) -> String {
 
     // Bo3 / Tournament match context from local SQLite DB
     let current_match = crate::db::current_match().ok().flatten();
-    let (match_type, series_left_score, series_right_score, tournament_name, map_pick_tag, left_team_name, right_team_name) = match current_match {
+    let (match_type, series_left_score, series_right_score, tournament_name, map_pick_tag, left_team_name, right_team_name, left_logo, right_logo, _left_short, right_short) = match current_match {
         Some(m) => {
             let t_name = crate::db::list_tournaments()
                 .ok()
@@ -335,9 +335,14 @@ fn make_universal_snapshot(st: &AppState) -> String {
                 }
             }
 
-            (m.match_type, m.left_score, m.right_score, t_name, pick_tag, left_name, right_name)
+            let left_logo = left_t.as_ref().map(|t| t.logo.clone()).unwrap_or_default();
+            let right_logo = right_t.as_ref().map(|t| t.logo.clone()).unwrap_or_default();
+            let left_short = left_t.as_ref().map(|t| t.short_name.clone()).unwrap_or_default();
+            let right_short = right_t.as_ref().map(|t| t.short_name.clone()).unwrap_or_default();
+
+            (m.match_type, m.left_score, m.right_score, t_name, pick_tag, left_name, right_name, left_logo, right_logo, left_short, right_short)
         }
-        None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new()),
+        None => ("bo3".to_string(), 0, 0, String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new()),
     };
 
     let msg = json!({
@@ -374,7 +379,25 @@ fn make_universal_snapshot(st: &AppState) -> String {
         "map_pick_tag": map_pick_tag,
         "match_left_name": left_team_name,
         "match_right_name": right_team_name,
+        "match_left_logo": left_logo,
+        "match_right_logo": right_logo,
+        "left_team_logo": left_logo,
+        "right_team_logo": right_logo,
+        "ct_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+            right_logo.clone()
+        } else {
+            left_logo.clone()
+        },
+        "t_logo": if !snap.ct_name.is_empty() && (snap.ct_name == right_team_name || (!right_short.is_empty() && right_short == snap.ct_name)) {
+            left_logo
+        } else {
+            right_logo
+        },
         "bomb": snap.bomb,
+        "bomb_state": snap.bomb_state,
+        "bomb_x": snap.bomb_x,
+        "bomb_y": snap.bomb_y,
+        "bomb_countdown": snap.bomb_countdown,
         "round_time": snap.round_time,
         "focused_steamid": snap.focused_steamid,
         "players": snap.players,

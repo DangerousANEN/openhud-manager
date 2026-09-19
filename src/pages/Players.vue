@@ -132,8 +132,42 @@
             </div>
           </div>
           <div>
-            <label class="text-text-secondary text-xs mb-1.5 block">Аватар (URL)</label>
-            <input v-model="draft.avatar" class="input-field" placeholder="https://...">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-text-secondary text-xs block">Аватар или CS2 Агент</label>
+              <select @change="(e: any) => { if (e.target.value && draft) draft.avatar = e.target.value }" class="bg-bg-input border border-bg-border/60 text-gold text-xs px-2 py-0.5 rounded cursor-pointer">
+                <option value="">— Быстрый выбор CS2 Агента —</option>
+                <optgroup label="Counter-Terrorists (CT)">
+                  <option value="assets/agents/ct_special_agent_ava_fbi_swat.png">Special Agent Ava | FBI SWAT</option>
+                  <option value="assets/agents/ct_cmdr_mae_dead_cold_jamison_swat.png">Cmdr. Mae Jamison | SWAT</option>
+                  <option value="assets/agents/ct_1st_lieutenant_farlow_swat.png">1st Lieutenant Farlow | SWAT</option>
+                  <option value="assets/agents/ct_michael_syfers_fbi_sniper.png">Michael Syfers | FBI Sniper</option>
+                  <option value="assets/agents/ct_markus_delrow_fbi_hrg.png">Markus Delrow | FBI HRT</option>
+                  <option value="assets/agents/ct_lieutenant_rex_krikey_nswc_seal.png">Lt. Rex Krikey | SEAL</option>
+                  <option value="assets/agents/ct_buckshot_nswc_seal.png">Buckshot | NSWC SEAL</option>
+                  <option value="assets/agents/ct_3rd_commando_company_ksk.png">3rd Commando Company | KSK</option>
+                  <option value="assets/agents/ct_aspirant_gendarmerie_nationale.png">Aspirant | Gendarmerie</option>
+                </optgroup>
+                <optgroup label="Terrorists (T)">
+                  <option value="assets/agents/t_sir_bloody_miami_darryl_the_professionals.png">Sir Bloody Miami Darryl | The Professionals</option>
+                  <option value="assets/agents/t_bloody_darryl_the_strapped_the_professionals.png">Bloody Darryl The Strapped | The Professionals</option>
+                  <option value="assets/agents/t_the_doctor_romanov_sabre.png">Doctor Romanov | Sabre</option>
+                  <option value="assets/agents/t_rezan_the_ready_sabre.png">Rezan The Ready | Sabre</option>
+                  <option value="assets/agents/t_blackwolf_sabre.png">Blackwolf | Sabre</option>
+                  <option value="assets/agents/t_maximus_sabre.png">Maximus | Sabre</option>
+                  <option value="assets/agents/t_dragomir_sabre.png">Dragomir | Sabre</option>
+                  <option value="assets/agents/t_safecracker_voltzmann_the_professionals.png">Safecracker Voltzmann | The Professionals</option>
+                  <option value="assets/agents/t_getaway_sally_the_professionals.png">Getaway Sally | The Professionals</option>
+                  <option value="assets/agents/t_arno_the_overgrown_guerrilla_warfare.png">Arno The Overgrown | Guerrilla</option>
+                  <option value="assets/agents/t_mr_muhlik_elite_crew.png">Mr. Muhlik | Elite Crew</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <input v-model="draft.avatar" class="input-field text-xs flex-1 font-mono" placeholder="assets/agents/... или https://...">
+              <button type="button" @click="fetchSteamAvatar" :disabled="!draft.steamid || fetchingSteam" class="btn-outline text-xs px-2.5 py-1 whitespace-nowrap text-gold hover:text-white" title="Загрузить аватар игрока из профиля Steam">
+                {{ fetchingSteam ? '...' : 'Steam 📥' }}
+              </button>
+            </div>
           </div>
 
           <div class="border-t border-bg-border/60 pt-3 space-y-2">
@@ -186,6 +220,32 @@ const error = ref('')
 const draft = ref<Player | null>(null)
 const playerCamUrl = ref('')
 const playerCamKind = ref<'video' | 'iframe'>('video')
+const fetchingSteam = ref(false)
+
+const fetchSteamAvatar = async () => {
+  if (!draft.value || !draft.value.steamid) return
+  const sid = draft.value.steamid.trim()
+  if (!/^\d{17}$/.test(sid)) {
+    alert('Укажите корректный 17-значный SteamID64 (начинается с 7656119...)')
+    return
+  }
+  fetchingSteam.value = true
+  try {
+    const res = await fetch(`https://steamcommunity.com/profiles/${sid}/?xml=1`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const text = await res.text()
+    const match = text.match(/<avatarFull><!\[CDATA\[(.*?)\]\]><\/avatarFull>/) || text.match(/<avatarFull>(.*?)<\/avatarFull>/)
+    if (match && match[1]) {
+      draft.value.avatar = match[1]
+    } else {
+      alert('Не удалось получить аватар из профиля Steam. Проверьте открытость профиля.')
+    }
+  } catch (e: any) {
+    alert('Ошибка запроса к Steam: ' + (e.message || String(e)))
+  } finally {
+    fetchingSteam.value = false
+  }
+}
 
 const camMap = computed(() => {
   const map: Record<string, CameraSource> = {}

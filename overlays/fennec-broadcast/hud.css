@@ -55,7 +55,14 @@ body {
   overflow: hidden;
   box-shadow: 0 .6rem 2.4rem rgba(0, 0, 0, .5);
 }
-.bug-team { display: flex; align-items: center; gap: 1.6rem; padding: 0 2rem; min-width: 26rem; }
+.bug-team { display: flex; align-items: center; gap: 1.4rem; padding: 0 2rem; min-width: 26rem; }
+.team-crest {
+  width: 4rem; height: 4rem;
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  flex-shrink: 0;
+}
+.team-crest.hidden { display: none !important; }
 .bug-team--ct { justify-content: flex-end; border-bottom: 3px solid var(--ct); }
 .bug-team--t  { border-bottom: 3px solid var(--t); }
 

@@ -207,28 +207,55 @@ SENDER_HTML = f"""<!DOCTYPE html>
 
   async function populateDevices() {{
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(d => d.kind === 'videoinput');
-    camSelect.innerHTML = '';
-    videoDevices.forEach((d, i) => {{
-      const opt = document.createElement('option');
-      opt.value = d.deviceId;
-      opt.textContent = d.label || ('Веб-камера ' + (i + 1));
-      camSelect.appendChild(opt);
-    }});
-    if (videoDevices.length > 0) {{
-      camControls.style.display = 'block';
+    try {{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      camSelect.innerHTML = '';
+      videoDevices.forEach((d, i) => {{
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = d.label || ('Веб-камера ' + (i + 1));
+        camSelect.appendChild(opt);
+      }});
+      if (videoDevices.length > 0) {{
+        camControls.style.display = 'block';
+      }}
+    }} catch (err) {{
+      console.warn('enumerateDevices error:', err);
     }}
   }}
 
-  async function startCam(deviceId) {{
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    const constraints = {{
-      video: deviceId ? {{ deviceId: {{ exact: deviceId }}, width: 1280, height: 720, frameRate: 30 }} : {{ width: 1280, height: 720, frameRate: 30 }},
+  async function requestCameraStream(deviceId) {{
+    // 1st attempt: Ideal 720p without strict overconstraints
+    try {{
+      const c = {{
+        video: deviceId
+          ? {{ deviceId: {{ exact: deviceId }} }}
+          : {{ width: {{ ideal: 1280 }}, height: {{ ideal: 720 }} }},
+        audio: false
+      }};
+      return await navigator.mediaDevices.getUserMedia(c);
+    }} catch (e1) {{
+      console.warn('Ideal constraints failed, trying basic video:true', e1);
+    }}
+    // 2nd attempt: Basic true constraint (accepts any webcam, virtual camera or resolution)
+    const c2 = {{
+      video: deviceId ? {{ deviceId: {{ exact: deviceId }} }} : true,
       audio: false
     }};
+    return await navigator.mediaDevices.getUserMedia(c2);
+  }}
+
+  async function startCam(deviceId) {{
+    if (stream) {{
+      try {{ stream.getTracks().forEach(t => t.stop()); }} catch (_) {{}}
+    }}
+    btnStart.style.display = 'none';
+    statusEl.style.color = '#38bdf8';
+    statusEl.textContent = '⏳ Подключение к камере...';
+
     try {{
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream = await requestCameraStream(deviceId);
       video.srcObject = stream;
       video.style.display = 'block';
       statusEl.style.color = '#4ade80';
@@ -236,18 +263,32 @@ SENDER_HTML = f"""<!DOCTYPE html>
       await populateDevices();
       startStreaming();
     }} catch (e) {{
+      console.error('Camera error:', e);
+      btnStart.style.display = 'inline-block';
+      btnStart.textContent = '🔄 Попробовать снова';
       statusEl.style.color = '#ef4444';
-      statusEl.textContent = '❌ Ошибка камеры: ' + e.message;
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {{
+        statusEl.innerHTML = '❌ <strong>Доступ к камере заблокирован!</strong><br>' +
+          'Нажмите на значок замочка/настроек слева от URL в строке браузера, переключите <strong>«Камера» → «Разрешить»</strong>, затем обновите страницу (F5).';
+      }} else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {{
+        statusEl.innerHTML = '❌ <strong>Веб-камера не найдена!</strong><br>Подключите камеру к USB-порту компьютера.';
+      }} else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {{
+        statusEl.innerHTML = '❌ <strong>Камера занята другой программой!</strong><br>Закройте Discord, OBS Studio или другую вкладку браузера, использующую камеру, и нажмите кнопку снова.';
+      }} else {{
+        statusEl.textContent = '❌ Ошибка камеры (' + e.name + '): ' + e.message;
+      }}
     }}
   }}
 
   btnStart.onclick = async () => {{
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {{
-      alert('Ваш браузер не поддерживает доступ к медиаустройствам. Убедитесь, что страница открыта по HTTPS или с localhost.');
+      statusEl.style.color = '#ef4444';
+      statusEl.innerHTML = '❌ <strong>Браузер заблокировал доступ к камере по протоколу HTTP!</strong><br>' +
+        'Откройте защищенный адрес: <a class="help-link" href="https://' + location.hostname + ':{HTTPS_PORT}' + location.pathname + location.search + '">' +
+        '👉 https://' + location.hostname + ':{HTTPS_PORT}' + location.pathname + location.search + '</a>' +
+        (location.hostname !== 'localhost' ? '<br>или на этом же ПК: <a class="help-link" href="http://localhost:{HTTP_PORT}' + location.pathname + location.search + '">http://localhost:{HTTP_PORT}' + location.pathname + location.search + '</a>' : '');
       return;
     }}
-    btnStart.style.display = 'none';
-    statusEl.textContent = 'Запрос доступа к камере...';
     await startCam();
   }};
 

@@ -16,3 +16,4 @@ src-tauri/gen/
 *.db-wal
 *.db-shm
 .DS_Store
+last_gsi.jsonl

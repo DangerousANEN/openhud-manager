@@ -184,6 +184,46 @@ window.ProtokolCore = (function () {
       });
   }
 
+  var AGENTS_CT = [
+    'assets/agents/ct_1st_lieutenant_farlow_swat.png',
+    'assets/agents/ct_cmdr_mae_dead_cold_jamison_swat.png',
+    'assets/agents/ct_lieutenant_rex_krikey_nswc_seal.png',
+    'assets/agents/ct_special_agent_ava_fbi_swat.png',
+    'assets/agents/ct_michael_syfers_fbi_sniper.png',
+    'assets/agents/ct_markus_delrow_fbi_hrg.png',
+    'assets/agents/ct_operator_fbi_swat.png',
+    'assets/agents/ct_3rd_commando_company_ksk.png',
+    'assets/agents/ct_seal_team_6_soldier_nswc_seal.png',
+    'assets/agents/ct_buckshot_nswc_seal.png'
+  ];
+  var AGENTS_T = [
+    'assets/agents/t_bloody_darryl_the_strapped_the_professionals.png',
+    'assets/agents/t_sir_bloody_miami_darryl_the_professionals.png',
+    'assets/agents/t_sir_bloody_loudmouth_darryl_the_professionals.png',
+    'assets/agents/t_the_doctor_romanov_sabre.png',
+    'assets/agents/t_blackwolf_sabre.png',
+    'assets/agents/t_rezan_the_ready_sabre.png',
+    'assets/agents/t_maximus_sabre.png',
+    'assets/agents/t_dragomir_sabre.png',
+    'assets/agents/t_safecracker_voltzmann_the_professionals.png',
+    'assets/agents/t_getaway_sally_the_professionals.png'
+  ];
+
+  function getPlayerAgent(player, mapKey) {
+    if (!player) return '';
+    if (player.avatar && player.avatar.trim() !== '') return player.avatar;
+    var isCt = String(player.team || '').toUpperCase() === 'CT';
+    var pool = isCt ? AGENTS_CT : AGENTS_T;
+    var hash = 0;
+    var str = String(player.steamid || player.name || player.observer_slot || '0');
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    var idx = Math.abs(hash) % pool.length;
+    return pool[idx] || (isCt ? 'assets/agents-ct.png' : 'assets/agents-t.png');
+  }
+
   function formatSlot(raw) {
     if (raw == null || raw === '') return '';
     var s = Number(raw);
@@ -253,6 +293,7 @@ window.ProtokolCore = (function () {
   return {
     esc: esc,
     formatSlot: formatSlot,
+    getPlayerAgent: getPlayerAgent,
     radarPos: radarPos,
     radarArt: radarArt,
     isLiveCam: isLiveCam,

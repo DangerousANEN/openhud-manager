@@ -234,8 +234,12 @@
       }
     });
 
-    if (snap.bomb === 'planted' || snap.bomb_state === 'planted') {
+    var isPlanted = snap.bomb === 'planted' || snap.bomb_state === 'planted';
+    var isDropped = snap.bomb === 'dropped' || snap.bomb_state === 'dropped';
+    if (isPlanted || isDropped) {
       els.radarBomb.classList.remove('hidden');
+      els.radarBomb.classList.toggle('is-dropped', isDropped);
+      els.radarBomb.classList.toggle('is-planted', isPlanted);
       var bx = snap.bomb_x, by = snap.bomb_y;
       if (bx != null && by != null && (bx !== 0 || by !== 0) && cfg && cfg.resolution) {
         var bpx = ((bx - cfg.offset.x) / cfg.resolution / 1024) * 100;
@@ -394,8 +398,9 @@
     w.classList.toggle('live-cam', live);
     var av = $('fp-avatar');
     if (av) {
+      var agentPic = f.avatar || ('assets/agents-' + (isCt ? 'ct' : 't') + '.png');
       av.style.backgroundImage = live
-        ? 'none' : 'url(assets/agents-' + (isCt ? 'ct' : 't') + '.png)';
+        ? 'none' : 'url(' + agentPic + ')';
     }
     var camWin = $('fp-cam-window');
     if (camWin) camWin.setAttribute('data-steamid', f.steamid || '');
@@ -419,10 +424,15 @@
     els.ctName.textContent = ctN || '';
     els.tName.textContent = tN || '';
     /* probe the logo first; a missing file must not leave a coloured square */
-    [[ctN, els.ctLogo], [tN, els.tLogo]].forEach(function (pair) {
-      var nm = pair[0], el = pair[1];
-      if (!nm || el.dataset.team === nm) return;
-      el.dataset.team = nm;
+    var ctLogoSrc = snap.ct_logo || snap.match_left_logo || snap.left_team_logo || ('team-logos/' + encodeURIComponent(ctN) + '.png');
+    var tLogoSrc = snap.t_logo || snap.match_right_logo || snap.right_team_logo || ('team-logos/' + encodeURIComponent(tN) + '.png');
+    [[ctN, els.ctLogo, ctLogoSrc], [tN, els.tLogo, tLogoSrc]].forEach(function (tuple) {
+      var nm = tuple[0], el = tuple[1], src = tuple[2];
+      if (!el) return;
+      if (!src) {
+        el.classList.remove('--loaded');
+        return;
+      }
       var probe = new Image();
       probe.onload = function () {
         /* reject 1x1 placeholder stubs; they render as coloured squares */
@@ -430,11 +440,11 @@
           el.classList.remove('--loaded');
           return;
         }
-        el.style.backgroundImage = 'url(team-logos/' + encodeURIComponent(nm) + '.png)';
+        el.style.backgroundImage = 'url(' + JSON.stringify(src) + ')';
         el.classList.add('--loaded');
       };
       probe.onerror = function () { el.classList.remove('--loaded'); };
-      probe.src = 'team-logos/' + encodeURIComponent(nm) + '.png';
+      probe.src = src;
     });
     els.ctScore.textContent = sidesReversed ? snap.t_score : snap.ct_score;
     els.tScore.textContent = sidesReversed ? snap.ct_score : snap.t_score;
